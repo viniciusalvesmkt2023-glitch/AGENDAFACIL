@@ -1,15 +1,15 @@
 import Link from "next/link";
 import { db } from "@/lib/db";
-import { requireUser } from "@/lib/auth";
+import { requireActiveUser } from "@/lib/auth";
 import { formatPhone } from "@/lib/format";
 import { EmptyState, PageHeader } from "@/components/ui";
-import { toggleProfessional } from "../actions";
+import { toggleProfessional } from "@/app/painel/actions";
 import { ProfessionalForm } from "./professional-form";
 
 type Props = { searchParams: Promise<{ editar?: string }> };
 
 export default async function ProfessionalsPage({ searchParams }: Props) {
-  const user = await requireUser();
+  const user = await requireActiveUser();
   const params = await searchParams;
   const [professionals, services] = await Promise.all([
     db.professional.findMany({

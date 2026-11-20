@@ -1,7 +1,7 @@
 "use client";
 
 import { useActionState } from "react";
-import { saveSettings } from "../actions";
+import { saveSettings } from "@/app/painel/actions";
 import { FormMessage } from "@/components/ui";
 import { SubmitButton } from "@/components/submit-button";
 

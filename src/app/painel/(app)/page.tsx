@@ -1,15 +1,15 @@
 import Link from "next/link";
 import { db } from "@/lib/db";
-import { requireUser } from "@/lib/auth";
+import { requireActiveUser } from "@/lib/auth";
 import { addDays, formatDateLong, isValidDate, minutesToTime, todayInTimezone } from "@/lib/time";
 import { formatMoney, formatPhone, whatsappLink } from "@/lib/format";
 import { EmptyState, FormMessage, PageHeader, StatusBadge } from "@/components/ui";
-import { updateAppointmentStatus } from "./actions";
+import { updateAppointmentStatus } from "@/app/painel/actions";
 
 type Props = { searchParams: Promise<{ data?: string; profissional?: string; erro?: string }> };
 
 export default async function AgendaPage({ searchParams }: Props) {
-  const user = await requireUser();
+  const user = await requireActiveUser();
   const params = await searchParams;
   const today = todayInTimezone();
   const date = params.data && isValidDate(params.data) ? params.data : today;

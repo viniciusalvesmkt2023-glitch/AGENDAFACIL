@@ -4,6 +4,7 @@ import { db } from "@/lib/db";
 import { todayInTimezone } from "@/lib/time";
 import { formatPhone, whatsappLink } from "@/lib/format";
 import { BookingWizard } from "./booking-wizard";
+import { hasAccess } from "@/lib/subscription";
 
 type Props = { params: Promise<{ slug: string }> };
 
@@ -58,7 +59,11 @@ export default async function PublicBookingPage({ params }: Props) {
         </div>
       </header>
       <main className="mx-auto -mt-8 max-w-3xl px-4 pb-16">
-        {business.services.length === 0 ? (
+        {!hasAccess(business) ? (
+          <div className="card p-8 text-center text-zinc-500">
+            O agendamento online deste estabelecimento está temporariamente indisponível. Entre em contato diretamente.
+          </div>
+        ) : business.services.length === 0 ? (
           <div className="card p-8 text-center text-zinc-500">
             Este estabelecimento ainda não disponibilizou serviços para agendamento online.
           </div>

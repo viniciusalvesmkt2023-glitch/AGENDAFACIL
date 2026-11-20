@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { db } from "@/lib/db";
-import { requireUser } from "@/lib/auth";
+import { requireActiveUser } from "@/lib/auth";
 import { isValidDate, todayInTimezone } from "@/lib/time";
 import { formatDuration, formatMoney } from "@/lib/format";
 import { EmptyState, PageHeader } from "@/components/ui";
@@ -9,7 +9,7 @@ import { ManualBookingForm } from "./manual-booking-form";
 type Props = { searchParams: Promise<{ data?: string }> };
 
 export default async function NewAppointmentPage({ searchParams }: Props) {
-  const user = await requireUser();
+  const user = await requireActiveUser();
   const { data } = await searchParams;
   const [services, professionals] = await Promise.all([
     db.service.findMany({ where: { businessId: user.businessId, active: true }, orderBy: { name: "asc" } }),

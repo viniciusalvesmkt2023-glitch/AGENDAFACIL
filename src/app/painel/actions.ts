@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { db } from "@/lib/db";
-import { requireUser } from "@/lib/auth";
+import { requireActiveUser } from "@/lib/auth";
 import { BookingError, createAppointment } from "@/lib/booking";
 import { parseMoneyToCents, slugify } from "@/lib/format";
 import { timeToMinutes } from "@/lib/time";
@@ -17,7 +17,7 @@ const STATUSES = ["SCHEDULED", "CONFIRMED", "COMPLETED", "CANCELED", "NO_SHOW"] 
 // ---------- Agendamentos ----------
 
 export async function updateAppointmentStatus(formData: FormData) {
-  const user = await requireUser();
+  const user = await requireActiveUser();
   const id = String(formData.get("id"));
   const status = z.enum(STATUSES).parse(formData.get("status"));
   const appointment = await db.appointment.findFirst({ where: { id, businessId: user.businessId } });
@@ -44,7 +44,7 @@ export async function updateAppointmentStatus(formData: FormData) {
 }
 
 export async function createManualAppointment(_: ActionState, formData: FormData): Promise<ActionState> {
-  const user = await requireUser();
+  const user = await requireActiveUser();
   const schema = z.object({
     serviceId: z.string().min(1, "Escolha o serviço."),
     professionalId: z.string().optional(),
@@ -81,7 +81,7 @@ export async function createManualAppointment(_: ActionState, formData: FormData
 // ---------- Serviços ----------
 
 export async function saveService(_: ActionState, formData: FormData): Promise<ActionState> {
-  const user = await requireUser();
+  const user = await requireActiveUser();
   const schema = z.object({
     id: z.string().optional(),
     name: z.string().trim().min(2, "Informe o nome do serviço."),
@@ -117,7 +117,7 @@ export async function saveService(_: ActionState, formData: FormData): Promise<A
 }
 
 export async function toggleService(formData: FormData) {
-  const user = await requireUser();
+  const user = await requireActiveUser();
   const id = String(formData.get("id"));
   const service = await db.service.findFirst({ where: { id, businessId: user.businessId } });
   if (service) await db.service.update({ where: { id }, data: { active: !service.active } });
@@ -127,7 +127,7 @@ export async function toggleService(formData: FormData) {
 // ---------- Profissionais ----------
 
 export async function saveProfessional(_: ActionState, formData: FormData): Promise<ActionState> {
-  const user = await requireUser();
+  const user = await requireActiveUser();
   const schema = z.object({
     id: z.string().optional(),
     name: z.string().trim().min(2, "Informe o nome do profissional."),
@@ -171,7 +171,7 @@ export async function saveProfessional(_: ActionState, formData: FormData): Prom
 }
 
 export async function toggleProfessional(formData: FormData) {
-  const user = await requireUser();
+  const user = await requireActiveUser();
   const id = String(formData.get("id"));
   const pro = await db.professional.findFirst({ where: { id, businessId: user.businessId } });
   if (pro) await db.professional.update({ where: { id }, data: { active: !pro.active } });
@@ -181,7 +181,7 @@ export async function toggleProfessional(formData: FormData) {
 // ---------- Horários de funcionamento ----------
 
 export async function saveWorkingHours(_: ActionState, formData: FormData): Promise<ActionState> {
-  const user = await requireUser();
+  const user = await requireActiveUser();
   const updates = [];
   for (let weekday = 0; weekday < 7; weekday++) {
     const isOpen = formData.get(`open_${weekday}`) === "on";
@@ -226,7 +226,7 @@ export async function saveWorkingHours(_: ActionState, formData: FormData): Prom
 // ---------- Configurações ----------
 
 export async function saveSettings(_: ActionState, formData: FormData): Promise<ActionState> {
-  const user = await requireUser();
+  const user = await requireActiveUser();
   const schema = z.object({
     name: z.string().trim().min(2, "Informe o nome do estabelecimento."),
     slug: z.string().trim().min(3, "O endereço precisa ter pelo menos 3 caracteres."),

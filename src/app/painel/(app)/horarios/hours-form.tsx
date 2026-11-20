@@ -1,7 +1,7 @@
 "use client";
 
 import { useActionState } from "react";
-import { saveWorkingHours } from "../actions";
+import { saveWorkingHours } from "@/app/painel/actions";
 import { FormMessage } from "@/components/ui";
 import { SubmitButton } from "@/components/submit-button";
 

@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import { getSession } from "@/lib/auth";
 import { getAvailability } from "@/lib/booking";
 import { minutesToTime } from "@/lib/time";
+import { hasAccess } from "@/lib/subscription";
 
 // GET /api/disponibilidade?slug=...&serviceId=...&date=YYYY-MM-DD[&professionalId=...][&painel=1]
 export async function GET(req: NextRequest) {
@@ -16,6 +17,7 @@ export async function GET(req: NextRequest) {
 
   const business = await db.business.findUnique({ where: { slug } });
   if (!business) return NextResponse.json({ error: "Estabelecimento não encontrado" }, { status: 404 });
+  if (!hasAccess(business)) return NextResponse.json({ slots: [] });
 
   // O dono logado pode ver horários fora da janela de agendamento online (encaixes)
   let enforceWindow = true;

@@ -29,12 +29,28 @@ model Business {
   maxAdvanceDays    Int      @default(30)
   createdAt         DateTime @default(now())
 
+  // ----- Assinatura do estabelecimento -----
+  // TRIALING | ACTIVE | PAST_DUE | CANCELED
+  subscriptionStatus   String    @default("TRIALING")
+  trialEndsAt          DateTime  @default(dbgenerated("(now() + '7 days'::interval)"))
+  plan                 String? // MONTHLY | SEMIANNUAL | ANNUAL
+  paymentMethod        String? // CARD | PIX
+  currentPeriodEnd     DateTime?
+  stripeCustomerId     String?   @unique
+  stripeSubscriptionId String?   @unique
+  taxId                String? // CPF/CNPJ (necessário para Pix)
+
+  // ----- WhatsApp -----
+  whatsappRemindersEnabled Boolean @default(true)
+
   users         User[]
   services      Service[]
   professionals Professional[]
   workingHours  WorkingHour[]
   clients       Client[]
   appointments  Appointment[]
+  payments      Payment[]
+  messageLogs   MessageLog[]
 }
 
 model User {
@@ -45,7 +61,62 @@ model User {
   role         String   @default("OWNER")
   businessId   String
   business     Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  termsAcceptedAt DateTime?
   createdAt    DateTime @default(now())
+
+  passwordResetTokens PasswordResetToken[]
+}
+
+model PasswordResetToken {
+  id        String    @id @default(cuid())
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  // Guardamos só o hash do token; o token puro vai apenas no e-mail
+  tokenHash String    @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+}
+
+// Pagamentos da assinatura (histórico de cartão e cobranças Pix)
+model Payment {
+  id          String    @id @default(cuid())
+  businessId  String
+  business    Business  @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  provider    String // STRIPE | SYNCPAY
+  method      String // CARD | PIX
+  plan        String // MONTHLY | SEMIANNUAL | ANNUAL
+  amountCents Int
+  // PENDING | PAID | EXPIRED | FAILED | REFUNDED
+  status      String    @default("PENDING")
+  externalId  String?   @unique
+  pixCopyPaste String?
+  pixQrCode   String? // imagem base64 ou URL do QR code
+  expiresAt   DateTime?
+  paidAt      DateTime?
+  createdAt   DateTime  @default(now())
+
+  @@index([businessId, createdAt])
+}
+
+// Registro de mensagens enviadas (WhatsApp)
+model MessageLog {
+  id                String       @id @default(cuid())
+  businessId        String
+  business          Business     @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  appointmentId     String?
+  appointment       Appointment? @relation(fields: [appointmentId], references: [id], onDelete: SetNull)
+  channel           String       @default("WHATSAPP")
+  // CONFIRMATION | REMINDER_24H | REMINDER_2H
+  type              String
+  to                String
+  // SENT | FAILED | SKIPPED
+  status            String
+  providerMessageId String?
+  error             String?
+  createdAt         DateTime     @default(now())
+
+  @@index([businessId, createdAt])
 }
 
 model Service {
@@ -140,6 +211,12 @@ model Appointment {
   cancelToken    String       @unique @default(cuid())
   createdAt      DateTime     @default(now())
 
+  confirmationSentAt DateTime?
+  reminder24hSentAt  DateTime?
+  reminder2hSentAt   DateTime?
+  messageLogs        MessageLog[]
+
   @@index([businessId, date])
+  @@index([date, status])
   @@index([professionalId, date])
 }

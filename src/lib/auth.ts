@@ -3,6 +3,7 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { SignJWT, jwtVerify } from "jose";
 import { db } from "./db";
+import { hasAccess } from "./subscription";
 
 const COOKIE_NAME = "agendafacil_session";
 const SESSION_DAYS = 30;
@@ -61,5 +62,12 @@ export async function requireUser() {
     include: { business: true },
   });
   if (!user || user.businessId !== session.businessId) redirect("/entrar");
+  return user;
+}
+
+/** Igual a requireUser, mas exige teste grátis ou assinatura ativa. */
+export async function requireActiveUser() {
+  const user = await requireUser();
+  if (!hasAccess(user.business)) redirect("/painel/assinatura");
   return user;
 }

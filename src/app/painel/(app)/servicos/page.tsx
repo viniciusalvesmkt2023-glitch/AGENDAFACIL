@@ -1,15 +1,15 @@
 import Link from "next/link";
 import { db } from "@/lib/db";
-import { requireUser } from "@/lib/auth";
+import { requireActiveUser } from "@/lib/auth";
 import { formatDuration, formatMoney } from "@/lib/format";
 import { EmptyState, PageHeader } from "@/components/ui";
-import { toggleService } from "../actions";
+import { toggleService } from "@/app/painel/actions";
 import { ServiceForm } from "./service-form";
 
 type Props = { searchParams: Promise<{ editar?: string; bemvindo?: string }> };
 
 export default async function ServicesPage({ searchParams }: Props) {
-  const user = await requireUser();
+  const user = await requireActiveUser();
   const params = await searchParams;
   const services = await db.service.findMany({
     where: { businessId: user.businessId },

@@ -1,11 +1,11 @@
 import { db } from "@/lib/db";
-import { requireUser } from "@/lib/auth";
+import { requireActiveUser } from "@/lib/auth";
 import { minutesToTime, WEEKDAYS } from "@/lib/time";
 import { PageHeader } from "@/components/ui";
 import { HoursForm } from "./hours-form";
 
 export default async function HoursPage() {
-  const user = await requireUser();
+  const user = await requireActiveUser();
   const hours = await db.workingHour.findMany({ where: { businessId: user.businessId } });
   const byDay = new Map(hours.map((h) => [h.weekday, h]));
 

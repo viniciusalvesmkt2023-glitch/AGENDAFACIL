@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 import { db } from "@/lib/db";
 import { BookingError, createAppointment } from "@/lib/booking";
+import { hasAccess } from "@/lib/subscription";
 
 export type BookingState = { error?: string | null } | undefined;
 
@@ -25,6 +26,7 @@ export async function bookOnline(_: BookingState, formData: FormData): Promise<B
 
   const business = await db.business.findUnique({ where: { slug: d.slug } });
   if (!business) return { error: "Estabelecimento não encontrado." };
+  if (!hasAccess(business)) return { error: "O agendamento online está indisponível no momento." };
 
   let token: string;
   try {

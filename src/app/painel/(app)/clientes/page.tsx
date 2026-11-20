@@ -1,5 +1,5 @@
 import { db } from "@/lib/db";
-import { requireUser } from "@/lib/auth";
+import { requireActiveUser } from "@/lib/auth";
 import { formatDateShort } from "@/lib/time";
 import { formatMoney, formatPhone, whatsappLink } from "@/lib/format";
 import { EmptyState, PageHeader } from "@/components/ui";
@@ -7,7 +7,7 @@ import { EmptyState, PageHeader } from "@/components/ui";
 type Props = { searchParams: Promise<{ busca?: string }> };
 
 export default async function ClientsPage({ searchParams }: Props) {
-  const user = await requireUser();
+  const user = await requireActiveUser();
   const { busca = "" } = await searchParams;
   const term = busca.trim();
   const digits = term.replace(/\D/g, "");

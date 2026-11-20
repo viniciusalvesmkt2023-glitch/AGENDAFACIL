@@ -6,6 +6,7 @@ import { z } from "zod";
 import { db } from "@/lib/db";
 import { createSession, destroySession } from "@/lib/auth";
 import { slugify } from "@/lib/format";
+import { TRIAL_DAYS } from "@/lib/plans";
 
 export type FormState = { error?: string | null } | undefined;
 
@@ -47,6 +48,7 @@ export async function signup(_: FormState, formData: FormData): Promise<FormStat
       data: {
         name: businessName,
         slug,
+        trialEndsAt: new Date(Date.now() + TRIAL_DAYS * 86_400_000),
         // Horário padrão: seg a sex 9h-19h (almoço 12h-13h), sábado 9h-14h, domingo fechado
         workingHours: {
           create: [0, 1, 2, 3, 4, 5, 6].map((weekday) => ({
