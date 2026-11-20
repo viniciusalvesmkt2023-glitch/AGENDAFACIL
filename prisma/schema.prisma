@@ -1,0 +1,142 @@
+// Modelo de dados do AgendaFácil.
+// Em produção, troque o provider para "postgresql".
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// Estabelecimento (barbearia, salão, clínica...). Cada um é um "tenant".
+model Business {
+  id                String   @id @default(cuid())
+  name              String
+  slug              String   @unique
+  phone             String?
+  address           String?
+  description       String?
+  // Intervalo entre horários exibidos na página de agendamento (minutos)
+  slotInterval      Int      @default(30)
+  // Antecedência mínima para o cliente agendar (minutos)
+  minAdvanceMinutes Int      @default(60)
+  // Até quantos dias no futuro o cliente pode agendar
+  maxAdvanceDays    Int      @default(30)
+  createdAt         DateTime @default(now())
+
+  users         User[]
+  services      Service[]
+  professionals Professional[]
+  workingHours  WorkingHour[]
+  clients       Client[]
+  appointments  Appointment[]
+}
+
+model User {
+  id           String   @id @default(cuid())
+  name         String
+  email        String   @unique
+  passwordHash String
+  role         String   @default("OWNER")
+  businessId   String
+  business     Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  createdAt    DateTime @default(now())
+}
+
+model Service {
+  id              String   @id @default(cuid())
+  businessId      String
+  business        Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  name            String
+  description     String?
+  durationMinutes Int
+  priceCents      Int
+  active          Boolean  @default(true)
+  createdAt       DateTime @default(now())
+
+  professionals ProfessionalService[]
+  appointments  Appointment[]
+
+  @@index([businessId])
+}
+
+model Professional {
+  id         String   @id @default(cuid())
+  businessId String
+  business   Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  name       String
+  phone      String?
+  active     Boolean  @default(true)
+  createdAt  DateTime @default(now())
+
+  services     ProfessionalService[]
+  appointments Appointment[]
+
+  @@index([businessId])
+}
+
+model ProfessionalService {
+  professionalId String
+  serviceId      String
+  professional   Professional @relation(fields: [professionalId], references: [id], onDelete: Cascade)
+  service        Service      @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+
+  @@id([professionalId, serviceId])
+}
+
+// Horário de funcionamento por dia da semana (0 = domingo ... 6 = sábado).
+// Horários são guardados em minutos desde 00:00 no fuso local do estabelecimento.
+model WorkingHour {
+  id           String   @id @default(cuid())
+  businessId   String
+  business     Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  weekday      Int
+  isOpen       Boolean  @default(true)
+  startMinutes Int
+  endMinutes   Int
+  breakStart   Int?
+  breakEnd     Int?
+
+  @@unique([businessId, weekday])
+}
+
+model Client {
+  id         String   @id @default(cuid())
+  businessId String
+  business   Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  name       String
+  phone      String
+  createdAt  DateTime @default(now())
+
+  appointments Appointment[]
+
+  @@unique([businessId, phone])
+}
+
+// Status: SCHEDULED | CONFIRMED | COMPLETED | CANCELED | NO_SHOW
+model Appointment {
+  id             String       @id @default(cuid())
+  businessId     String
+  business       Business     @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  professionalId String
+  professional   Professional @relation(fields: [professionalId], references: [id], onDelete: Cascade)
+  serviceId      String
+  service        Service      @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+  clientId       String
+  client         Client       @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  // Data local "YYYY-MM-DD" e horário em minutos desde 00:00 (fuso do estabelecimento)
+  date           String
+  startMinutes   Int
+  endMinutes     Int
+  status         String       @default("SCHEDULED")
+  priceCents     Int
+  notes          String?
+  source         String       @default("ONLINE") // ONLINE | MANUAL
+  cancelToken    String       @unique @default(cuid())
+  createdAt      DateTime     @default(now())
+
+  @@index([businessId, date])
+  @@index([professionalId, date])
+}
