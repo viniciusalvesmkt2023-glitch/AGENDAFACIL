@@ -4,6 +4,12 @@ SaaS de agendamento online para **barbearias, salões de beleza, clínicas de es
 
 Cada estabelecimento ganha um painel de gestão e uma página pública de agendamento (ex.: `agendafacil.com/barbearia-do-joao`), onde os clientes marcam horário sozinhos, 24h por dia.
 
+## Telas
+
+| Painel do estabelecimento | Agendamento pelo cliente (celular) |
+|---|---|
+| ![Agenda](docs/telas/2-painel-agenda.png) | ![Cliente](docs/telas/5-celular-cliente-horarios.png) |
+
 ## Funcionalidades (MVP)
 
 **Para o cliente final (página pública `/[slug]`)**
