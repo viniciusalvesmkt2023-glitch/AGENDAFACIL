@@ -58,8 +58,8 @@ export default function Home() {
           <Link href="/cadastro" className="btn-primary px-6 py-3 text-base">
             Começar agora
           </Link>
-          <Link href="/barbearia-demo" className="btn-secondary px-6 py-3 text-base">
-            Ver página de exemplo
+          <Link href="/entrar" className="btn-secondary px-6 py-3 text-base">
+            Já tenho conta
           </Link>
         </div>
       </section>
