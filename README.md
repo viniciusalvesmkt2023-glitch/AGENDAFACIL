@@ -32,24 +32,38 @@ Cada estabelecimento ganha um painel de gestão e uma página pública de agenda
 ## Stack
 
 - [Next.js](https://nextjs.org) (App Router, Server Actions) + React + TypeScript
-- [Prisma](https://www.prisma.io) — SQLite em desenvolvimento, PostgreSQL em produção
+- [Prisma](https://www.prisma.io) + PostgreSQL no [Supabase](https://supabase.com)
 - Tailwind CSS
 - Autenticação própria com sessão em cookie JWT (`jose`) e senhas com `bcryptjs`
 - Testes com Vitest
 
 ## Como rodar
 
+### 1. Crie o banco no Supabase
+1. Crie uma conta em https://supabase.com e clique em **New project**.
+2. Dê um nome, **anote a senha do banco** (Database Password) e escolha a região **South America (São Paulo)**.
+3. Com o projeto criado, clique em **Connect** (no topo) → aba **ORMs** → **Prisma**.
+4. Copie as duas linhas `DATABASE_URL` e `DIRECT_URL`.
+
+### 2. Configure e rode o projeto
 ```bash
 npm install
-cp .env.example .env        # edite AUTH_SECRET
-npx prisma db push          # cria o banco
+cp .env.example .env        # no Windows: copy .env.example .env
+```
+Abra o arquivo `.env`, cole as duas URLs do Supabase (trocando `[YOUR-PASSWORD]` pela senha do banco) e troque o `AUTH_SECRET` por um texto longo qualquer. Depois:
+```bash
+npm run db:migrate          # cria as tabelas no Supabase
 npm run db:seed             # (opcional) cria a demo /barbearia-demo
 npm run dev
 ```
 
 Acesse http://localhost:3000. Login da demo: `demo@agendafacil.com` / `demo1234`.
 
-Outros comandos: `npm test` (testes), `npm run typecheck`, `npm run build`, `npm run db:studio` (visualizar o banco).
+As tabelas e os dados podem ser vistos no Supabase em **Table Editor**, ou com `npm run db:studio`.
+
+Outros comandos: `npm test` (testes), `npm run typecheck`, `npm run build`.
+
+**Alterando o banco:** depois de mudar `prisma/schema.prisma`, rode `npx prisma migrate dev --name descricao-da-mudanca` para gerar uma nova migration e `npm run db:migrate` para aplicá-la no Supabase.
 
 ## Estrutura
 
@@ -66,11 +80,11 @@ src/app/api/disponibilidade/  API de horários livres
 
 Datas são guardadas como `YYYY-MM-DD` e horários como minutos desde 00:00, no fuso do estabelecimento (`APP_TIMEZONE`), evitando bugs de fuso horário.
 
-## Deploy em produção
+## Deploy em produção (Vercel + Supabase)
 
-1. Crie um banco PostgreSQL (Neon, Supabase, Railway...).
-2. Em `prisma/schema.prisma`, troque `provider = "sqlite"` por `provider = "postgresql"`.
-3. Configure `DATABASE_URL` e `AUTH_SECRET` na hospedagem (ex.: Vercel) e rode `npx prisma db push` (ou migrations).
+1. Importe o repositório na [Vercel](https://vercel.com).
+2. Em **Environment Variables**, cadastre `DATABASE_URL`, `DIRECT_URL`, `AUTH_SECRET` e `APP_TIMEZONE` (os mesmos valores do `.env`).
+3. Faça o deploy. As tabelas já existem no Supabase se você rodou `npm run db:migrate`.
 
 ## Próximos passos (roadmap)
 

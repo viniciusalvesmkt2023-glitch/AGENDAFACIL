@@ -16,7 +16,7 @@ export default async function ClientsPage({ searchParams }: Props) {
     where: {
       businessId: user.businessId,
       ...(term
-        ? { OR: [{ name: { contains: term } }, ...(digits ? [{ phone: { contains: digits } }] : [])] }
+        ? { OR: [{ name: { contains: term, mode: "insensitive" as const } }, ...(digits ? [{ phone: { contains: digits } }] : [])] }
         : {}),
     },
     include: {

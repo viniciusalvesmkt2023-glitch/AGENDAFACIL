@@ -1,13 +1,16 @@
 // Modelo de dados do AgendaFácil.
-// Em produção, troque o provider para "postgresql".
+// Banco: PostgreSQL (Supabase). Veja .env.example para as URLs de conexão.
 
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
-  provider = "sqlite"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  // Conexão via pooler do Supabase (porta 6543), usada pelo sistema
+  url       = env("DATABASE_URL")
+  // Conexão direta (porta 5432), usada para criar/alterar as tabelas (migrations)
+  directUrl = env("DIRECT_URL")
 }
 
 // Estabelecimento (barbearia, salão, clínica...). Cada um é um "tenant".
