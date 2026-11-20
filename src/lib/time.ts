@@ -99,3 +99,30 @@ export function formatDateShort(date: string): string {
   const [, m, d] = date.split("-");
   return `${d}/${m}`;
 }
+
+/** Diferença (ms) entre o horário local do fuso e UTC em um instante. */
+function tzOffsetMs(tz: string, instant: Date): number {
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone: tz,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hourCycle: "h23",
+  }).formatToParts(instant);
+  const get = (t: string) => Number(parts.find((p) => p.type === t)!.value);
+  const asUtc = Date.UTC(get("year"), get("month") - 1, get("day"), get("hour"), get("minute"), get("second"));
+  return asUtc - Math.floor(instant.getTime() / 1000) * 1000;
+}
+
+/** Converte data local "YYYY-MM-DD" + minutos (no fuso do estabelecimento) para um instante UTC. */
+export function localToUtc(date: string, minutes: number, tz: string = TIMEZONE): Date {
+  const [y, m, d] = date.split("-").map(Number);
+  const naive = Date.UTC(y, m - 1, d, Math.floor(minutes / 60), minutes % 60);
+  let guess = naive - tzOffsetMs(tz, new Date(naive));
+  // Segunda passada corrige casos de mudança de horário de verão
+  guess = naive - tzOffsetMs(tz, new Date(guess));
+  return new Date(guess);
+}

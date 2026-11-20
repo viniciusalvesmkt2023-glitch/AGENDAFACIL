@@ -1,6 +1,8 @@
 "use server";
 
 import { redirect } from "next/navigation";
+import { after } from "next/server";
+import { sendAppointmentMessage } from "@/lib/notifications";
 import { z } from "zod";
 import { db } from "@/lib/db";
 import { BookingError, createAppointment } from "@/lib/booking";
@@ -42,6 +44,8 @@ export async function bookOnline(_: BookingState, formData: FormData): Promise<B
       source: "ONLINE",
     });
     token = appointment.cancelToken;
+    // Confirmação no WhatsApp enviada em segundo plano, sem atrasar a resposta ao cliente
+    after(() => sendAppointmentMessage(appointment.id, "CONFIRMATION"));
   } catch (e) {
     if (e instanceof BookingError) return { error: e.message };
     throw e;

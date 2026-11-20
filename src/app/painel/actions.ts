@@ -2,6 +2,8 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { after } from "next/server";
+import { sendAppointmentMessage } from "@/lib/notifications";
 import { z } from "zod";
 import { db } from "@/lib/db";
 import { requireActiveUser } from "@/lib/auth";
@@ -59,7 +61,7 @@ export async function createManualAppointment(_: ActionState, formData: FormData
   const d = parsed.data;
 
   try {
-    await createAppointment({
+    const appointment = await createAppointment({
       business: user.business,
       serviceId: d.serviceId,
       professionalId: d.professionalId || null,
@@ -70,6 +72,9 @@ export async function createManualAppointment(_: ActionState, formData: FormData
       notes: d.notes,
       source: "MANUAL",
     });
+    if (formData.get("sendWhatsapp") === "on") {
+      after(() => sendAppointmentMessage(appointment.id, "CONFIRMATION"));
+    }
   } catch (e) {
     if (e instanceof BookingError) return { error: e.message };
     throw e;
@@ -236,6 +241,7 @@ export async function saveSettings(_: ActionState, formData: FormData): Promise<
     slotInterval: z.coerce.number().int().min(5).max(240),
     minAdvanceMinutes: z.coerce.number().int().min(0).max(10080),
     maxAdvanceDays: z.coerce.number().int().min(1).max(365),
+    whatsappRemindersEnabled: z.string().optional(),
   });
   const parsed = schema.safeParse(Object.fromEntries(formData));
   if (!parsed.success) return { error: parsed.error.issues[0].message };
@@ -257,6 +263,7 @@ export async function saveSettings(_: ActionState, formData: FormData): Promise<
       slotInterval: d.slotInterval,
       minAdvanceMinutes: d.minAdvanceMinutes,
       maxAdvanceDays: d.maxAdvanceDays,
+      whatsappRemindersEnabled: d.whatsappRemindersEnabled === "on",
     },
   });
   revalidatePath("/painel", "layout");

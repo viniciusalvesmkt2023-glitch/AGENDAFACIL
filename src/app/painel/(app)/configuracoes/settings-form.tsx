@@ -14,6 +14,7 @@ type Business = {
   slotInterval: number;
   minAdvanceMinutes: number;
   maxAdvanceDays: number;
+  whatsappRemindersEnabled: boolean;
 };
 
 export function SettingsForm({ business }: { business: Business }) {
@@ -81,6 +82,22 @@ export function SettingsForm({ business }: { business: Business }) {
             </select>
           </div>
         </div>
+      </section>
+
+      <section className="card space-y-3 p-5">
+        <h2 className="font-semibold">Mensagens automáticas no WhatsApp</h2>
+        <label className="flex items-start gap-3 text-sm">
+          <input
+            type="checkbox"
+            name="whatsappRemindersEnabled"
+            defaultChecked={business.whatsappRemindersEnabled}
+            className="mt-0.5 h-4 w-4 accent-brand-600"
+          />
+          <span>
+            Enviar confirmação ao agendar e lembretes 24 horas e 2 horas antes do horário.
+            <span className="block text-zinc-500">Reduz faltas: o cliente recebe o link para cancelar se não puder ir.</span>
+          </span>
+        </label>
       </section>
 
       <FormMessage error={state?.error} success={state?.success} />

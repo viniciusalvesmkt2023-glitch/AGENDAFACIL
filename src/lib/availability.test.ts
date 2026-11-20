@@ -78,3 +78,15 @@ describe("time helpers", () => {
     expect(now).toEqual({ date: "2026-11-19", minutes: 23 * 60 + 30 });
   });
 });
+
+import { localToUtc } from "./time";
+describe("localToUtc", () => {
+  it("converte horário de São Paulo para UTC", () => {
+    expect(localToUtc("2026-11-20", 14 * 60, "America/Sao_Paulo").toISOString()).toBe("2026-11-20T17:00:00.000Z");
+    expect(localToUtc("2026-11-20", 23 * 60 + 30, "America/Sao_Paulo").toISOString()).toBe("2026-11-21T02:30:00.000Z");
+  });
+  it("funciona em fuso com horário de verão", () => {
+    expect(localToUtc("2026-07-01", 9 * 60, "America/New_York").toISOString()).toBe("2026-07-01T13:00:00.000Z");
+    expect(localToUtc("2026-01-15", 9 * 60, "America/New_York").toISOString()).toBe("2026-01-15T14:00:00.000Z");
+  });
+});

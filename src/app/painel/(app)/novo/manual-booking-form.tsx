@@ -90,6 +90,10 @@ export function ManualBookingForm({ slug, initialDate, services, professionals }
         <label className="label" htmlFor="notes">Observações (opcional)</label>
         <textarea className="input" id="notes" name="notes" rows={2} />
       </div>
+      <label className="flex items-center gap-2 text-sm text-zinc-700">
+        <input type="checkbox" name="sendWhatsapp" defaultChecked className="h-4 w-4 accent-brand-600" />
+        Enviar confirmação pelo WhatsApp para o cliente
+      </label>
       <FormMessage error={state?.error} />
       <SubmitButton pendingText="Agendando...">Confirmar agendamento</SubmitButton>
     </form>
