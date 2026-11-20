@@ -15,10 +15,13 @@ export default function LoginPage() {
       <form action={action} className="mt-6 space-y-4">
         <div>
           <label className="label" htmlFor="email">E-mail</label>
-          <input className="input" id="email" name="email" type="email" required autoComplete="email" />
+          <input className="input" id="email" name="email" type="email" required autoComplete="email" defaultValue={state?.values?.email} />
         </div>
         <div>
-          <label className="label" htmlFor="password">Senha</label>
+          <div className="flex items-center justify-between">
+            <label className="label" htmlFor="password">Senha</label>
+            <Link href="/esqueci-senha" className="mb-1 text-xs font-medium text-brand-600">Esqueci minha senha</Link>
+          </div>
           <input className="input" id="password" name="password" type="password" required autoComplete="current-password" />
         </div>
         <FormMessage error={state?.error} />

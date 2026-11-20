@@ -15,20 +15,27 @@ export default function SignupPage() {
       <form action={action} className="mt-6 space-y-4">
         <div>
           <label className="label" htmlFor="name">Seu nome</label>
-          <input className="input" id="name" name="name" required autoComplete="name" />
+          <input className="input" id="name" name="name" required autoComplete="name" defaultValue={state?.values?.name} />
         </div>
         <div>
           <label className="label" htmlFor="businessName">Nome do estabelecimento</label>
-          <input className="input" id="businessName" name="businessName" required placeholder="Ex.: Barbearia do João" />
+          <input className="input" id="businessName" name="businessName" required placeholder="Ex.: Barbearia do João" defaultValue={state?.values?.businessName} />
         </div>
         <div>
           <label className="label" htmlFor="email">E-mail</label>
-          <input className="input" id="email" name="email" type="email" required autoComplete="email" />
+          <input className="input" id="email" name="email" type="email" required autoComplete="email" defaultValue={state?.values?.email} />
         </div>
         <div>
           <label className="label" htmlFor="password">Senha</label>
           <input className="input" id="password" name="password" type="password" required minLength={8} autoComplete="new-password" />
         </div>
+        <label className="flex items-start gap-2 text-sm text-zinc-600">
+          <input type="checkbox" name="acceptTerms" required defaultChecked={state?.values?.acceptTerms === "on"} className="mt-0.5 h-4 w-4 accent-brand-600" />
+          <span>
+            Li e aceito os <Link href="/termos" target="_blank" className="text-brand-600 underline">Termos de Uso</Link> e a{" "}
+            <Link href="/privacidade" target="_blank" className="text-brand-600 underline">Política de Privacidade</Link>.
+          </span>
+        </label>
         <FormMessage error={state?.error} />
         <SubmitButton className="btn-primary w-full" pendingText="Criando conta...">Criar conta</SubmitButton>
       </form>

@@ -171,16 +171,16 @@ export function BookingWizard({ slug, today, maxAdvanceDays, openWeekdays, servi
             <div className="grid gap-4 sm:grid-cols-2">
               <div>
                 <label className="label" htmlFor="clientName">Nome</label>
-                <input className="input" id="clientName" name="clientName" required autoComplete="name" />
+                <input className="input" id="clientName" name="clientName" required autoComplete="name" defaultValue={state?.values?.clientName} />
               </div>
               <div>
                 <label className="label" htmlFor="clientPhone">WhatsApp com DDD</label>
-                <input className="input" id="clientPhone" name="clientPhone" required inputMode="tel" autoComplete="tel" placeholder="(11) 99999-9999" />
+                <input className="input" id="clientPhone" name="clientPhone" required inputMode="tel" autoComplete="tel" placeholder="(11) 99999-9999" defaultValue={state?.values?.clientPhone} />
               </div>
             </div>
             <div>
               <label className="label" htmlFor="notes">Observação (opcional)</label>
-              <input className="input" id="notes" name="notes" maxLength={500} />
+              <input className="input" id="notes" name="notes" maxLength={500} defaultValue={state?.values?.notes} />
             </div>
             <div className="rounded-lg bg-zinc-50 p-4 text-sm">
               <p><strong>{service.name}</strong> · {formatDuration(service.durationMinutes)}</p>
@@ -190,6 +190,10 @@ export function BookingWizard({ slug, today, maxAdvanceDays, openWeekdays, servi
               </p>
               <p className="mt-1 font-semibold">{formatMoney(service.priceCents)}</p>
             </div>
+            <p className="text-xs text-zinc-500">
+              Seus dados serão usados para gerenciar o agendamento e enviar confirmação e lembretes pelo WhatsApp. Veja a{" "}
+              <a href="/privacidade" target="_blank" className="underline">Política de Privacidade</a>.
+            </p>
             <FormMessage error={state?.error} />
             <SubmitButton className="btn-primary w-full py-3 text-base" pendingText="Confirmando...">
               Confirmar agendamento

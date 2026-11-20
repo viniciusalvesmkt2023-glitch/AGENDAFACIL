@@ -6,18 +6,26 @@ import { z } from "zod";
 import { db } from "@/lib/db";
 import { createSession, destroySession } from "@/lib/auth";
 import { slugify } from "@/lib/format";
+import { RESERVED_SLUGS } from "@/lib/brand";
 import { TRIAL_DAYS } from "@/lib/plans";
 
-export type FormState = { error?: string | null } | undefined;
+export type FormState = { error?: string | null; values?: Record<string, string> } | undefined;
+
+/** Valores digitados (exceto senha), para não apagar o formulário quando houver erro. */
+function keep(formData: FormData): Record<string, string> {
+  const values: Record<string, string> = {};
+  for (const [k, v] of formData.entries()) if (typeof v === "string" && !k.startsWith("$") && k !== "password") values[k] = v;
+  return values;
+}
 
 // Rotas do sistema que não podem ser usadas como endereço de estabelecimento
-const RESERVED_SLUGS = new Set(["entrar", "cadastro", "painel", "api", "agendamento", "sair", "admin"]);
 
 const signupSchema = z.object({
   name: z.string().trim().min(2, "Informe seu nome."),
   businessName: z.string().trim().min(2, "Informe o nome do estabelecimento."),
   email: z.string().trim().toLowerCase().email("E-mail inválido."),
   password: z.string().min(8, "A senha precisa ter pelo menos 8 caracteres."),
+  acceptTerms: z.literal("on", { message: "É preciso aceitar os Termos de Uso e a Política de Privacidade." }),
 });
 
 async function uniqueSlug(base: string) {
@@ -33,11 +41,11 @@ async function uniqueSlug(base: string) {
 
 export async function signup(_: FormState, formData: FormData): Promise<FormState> {
   const parsed = signupSchema.safeParse(Object.fromEntries(formData));
-  if (!parsed.success) return { error: parsed.error.issues[0].message };
+  if (!parsed.success) return { error: parsed.error.issues[0].message, values: keep(formData) };
   const { name, businessName, email, password } = parsed.data;
 
   if (await db.user.findUnique({ where: { email } })) {
-    return { error: "Já existe uma conta com este e-mail." };
+    return { error: "Já existe uma conta com este e-mail.", values: keep(formData) };
   }
 
   const slug = await uniqueSlug(slugify(businessName));
@@ -64,7 +72,7 @@ export async function signup(_: FormState, formData: FormData): Promise<FormStat
     });
     // O dono já entra como primeiro profissional
     await tx.professional.create({ data: { businessId: business.id, name } });
-    return tx.user.create({ data: { name, email, passwordHash, businessId: business.id } });
+    return tx.user.create({ data: { name, email, passwordHash, businessId: business.id, termsAcceptedAt: new Date() } });
   });
 
   await createSession({ userId: user.id, businessId: user.businessId });
@@ -78,11 +86,11 @@ const loginSchema = z.object({
 
 export async function login(_: FormState, formData: FormData): Promise<FormState> {
   const parsed = loginSchema.safeParse(Object.fromEntries(formData));
-  if (!parsed.success) return { error: parsed.error.issues[0].message };
+  if (!parsed.success) return { error: parsed.error.issues[0].message, values: keep(formData) };
 
   const user = await db.user.findUnique({ where: { email: parsed.data.email } });
   if (!user || !(await bcrypt.compare(parsed.data.password, user.passwordHash))) {
-    return { error: "E-mail ou senha incorretos." };
+    return { error: "E-mail ou senha incorretos.", values: keep(formData) };
   }
 
   await createSession({ userId: user.id, businessId: user.businessId });

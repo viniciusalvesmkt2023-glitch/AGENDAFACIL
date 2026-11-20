@@ -8,7 +8,7 @@ import { db } from "@/lib/db";
 import { BookingError, createAppointment } from "@/lib/booking";
 import { hasAccess } from "@/lib/subscription";
 
-export type BookingState = { error?: string | null } | undefined;
+export type BookingState = { error?: string | null; values?: { clientName?: string; clientPhone?: string; notes?: string } } | undefined;
 
 const schema = z.object({
   slug: z.string().min(1),
@@ -22,13 +22,19 @@ const schema = z.object({
 });
 
 export async function bookOnline(_: BookingState, formData: FormData): Promise<BookingState> {
+  const values = {
+    clientName: String(formData.get("clientName") ?? ""),
+    clientPhone: String(formData.get("clientPhone") ?? ""),
+    notes: String(formData.get("notes") ?? ""),
+  };
+  const fail = (error: string): BookingState => ({ error, values });
   const parsed = schema.safeParse(Object.fromEntries(formData));
-  if (!parsed.success) return { error: parsed.error.issues[0].message };
+  if (!parsed.success) return fail(parsed.error.issues[0].message);
   const d = parsed.data;
 
   const business = await db.business.findUnique({ where: { slug: d.slug } });
-  if (!business) return { error: "Estabelecimento não encontrado." };
-  if (!hasAccess(business)) return { error: "O agendamento online está indisponível no momento." };
+  if (!business) return fail("Estabelecimento não encontrado.");
+  if (!hasAccess(business)) return fail("O agendamento online está indisponível no momento.");
 
   let token: string;
   try {
@@ -47,7 +53,7 @@ export async function bookOnline(_: BookingState, formData: FormData): Promise<B
     // Confirmação no WhatsApp enviada em segundo plano, sem atrasar a resposta ao cliente
     after(() => sendAppointmentMessage(appointment.id, "CONFIRMATION"));
   } catch (e) {
-    if (e instanceof BookingError) return { error: e.message };
+    if (e instanceof BookingError) return fail(e.message);
     throw e;
   }
   redirect(`/agendamento/${token}?novo=1`);

@@ -79,16 +79,16 @@ export function ManualBookingForm({ slug, initialDate, services, professionals }
         </div>
         <div>
           <label className="label" htmlFor="clientName">Nome do cliente</label>
-          <input className="input" id="clientName" name="clientName" required />
+          <input className="input" id="clientName" name="clientName" required defaultValue={state?.values?.clientName} />
         </div>
         <div>
           <label className="label" htmlFor="clientPhone">Telefone / WhatsApp</label>
-          <input className="input" id="clientPhone" name="clientPhone" required placeholder="(11) 99999-9999" inputMode="tel" />
+          <input className="input" id="clientPhone" name="clientPhone" required placeholder="(11) 99999-9999" inputMode="tel" defaultValue={state?.values?.clientPhone} />
         </div>
       </div>
       <div>
         <label className="label" htmlFor="notes">Observações (opcional)</label>
-        <textarea className="input" id="notes" name="notes" rows={2} />
+        <textarea className="input" id="notes" name="notes" rows={2} defaultValue={state?.values?.notes} />
       </div>
       <label className="flex items-center gap-2 text-sm text-zinc-700">
         <input type="checkbox" name="sendWhatsapp" defaultChecked className="h-4 w-4 accent-brand-600" />

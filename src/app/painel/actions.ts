@@ -9,11 +9,11 @@ import { db } from "@/lib/db";
 import { requireActiveUser } from "@/lib/auth";
 import { BookingError, createAppointment } from "@/lib/booking";
 import { parseMoneyToCents, slugify } from "@/lib/format";
+import { RESERVED_SLUGS } from "@/lib/brand";
 import { timeToMinutes } from "@/lib/time";
 
-export type ActionState = { error?: string | null; success?: string | null } | undefined;
+export type ActionState = { error?: string | null; success?: string | null; values?: Record<string, string> } | undefined;
 
-const RESERVED_SLUGS = new Set(["entrar", "cadastro", "painel", "api", "agendamento", "sair", "admin"]);
 const STATUSES = ["SCHEDULED", "CONFIRMED", "COMPLETED", "CANCELED", "NO_SHOW"] as const;
 
 // ---------- Agendamentos ----------
@@ -56,8 +56,9 @@ export async function createManualAppointment(_: ActionState, formData: FormData
     clientPhone: z.string().trim().min(8, "Informe o telefone do cliente."),
     notes: z.string().trim().optional(),
   });
+  const values = Object.fromEntries([...formData.entries()].filter(([k, v]) => typeof v === "string" && !k.startsWith("$"))) as Record<string, string>;
   const parsed = schema.safeParse(Object.fromEntries(formData));
-  if (!parsed.success) return { error: parsed.error.issues[0].message };
+  if (!parsed.success) return { error: parsed.error.issues[0].message, values };
   const d = parsed.data;
 
   try {
@@ -76,7 +77,7 @@ export async function createManualAppointment(_: ActionState, formData: FormData
       after(() => sendAppointmentMessage(appointment.id, "CONFIRMATION"));
     }
   } catch (e) {
-    if (e instanceof BookingError) return { error: e.message };
+    if (e instanceof BookingError) return { error: e.message, values };
     throw e;
   }
   revalidatePath("/painel");

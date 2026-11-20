@@ -76,7 +76,9 @@ export default function Home() {
       </section>
 
       <footer className="py-8 text-center text-sm text-zinc-500">
-        © {new Date().getFullYear()} AgendaFácil
+        © {new Date().getFullYear()} AgendaFácil ·{" "}
+        <Link href="/termos" className="hover:underline">Termos de Uso</Link> ·{" "}
+        <Link href="/privacidade" className="hover:underline">Privacidade</Link>
       </footer>
     </div>
   );
