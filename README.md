@@ -84,7 +84,7 @@ Datas são guardadas como `YYYY-MM-DD` e horários como minutos desde 00:00, no 
 
 1. Importe o repositório na [Vercel](https://vercel.com).
 2. Em **Environment Variables**, cadastre `DATABASE_URL`, `DIRECT_URL`, `AUTH_SECRET` e `APP_TIMEZONE` (os mesmos valores do `.env`).
-3. Faça o deploy. As tabelas já existem no Supabase se você rodou `npm run db:migrate`.
+3. Faça o deploy. O build roda `prisma migrate deploy`, que cria/atualiza as tabelas no Supabase automaticamente.
 
 ## Próximos passos (roadmap)
 
