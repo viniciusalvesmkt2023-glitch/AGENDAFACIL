@@ -31,6 +31,11 @@ export async function startCardCheckout(_: BillingState, formData: FormData): Pr
   }
 
   let customerId = business.stripeCustomerId;
+  // O cliente pode não existir mais (ex.: criado no modo de teste e agora estamos no modo real)
+  if (customerId) {
+    const existing = await stripe.customers.retrieve(customerId).catch(() => null);
+    if (!existing || existing.deleted) customerId = null;
+  }
   if (!customerId) {
     const customer = await stripe.customers.create({
       name: business.name,
@@ -81,11 +86,13 @@ export async function openCardPortal() {
   const user = await requireUser();
   const stripe = getStripe();
   if (!stripe || !user.business.stripeCustomerId) redirect("/painel/assinatura");
-  const portal = await stripe.billingPortal.sessions.create({
-    customer: user.business.stripeCustomerId,
-    return_url: `${appUrl()}/painel/assinatura`,
-  });
-  redirect(portal.url);
+  const portal = await stripe.billingPortal.sessions
+    .create({ customer: user.business.stripeCustomerId, return_url: `${appUrl()}/painel/assinatura` })
+    .catch((e) => {
+      console.error("[stripe] erro ao abrir o portal", e);
+      return null;
+    });
+  redirect(portal?.url ?? "/painel/assinatura?erro=portal");
 }
 
 // ---------- Pix ----------

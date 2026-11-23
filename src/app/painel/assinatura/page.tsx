@@ -9,7 +9,7 @@ import { PageHeader } from "@/components/ui";
 import { PlanPicker } from "./plan-picker";
 import { openCardPortal } from "./actions";
 
-type Props = { searchParams: Promise<{ sucesso?: string }> };
+type Props = { searchParams: Promise<{ sucesso?: string; erro?: string }> };
 
 const dateFmt = new Intl.DateTimeFormat("pt-BR", { day: "2-digit", month: "2-digit", year: "numeric", timeZone: "America/Sao_Paulo" });
 
@@ -23,7 +23,7 @@ const PAYMENT_STATUS: Record<string, string> = {
 
 export default async function SubscriptionPage({ searchParams }: Props) {
   const user = await requireUser();
-  const { sucesso } = await searchParams;
+  const { sucesso, erro } = await searchParams;
   const b = user.business;
   const state = getAccessState(b);
   const payments = await db.payment.findMany({
@@ -41,6 +41,12 @@ export default async function SubscriptionPage({ searchParams }: Props) {
       {sucesso && (
         <div className="mb-6 rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-800">
           Pagamento recebido! Sua assinatura será ativada em instantes. Se o status ainda não mudou, recarregue a página.
+        </div>
+      )}
+
+      {erro === "portal" && (
+        <div className="mb-6 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-800">
+          Não foi possível abrir o gerenciamento do cartão agora. Tente novamente em alguns minutos ou fale com o suporte.
         </div>
       )}
 
