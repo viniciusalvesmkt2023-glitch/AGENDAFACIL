@@ -36,7 +36,10 @@ export async function POST(req: NextRequest) {
       break;
     case "invoice.paid": {
       const invoice = event.data.object;
-      const subRef = invoice.parent?.subscription_details?.subscription;
+      // Formato novo: invoice.parent.subscription_details; formato antigo: invoice.subscription
+      const subRef =
+        invoice.parent?.subscription_details?.subscription ??
+        (invoice as unknown as { subscription?: string | Stripe.Subscription | null }).subscription;
       const sub = subRef ? (typeof subRef === "string" ? await stripe.subscriptions.retrieve(subRef) : subRef) : null;
       if (sub) await syncStripeSubscription(sub);
       await recordStripeInvoice(invoice, sub);

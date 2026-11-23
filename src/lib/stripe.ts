@@ -26,6 +26,9 @@ const STATUS_MAP: Record<string, string> = {
 /** Data de fim do período atual (nas versões novas da API ela fica nos itens da assinatura). */
 function periodEnd(sub: Stripe.Subscription): Date | null {
   const ends = sub.items.data.map((i) => i.current_period_end).filter((n): n is number => typeof n === "number");
+  // Formato antigo da API (antes de 2025-03): a data ficava na própria assinatura
+  const legacy = (sub as unknown as { current_period_end?: number }).current_period_end;
+  if (typeof legacy === "number") ends.push(legacy);
   const end = Math.max(...ends, sub.trial_end ?? 0);
   return end > 0 ? new Date(end * 1000) : null;
 }
