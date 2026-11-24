@@ -114,8 +114,9 @@ Usa a [Evolution API](https://doc.evolution-api.com) (código aberto), instalada
    (já inclui banco e Redis). Na Vercel não funciona, pois o WhatsApp precisa de um servidor ligado o tempo todo.
 2. Copie o endereço público do servidor para `EVOLUTION_API_URL` e a chave global (`AUTHENTICATION_API_KEY`
    do servidor) para `EVOLUTION_API_KEY`.
-3. Agende uma chamada a cada **15 minutos** para `GET https://SEU-DOMINIO/api/cron/lembretes` com o cabeçalho
-   `Authorization: Bearer <CRON_SECRET>`: com *Vercel Cron* (plano Pro) ou https://cron-job.org (grátis).
+3. Os lembretes rodam a cada **15 minutos** pelo *Vercel Cron* (configurado em `vercel.json`, plano Pro), que envia
+   `Authorization: Bearer <CRON_SECRET>` automaticamente. Alternativa: um agendador externo (ex.: cron-job.org) chamando
+   `GET https://SEU-DOMINIO/api/cron/lembretes?key=<CRON_SECRET>`. Rodar os dois ao mesmo tempo não duplica mensagens.
 
 > ⚠️ A Evolution API não é oficial do WhatsApp: números podem ser bloqueados se usados para spam. O sistema só envia
 > mensagens transacionais a quem agendou, o que reduz bastante o risco. Os Termos de Uso avisam o estabelecimento.
