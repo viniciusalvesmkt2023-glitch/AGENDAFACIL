@@ -9,7 +9,7 @@ import { evolutionConfigured } from "@/lib/evolution";
 
 // Envia os lembretes de WhatsApp que estão no horário.
 // Deve ser chamada a cada 15 minutos por um agendador (Vercel Cron ou cron-job.org),
-// com o cabeçalho  Authorization: Bearer <CRON_SECRET>
+// com o cabeçalho  Authorization: Bearer <CRON_SECRET>  ou com  ?key=<CRON_SECRET>  no endereço
 export const maxDuration = 60;
 
 /** Confere a chave ignorando espaços sobrando e maiúsculas/minúsculas em "Bearer". */
@@ -23,7 +23,8 @@ function isAuthorized(header: string | null): boolean {
 }
 
 export async function GET(req: NextRequest) {
-  if (!isAuthorized(req.headers.get("authorization"))) {
+  // Chave no cabeçalho "Authorization: Bearer ..." (Vercel Cron) ou no endereço "?key=..." (cron-job.org)
+  if (!isAuthorized(req.headers.get("authorization") ?? req.nextUrl.searchParams.get("key"))) {
     return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
   }
   if (!evolutionConfigured()) return NextResponse.json({ skipped: "WhatsApp não configurado" });
