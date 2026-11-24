@@ -1,13 +1,13 @@
 import { timingSafeEqual } from "node:crypto";
 import { NextResponse, type NextRequest } from "next/server";
 import { db } from "@/lib/db";
-import { dueReminder } from "@/lib/reminders";
+import { dueReminder, reminderSchedule, type ReminderType } from "@/lib/reminders";
 import { sendAppointmentMessage } from "@/lib/notifications";
 import { hasAccess } from "@/lib/subscription";
-import { addDays, localToUtc, todayInTimezone } from "@/lib/time";
+import { addDays, todayInTimezone } from "@/lib/time";
 import { evolutionConfigured } from "@/lib/evolution";
 
-// Envia os lembretes de WhatsApp que estão no horário.
+// Envia os lembretes de WhatsApp que estão no horário, conforme a configuração de cada estabelecimento.
 // Deve ser chamada a cada 15 minutos por um agendador (Vercel Cron ou cron-job.org),
 // com o cabeçalho  Authorization: Bearer <CRON_SECRET>  ou com  ?key=<CRON_SECRET>  no endereço
 export const maxDuration = 60;
@@ -33,9 +33,10 @@ export async function GET(req: NextRequest) {
   const today = todayInTimezone();
   const candidates = await db.appointment.findMany({
     where: {
+      // lembretes saem no máximo ~2 dias antes (véspera em horário fixo)
       date: { in: [today, addDays(today, 1), addDays(today, 2)] },
       status: { in: ["SCHEDULED", "CONFIRMED"] },
-      reminder1hSentAt: null,
+      reminderShortSentAt: null,
       business: { whatsappRemindersEnabled: true, whatsappStatus: "CONNECTED" },
     },
     select: {
@@ -43,17 +44,33 @@ export async function GET(req: NextRequest) {
       date: true,
       startMinutes: true,
       createdAt: true,
-      reminder24hSentAt: true,
-      reminder1hSentAt: true,
-      business: { select: { subscriptionStatus: true, trialEndsAt: true, currentPeriodEnd: true } },
+      reminderDaySentAt: true,
+      reminderShortSentAt: true,
+      business: {
+        select: {
+          subscriptionStatus: true,
+          trialEndsAt: true,
+          currentPeriodEnd: true,
+          reminderDayMode: true,
+          reminderDayTime: true,
+          reminderShortMinutes: true,
+        },
+      },
     },
-    take: 2000,
+    take: 5000,
   });
 
   const due = candidates
     .filter((a) => hasAccess(a.business, now))
-    .map((a) => ({ id: a.id, type: dueReminder({ ...a, start: localToUtc(a.date, a.startMinutes) }, now) }))
-    .filter((a): a is { id: string; type: "REMINDER_24H" | "REMINDER_1H" } => a.type !== null);
+    .map((a) => {
+      const sched = reminderSchedule(a, {
+        dayMode: a.business.reminderDayMode,
+        dayTime: a.business.reminderDayTime,
+        shortMinutes: a.business.reminderShortMinutes,
+      });
+      return { id: a.id, type: dueReminder(a, sched, now) };
+    })
+    .filter((a): a is { id: string; type: ReminderType } => a.type !== null);
 
   const results = { SENT: 0, FAILED: 0, SKIPPED: 0 };
   // Lotes de 10 em paralelo, com uma pequena pausa entre lotes para não parecer disparo em massa

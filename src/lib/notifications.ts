@@ -11,8 +11,8 @@ type MessageType = "CONFIRMATION" | ReminderType;
 
 const SENT_FIELD = {
   CONFIRMATION: "confirmationSentAt",
-  REMINDER_24H: "reminder24hSentAt",
-  REMINDER_1H: "reminder1hSentAt",
+  REMINDER_DAY: "reminderDaySentAt",
+  REMINDER_SHORT: "reminderShortSentAt",
 } as const;
 
 /**
@@ -29,7 +29,13 @@ export async function sendAppointmentMessage(appointmentId: string, type: Messag
       id: appointmentId,
       [field]: null,
       status: { in: ["SCHEDULED", "CONFIRMED"] },
-      business: { whatsappRemindersEnabled: true, whatsappStatus: "CONNECTED", whatsappInstance: { not: null } },
+      business: {
+        whatsappRemindersEnabled: true,
+        whatsappStatus: "CONNECTED",
+        whatsappInstance: { not: null },
+        // A confirmação também pode ser desligada pelo estabelecimento
+        ...(type === "CONFIRMATION" ? { confirmationEnabled: true } : {}),
+      },
     },
     data: { [field]: new Date() },
   });

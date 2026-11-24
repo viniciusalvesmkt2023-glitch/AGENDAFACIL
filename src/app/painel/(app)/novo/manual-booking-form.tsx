@@ -8,12 +8,13 @@ import { useSlots } from "@/components/use-slots";
 
 type Props = {
   slug: string;
+  canSendWhatsapp: boolean;
   initialDate: string;
   services: { id: string; name: string; label: string }[];
   professionals: { id: string; name: string; serviceIds: string[] }[];
 };
 
-export function ManualBookingForm({ slug, initialDate, services, professionals }: Props) {
+export function ManualBookingForm({ slug, canSendWhatsapp, initialDate, services, professionals }: Props) {
   const [state, action] = useActionState(createManualAppointment, undefined);
   const [serviceId, setServiceId] = useState("");
   const [professionalId, setProfessionalId] = useState("");
@@ -90,10 +91,12 @@ export function ManualBookingForm({ slug, initialDate, services, professionals }
         <label className="label" htmlFor="notes">Observações (opcional)</label>
         <textarea className="input" id="notes" name="notes" rows={2} defaultValue={state?.values?.notes} />
       </div>
-      <label className="flex items-center gap-2 text-sm text-zinc-700">
-        <input type="checkbox" name="sendWhatsapp" defaultChecked className="h-4 w-4 accent-brand-600" />
-        Enviar confirmação pelo WhatsApp para o cliente
-      </label>
+      {canSendWhatsapp && (
+        <label className="flex items-center gap-2 text-sm text-zinc-700">
+          <input type="checkbox" name="sendWhatsapp" defaultChecked className="h-4 w-4 accent-brand-600" />
+          Enviar confirmação pelo WhatsApp para o cliente
+        </label>
+      )}
       <FormMessage error={state?.error} />
       <SubmitButton pendingText="Agendando...">Confirmar agendamento</SubmitButton>
     </form>

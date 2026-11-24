@@ -47,6 +47,12 @@ model Business {
   whatsappStatus           String    @default("DISCONNECTED")
   whatsappNumber           String?
   whatsappConnectedAt      DateTime?
+  // Quando enviar (configurável por estabelecimento)
+  confirmationEnabled      Boolean   @default(true)
+  // OFF | 24H (24 horas antes) | EVENING (na véspera, no horário reminderDayTime)
+  reminderDayMode          String    @default("24H")
+  reminderDayTime          Int       @default(1080) // minutos desde 00:00 (1080 = 18:00)
+  reminderShortMinutes     Int       @default(60) // 0 = desligado
   // Textos personalizados (null = usar o texto padrão)
   msgConfirmation          String?
   msgReminder              String?
@@ -115,7 +121,7 @@ model MessageLog {
   appointmentId     String?
   appointment       Appointment? @relation(fields: [appointmentId], references: [id], onDelete: SetNull)
   channel           String       @default("WHATSAPP")
-  // CONFIRMATION | REMINDER_24H | REMINDER_1H
+  // CONFIRMATION | REMINDER_DAY | REMINDER_SHORT
   type              String
   to                String
   // SENT | FAILED | SKIPPED
@@ -220,8 +226,8 @@ model Appointment {
   createdAt      DateTime     @default(now())
 
   confirmationSentAt DateTime?
-  reminder24hSentAt  DateTime?
-  reminder1hSentAt   DateTime?
+  reminderDaySentAt   DateTime? // lembrete antecipado (24h antes ou véspera)
+  reminderShortSentAt DateTime? // lembrete próximo do horário
   messageLogs        MessageLog[]
 
   @@index([businessId, date])

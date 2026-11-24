@@ -7,7 +7,7 @@ import { ConnectPanel } from "./connect-panel";
 import { MessagesForm, TestMessageForm } from "./messages-form";
 import { disconnectWhatsapp } from "./actions";
 
-const TYPES: Record<string, string> = { CONFIRMATION: "Confirmação", REMINDER_24H: "Lembrete 24h", REMINDER_1H: "Lembrete 1h" };
+const TYPES: Record<string, string> = { CONFIRMATION: "Confirmação", REMINDER_DAY: "Lembrete antecipado", REMINDER_SHORT: "Lembrete" };
 
 export default async function WhatsappPage() {
   const user = await requireActiveUser();
@@ -53,7 +53,16 @@ export default async function WhatsappPage() {
 
       <section className="card mb-6 p-5">
         <h2 className="mb-4 font-semibold">Mensagens automáticas</h2>
-        <MessagesForm enabled={b.whatsappRemindersEnabled} confirmation={b.msgConfirmation} reminder={b.msgReminder} businessName={b.name} />
+        <MessagesForm
+          enabled={b.whatsappRemindersEnabled}
+          confirmationEnabled={b.confirmationEnabled}
+          dayMode={b.reminderDayMode}
+          dayTime={b.reminderDayTime}
+          shortMinutes={b.reminderShortMinutes}
+          confirmation={b.msgConfirmation}
+          reminder={b.msgReminder}
+          businessName={b.name}
+        />
       </section>
 
       <section className="card p-5">

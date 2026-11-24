@@ -1,39 +1,66 @@
 // Regras de quando enviar cada lembrete (funções puras, testadas).
-//
-// - Confirmação: na hora do agendamento (não passa por aqui).
-// - Lembrete 24h: ~24h antes, só se o cliente agendou com mais de 26h de antecedência
-//   (quem agenda para o mesmo dia ou para o dia seguinte em cima da hora já recebeu a confirmação).
-// - Lembrete 1h: ~1h antes, só se o cliente agendou com mais de 2h de antecedência.
-// O cron roda a cada 15 minutos, então cada lembrete sai entre 0 e 15 minutos depois do momento exato.
+// Cada estabelecimento configura:
+//  - lembrete antecipado: desligado, 24h antes, ou na véspera em um horário fixo (ex.: 18:00)
+//  - lembrete curto: desligado ou X minutos antes (30, 60, 120...)
+// O cron roda a cada 15 minutos, então cada lembrete sai entre 0 e 15 minutos após o momento programado.
 
-const HOUR = 3_600_000;
+import { addDays, localToUtc, TIMEZONE } from "./time";
 
-export type ReminderType = "REMINDER_24H" | "REMINDER_1H";
+const MIN = 60_000;
+const HOUR = 60 * MIN;
 
-export const SHORT_REMINDER_HOURS = 1;
-const SHORT_REMINDER_MIN_ADVANCE_HOURS = 2;
-const DAY_REMINDER_MIN_ADVANCE_HOURS = 26;
+export type ReminderType = "REMINDER_DAY" | "REMINDER_SHORT";
+export type DayMode = "OFF" | "24H" | "EVENING";
+
+export type ReminderConfig = { dayMode: string; dayTime: number; shortMinutes: number };
+
+export const SHORT_OPTIONS = [0, 30, 60, 120, 180, 240] as const;
+export const DAY_MODES: DayMode[] = ["OFF", "24H", "EVENING"];
+
+/** Antecedência mínima entre o agendamento e o lembrete (senão ele repetiria a confirmação). */
+const DAY_MIN_GAP = 2 * HOUR;
+const SHORT_MIN_GAP = 1 * HOUR;
+/** Se o lembrete antecipado atrasar mais que isso (ex.: configuração mudada tarde da noite), é descartado
+ *  para não mandar mensagem de madrugada — o lembrete curto ainda cobre o cliente. */
+const DAY_MAX_DELAY = 3 * HOUR;
+
+/** Momentos programados para os lembretes de um agendamento. */
+export function reminderSchedule(
+  appt: { date: string; startMinutes: number },
+  cfg: ReminderConfig,
+  tz: string = TIMEZONE,
+): { start: Date; dayAt: Date | null; shortAt: Date | null } {
+  const start = localToUtc(appt.date, appt.startMinutes, tz);
+  const shortAt = cfg.shortMinutes > 0 ? new Date(start.getTime() - cfg.shortMinutes * MIN) : null;
+  let dayAt: Date | null = null;
+  if (cfg.dayMode === "24H") dayAt = new Date(start.getTime() - 24 * HOUR);
+  else if (cfg.dayMode === "EVENING") dayAt = localToUtc(addDays(appt.date, -1), cfg.dayTime, tz);
+  // O antecipado precisa vir antes do curto
+  if (dayAt && shortAt && dayAt >= shortAt) dayAt = null;
+  return { start, dayAt, shortAt };
+}
 
 export function dueReminder(
-  a: { start: Date; createdAt: Date; reminder24hSentAt: Date | null; reminder1hSentAt: Date | null },
+  a: { createdAt: Date; reminderDaySentAt: Date | null; reminderShortSentAt: Date | null },
+  sched: { start: Date; dayAt: Date | null; shortAt: Date | null },
   now: Date,
 ): ReminderType | null {
-  const untilStart = a.start.getTime() - now.getTime();
-  if (untilStart <= 0) return null;
-  const bookedAhead = a.start.getTime() - a.createdAt.getTime();
+  const t = now.getTime();
+  if (t >= sched.start.getTime()) return null;
+  const created = a.createdAt.getTime();
 
-  // Lembrete de 1h
-  if (!a.reminder1hSentAt && untilStart <= SHORT_REMINDER_HOURS * HOUR) {
-    return bookedAhead > SHORT_REMINDER_MIN_ADVANCE_HOURS * HOUR ? "REMINDER_1H" : null;
+  if (sched.shortAt && !a.reminderShortSentAt && t >= sched.shortAt.getTime()) {
+    return created < sched.shortAt.getTime() - SHORT_MIN_GAP ? "REMINDER_SHORT" : null;
   }
-  // Lembrete de 24h
   if (
-    !a.reminder24hSentAt &&
-    !a.reminder1hSentAt &&
-    untilStart <= 24 * HOUR &&
-    bookedAhead > DAY_REMINDER_MIN_ADVANCE_HOURS * HOUR
+    sched.dayAt &&
+    !a.reminderDaySentAt &&
+    !a.reminderShortSentAt &&
+    t >= sched.dayAt.getTime() &&
+    t <= sched.dayAt.getTime() + DAY_MAX_DELAY &&
+    created < sched.dayAt.getTime() - DAY_MIN_GAP
   ) {
-    return "REMINDER_24H";
+    return "REMINDER_DAY";
   }
   return null;
 }
@@ -43,4 +70,12 @@ export function whenText(date: string, time: string, today: string, tomorrow: st
   if (date === today) return `hoje às ${time}`;
   if (date === tomorrow) return `amanhã às ${time}`;
   return `${longDate} às ${time}`;
+}
+
+/** Texto curto para o painel: "1 hora antes", "30 minutos antes"... */
+export function shortLabel(minutes: number): string {
+  if (minutes <= 0) return "Desligado";
+  if (minutes < 60) return `${minutes} minutos antes`;
+  const h = minutes / 60;
+  return `${h} hora${h > 1 ? "s" : ""} antes`;
 }

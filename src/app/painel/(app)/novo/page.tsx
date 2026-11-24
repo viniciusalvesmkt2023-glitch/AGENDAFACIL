@@ -33,6 +33,11 @@ export default async function NewAppointmentPage({ searchParams }: Props) {
       ) : (
         <ManualBookingForm
           slug={user.business.slug}
+          canSendWhatsapp={
+            user.business.whatsappStatus === "CONNECTED" &&
+            user.business.whatsappRemindersEnabled &&
+            user.business.confirmationEnabled
+          }
           initialDate={data && isValidDate(data) ? data : todayInTimezone()}
           services={services.map((s) => ({
             id: s.id,

@@ -6,6 +6,8 @@ import { requireActiveUser } from "@/lib/auth";
 import { createInstance, deleteInstance, evolutionConfigured, logoutInstance, sendText } from "@/lib/evolution";
 import { DEFAULT_CONFIRMATION, DEFAULT_REMINDER, MAX_MESSAGE_LENGTH, renderMessage } from "@/lib/messages";
 import { appUrl } from "@/lib/brand";
+import { DAY_MODES, SHORT_OPTIONS, type DayMode } from "@/lib/reminders";
+import { timeToMinutes } from "@/lib/time";
 
 export type WhatsappState = { error?: string | null; success?: string | null } | undefined;
 
@@ -54,10 +56,23 @@ export async function saveWhatsappSettings(_: WhatsappState, formData: FormData)
   if (confirmation.length > MAX_MESSAGE_LENGTH || reminder.length > MAX_MESSAGE_LENGTH) {
     return { error: `Cada mensagem pode ter no máximo ${MAX_MESSAGE_LENGTH} caracteres.` };
   }
+  const dayMode = String(formData.get("reminderDayMode") ?? "24H") as DayMode;
+  const shortMinutes = Number(formData.get("reminderShortMinutes"));
+  const dayTime = timeToMinutes(String(formData.get("reminderDayTime") ?? "18:00"));
+  if (!DAY_MODES.includes(dayMode)) return { error: "Opção de lembrete antecipado inválida." };
+  if (!(SHORT_OPTIONS as readonly number[]).includes(shortMinutes)) return { error: "Opção de lembrete inválida." };
+  if (dayMode === "EVENING" && !(Number.isFinite(dayTime) && dayTime >= 6 * 60 && dayTime <= 22 * 60)) {
+    return { error: "Escolha um horário entre 06:00 e 22:00 para o lembrete da véspera." };
+  }
+
   await db.business.update({
     where: { id: user.businessId },
     data: {
       whatsappRemindersEnabled: formData.get("whatsappRemindersEnabled") === "on",
+      confirmationEnabled: formData.get("confirmationEnabled") === "on",
+      reminderDayMode: dayMode,
+      ...(dayMode === "EVENING" ? { reminderDayTime: dayTime } : {}),
+      reminderShortMinutes: shortMinutes,
       // Vazio ou igual ao padrão = usa o texto padrão (e recebe melhorias futuras)
       msgConfirmation: confirmation && confirmation !== DEFAULT_CONFIRMATION ? confirmation : null,
       msgReminder: reminder && reminder !== DEFAULT_REMINDER ? reminder : null,
