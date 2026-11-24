@@ -40,8 +40,16 @@ model Business {
   stripeSubscriptionId String?   @unique
   taxId                String? // CPF/CNPJ (necessário para Pix)
 
-  // ----- WhatsApp -----
-  whatsappRemindersEnabled Boolean @default(true)
+  // ----- WhatsApp (Evolution API: o salão conecta o próprio número por QR code) -----
+  whatsappRemindersEnabled Boolean   @default(true)
+  whatsappInstance         String?   @unique // nome da instância na Evolution API
+  // DISCONNECTED | CONNECTING | CONNECTED
+  whatsappStatus           String    @default("DISCONNECTED")
+  whatsappNumber           String?
+  whatsappConnectedAt      DateTime?
+  // Textos personalizados (null = usar o texto padrão)
+  msgConfirmation          String?
+  msgReminder              String?
 
   users         User[]
   services      Service[]

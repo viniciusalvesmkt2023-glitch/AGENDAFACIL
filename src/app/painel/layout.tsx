@@ -5,6 +5,7 @@ import { DashboardNav } from "@/components/dashboard-nav";
 import { CopyButton } from "@/components/copy-button";
 import { logout } from "../(auth)/actions";
 import { getAccessState } from "@/lib/subscription";
+import { evolutionConfigured } from "@/lib/evolution";
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
   const user = await requireUser();
@@ -56,6 +57,14 @@ export default async function DashboardLayout({ children }: { children: React.Re
                 Sua assinatura venceu. O acesso será bloqueado em <strong>{access.daysLeft} dia(s)</strong>.
               </span>
               <Link href="/painel/assinatura" className="btn-primary px-3 py-1.5 text-xs">Regularizar</Link>
+            </div>
+          )}
+          {evolutionConfigured() && user.business.whatsappConnectedAt && user.business.whatsappStatus !== "CONNECTED" && (
+            <div className="mb-6 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
+              <span>
+                <strong>Seu WhatsApp desconectou.</strong> Os lembretes automáticos estão parados.
+              </span>
+              <Link href="/painel/whatsapp" className="btn-primary px-3 py-1.5 text-xs">Reconectar</Link>
             </div>
           )}
           {children}

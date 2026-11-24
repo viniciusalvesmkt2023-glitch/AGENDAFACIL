@@ -4,7 +4,7 @@ import { dueReminder } from "@/lib/reminders";
 import { sendAppointmentMessage } from "@/lib/notifications";
 import { hasAccess } from "@/lib/subscription";
 import { addDays, localToUtc, todayInTimezone } from "@/lib/time";
-import { whatsappConfigured } from "@/lib/whatsapp";
+import { evolutionConfigured } from "@/lib/evolution";
 
 // Envia os lembretes de WhatsApp que estão no horário.
 // Deve ser chamada a cada 15 minutos por um agendador (Vercel Cron ou cron-job.org),
@@ -16,7 +16,7 @@ export async function GET(req: NextRequest) {
   if (!secret || req.headers.get("authorization") !== `Bearer ${secret}`) {
     return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
   }
-  if (!whatsappConfigured()) return NextResponse.json({ skipped: "WhatsApp não configurado" });
+  if (!evolutionConfigured()) return NextResponse.json({ skipped: "WhatsApp não configurado" });
 
   const now = new Date();
   const today = todayInTimezone();
@@ -25,7 +25,7 @@ export async function GET(req: NextRequest) {
       date: { in: [today, addDays(today, 1), addDays(today, 2)] },
       status: { in: ["SCHEDULED", "CONFIRMED"] },
       reminder2hSentAt: null,
-      business: { whatsappRemindersEnabled: true },
+      business: { whatsappRemindersEnabled: true, whatsappStatus: "CONNECTED" },
     },
     select: {
       id: true,
@@ -45,10 +45,11 @@ export async function GET(req: NextRequest) {
     .filter((a): a is { id: string; type: "REMINDER_24H" | "REMINDER_2H" } => a.type !== null);
 
   const results = { SENT: 0, FAILED: 0, SKIPPED: 0 };
-  // Envia em lotes de 10 para não sobrecarregar a API
+  // Lotes de 10 em paralelo, com uma pequena pausa entre lotes para não parecer disparo em massa
   for (let i = 0; i < due.length; i += 10) {
     const batch = await Promise.all(due.slice(i, i + 10).map((a) => sendAppointmentMessage(a.id, a.type)));
     for (const r of batch) results[r]++;
+    if (i + 10 < due.length) await new Promise((r) => setTimeout(r, 1500));
   }
   return NextResponse.json({ checked: candidates.length, due: due.length, ...results });
 }

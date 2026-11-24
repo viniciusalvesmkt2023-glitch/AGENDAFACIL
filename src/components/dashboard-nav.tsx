@@ -10,6 +10,7 @@ const links = [
   { href: "/painel/servicos", label: "Serviços" },
   { href: "/painel/profissionais", label: "Profissionais" },
   { href: "/painel/horarios", label: "Horários" },
+  { href: "/painel/whatsapp", label: "WhatsApp" },
   { href: "/painel/configuracoes", label: "Configurações" },
   { href: "/painel/assinatura", label: "Assinatura" },
 ];

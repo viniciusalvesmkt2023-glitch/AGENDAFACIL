@@ -42,7 +42,7 @@ export default function PrivacyPage() {
       <h2>5. Compartilhamento</h2>
       <p>
         Compartilhamos dados apenas com fornecedores necessários ao serviço: hospedagem (Vercel), banco de dados (Supabase),
-        envio de mensagens (Meta/WhatsApp), envio de e-mails (Resend) e pagamentos (Stripe e provedor Pix). Não vendemos dados pessoais.
+        envio de mensagens (WhatsApp do próprio Estabelecimento, via servidor de integração), envio de e-mails (Resend) e pagamentos (Stripe e provedor Pix). Não vendemos dados pessoais.
       </p>
 
       <h2>6. Retenção e segurança</h2>

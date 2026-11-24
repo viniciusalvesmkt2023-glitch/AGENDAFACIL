@@ -102,41 +102,25 @@ Datas são guardadas como `YYYY-MM-DD` e horários como minutos desde 00:00, no 
   A integração com a API da SyncPay fica em `src/lib/pix/syncpay.ts` (**pendente** da documentação oficial).
   Para testar localmente, use `PIX_PROVIDER="mock"`.
 
-## Lembretes no WhatsApp
+## Lembretes no WhatsApp (Evolution API)
 
-Confirmação ao agendar e lembretes 24h e 2h antes, pela **API oficial do WhatsApp (Meta Cloud API)**, com um número da plataforma.
+Cada estabelecimento conecta **o próprio WhatsApp** lendo um QR code no painel (menu *WhatsApp*). As mensagens
+(confirmação ao agendar e lembretes 24h e 2h antes) saem do número do salão, e o texto pode ser personalizado
+com as variáveis `{nome}`, `{estabelecimento}`, `{quando}`, `{servico}`, `{profissional}` e `{link}`.
 
-1. Em https://business.facebook.com crie um app do tipo *Business* com o produto **WhatsApp** e adicione o número da plataforma.
-2. Gere um token permanente (usuário do sistema) → `WHATSAPP_TOKEN`; copie o *Phone number ID* → `WHATSAPP_PHONE_NUMBER_ID`.
-3. Em *WhatsApp Manager → Modelos de mensagem*, crie dois modelos, categoria **Utilidade**, idioma **Português (BR)**:
+Usa a [Evolution API](https://doc.evolution-api.com) (código aberto), instalada em um servidor próprio:
 
-   **`agendamento_confirmado`**
-   ```
-   Olá, {{1}}! Seu horário em *{{2}}* está confirmado para {{3}}.
+1. Crie o servidor — o jeito mais simples é o modelo pronto da Evolution API na [Railway](https://railway.com)
+   (já inclui banco e Redis). Na Vercel não funciona, pois o WhatsApp precisa de um servidor ligado o tempo todo.
+2. Copie o endereço público do servidor para `EVOLUTION_API_URL` e a chave global (`AUTHENTICATION_API_KEY`
+   do servidor) para `EVOLUTION_API_KEY`.
+3. Agende uma chamada a cada **15 minutos** para `GET https://SEU-DOMINIO/api/cron/lembretes` com o cabeçalho
+   `Authorization: Bearer <CRON_SECRET>`: com *Vercel Cron* (plano Pro) ou https://cron-job.org (grátis).
 
-   Serviço: {{4}} com {{5}}
+> ⚠️ A Evolution API não é oficial do WhatsApp: números podem ser bloqueados se usados para spam. O sistema só envia
+> mensagens transacionais a quem agendou, o que reduz bastante o risco. Os Termos de Uso avisam o estabelecimento.
 
-   Para ver ou cancelar seu agendamento: {{6}}
-
-   Até lá!
-   ```
-   **`lembrete_agendamento`**
-   ```
-   Olá, {{1}}! Passando para lembrar do seu horário em *{{2}}* {{3}}.
-
-   Serviço: {{4}} com {{5}}
-
-   Se não puder comparecer, cancele por aqui: {{6}}
-
-   Obrigado!
-   ```
-   Parâmetros: 1 = primeiro nome do cliente, 2 = estabelecimento, 3 = quando (ex.: "amanhã às 14:00"), 4 = serviço, 5 = profissional, 6 = link.
-4. Agende uma chamada a cada **15 minutos** para `GET https://SEU-DOMINIO/api/cron/lembretes` com o cabeçalho
-   `Authorization: Bearer <CRON_SECRET>`:
-   - no plano **Pro** da Vercel, com *Vercel Cron* (`vercel.json`);
-   - no plano grátis (Hobby, que só permite cron diário), com https://cron-job.org (grátis).
-
-Cada estabelecimento pode ligar/desligar as mensagens em *Configurações*, onde também vê o histórico de envios.
+Se o WhatsApp de um salão desconectar, o envio falha, o sistema marca como desconectado e o painel mostra um aviso para reconectar.
 
 ## E-mail (recuperação de senha)
 

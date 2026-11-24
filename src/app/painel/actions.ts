@@ -242,7 +242,6 @@ export async function saveSettings(_: ActionState, formData: FormData): Promise<
     slotInterval: z.coerce.number().int().min(5).max(240),
     minAdvanceMinutes: z.coerce.number().int().min(0).max(10080),
     maxAdvanceDays: z.coerce.number().int().min(1).max(365),
-    whatsappRemindersEnabled: z.string().optional(),
   });
   const parsed = schema.safeParse(Object.fromEntries(formData));
   if (!parsed.success) return { error: parsed.error.issues[0].message };
@@ -264,7 +263,6 @@ export async function saveSettings(_: ActionState, formData: FormData): Promise<
       slotInterval: d.slotInterval,
       minAdvanceMinutes: d.minAdvanceMinutes,
       maxAdvanceDays: d.maxAdvanceDays,
-      whatsappRemindersEnabled: d.whatsappRemindersEnabled === "on",
     },
   });
   revalidatePath("/painel", "layout");

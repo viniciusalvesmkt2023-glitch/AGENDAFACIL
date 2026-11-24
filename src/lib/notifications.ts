@@ -4,7 +4,8 @@ import { appUrl } from "./brand";
 import { hasAccess } from "./subscription";
 import { addDays, formatDateLong, minutesToTime, todayInTimezone } from "./time";
 import { whenText, type ReminderType } from "./reminders";
-import { sendWhatsAppTemplate, TEMPLATES, whatsappConfigured } from "./whatsapp";
+import { DEFAULT_CONFIRMATION, DEFAULT_REMINDER, renderMessage } from "./messages";
+import { evolutionConfigured, sendText } from "./evolution";
 
 type MessageType = "CONFIRMATION" | ReminderType;
 
@@ -15,15 +16,21 @@ const SENT_FIELD = {
 } as const;
 
 /**
- * Envia a mensagem de WhatsApp de um agendamento.
+ * Envia a mensagem de WhatsApp de um agendamento pelo WhatsApp do próprio estabelecimento.
  * "Reserva" o envio marcando o campo antes, para nunca mandar a mesma mensagem duas vezes.
  */
 export async function sendAppointmentMessage(appointmentId: string, type: MessageType): Promise<"SENT" | "FAILED" | "SKIPPED"> {
-  if (!whatsappConfigured()) return "SKIPPED";
+  if (!evolutionConfigured()) return "SKIPPED";
   const field = SENT_FIELD[type];
 
+  // Só reserva o envio se o estabelecimento estiver com o WhatsApp conectado e as mensagens ligadas
   const claimed = await db.appointment.updateMany({
-    where: { id: appointmentId, [field]: null, status: { in: ["SCHEDULED", "CONFIRMED"] } },
+    where: {
+      id: appointmentId,
+      [field]: null,
+      status: { in: ["SCHEDULED", "CONFIRMED"] },
+      business: { whatsappRemindersEnabled: true, whatsappStatus: "CONNECTED", whatsappInstance: { not: null } },
+    },
     data: { [field]: new Date() },
   });
   if (claimed.count === 0) return "SKIPPED";
@@ -32,18 +39,24 @@ export async function sendAppointmentMessage(appointmentId: string, type: Messag
     where: { id: appointmentId },
     include: { business: true, client: true, service: true, professional: true },
   });
-  if (!a.business.whatsappRemindersEnabled || !hasAccess(a.business)) return "SKIPPED";
+  if (!hasAccess(a.business) || !a.business.whatsappInstance) return "SKIPPED";
 
   const today = todayInTimezone();
   const time = minutesToTime(a.startMinutes);
-  const when = whenText(a.date, time, today, addDays(today, 1), formatDateLong(a.date));
-  const link = `${appUrl()}/agendamento/${a.cancelToken}`;
-  const firstName = a.client.name.split(" ")[0];
+  const template =
+    type === "CONFIRMATION"
+      ? a.business.msgConfirmation || DEFAULT_CONFIRMATION
+      : a.business.msgReminder || DEFAULT_REMINDER;
+  const text = renderMessage(template, {
+    nome: a.client.name.split(" ")[0],
+    estabelecimento: a.business.name,
+    quando: whenText(a.date, time, today, addDays(today, 1), formatDateLong(a.date)),
+    servico: a.service.name,
+    profissional: a.professional.name,
+    link: `${appUrl()}/agendamento/${a.cancelToken}`,
+  });
 
-  const template = type === "CONFIRMATION" ? TEMPLATES.confirmation() : TEMPLATES.reminder();
-  // Ordem dos parâmetros = {{1}}..{{6}} dos templates cadastrados na Meta (veja o README)
-  const params = [firstName, a.business.name, when, a.service.name, a.professional.name, link];
-  const result = await sendWhatsAppTemplate(a.client.phone, template, params);
+  const result = await sendText(a.business.whatsappInstance, a.client.phone, text);
 
   await db.messageLog.create({
     data: {
@@ -56,6 +69,13 @@ export async function sendAppointmentMessage(appointmentId: string, type: Messag
       error: result.ok ? null : result.error.slice(0, 500),
     },
   });
-  if (!result.ok) console.warn(`[whatsapp] falha ao enviar ${type} (${a.id}): ${result.error}`);
+
+  if (!result.ok) {
+    console.warn(`[whatsapp] falha ao enviar ${type} (${a.id}): ${result.error}`);
+    // Marca como desconectado para o painel avisar o dono
+    if (result.disconnected) {
+      await db.business.update({ where: { id: a.businessId }, data: { whatsappStatus: "DISCONNECTED" } });
+    }
+  }
   return result.ok ? "SENT" : "FAILED";
 }
