@@ -24,7 +24,7 @@ function isAuthorized(header: string | null): boolean {
 
 export async function GET(req: NextRequest) {
   // Chave no cabeçalho "Authorization: Bearer ..." (Vercel Cron) ou no endereço "?key=..." (cron-job.org)
-  if (!isAuthorized(req.headers.get("authorization") ?? req.nextUrl.searchParams.get("key"))) {
+  if (!isAuthorized(req.headers.get("authorization")) && !isAuthorized(req.nextUrl.searchParams.get("key"))) {
     return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
   }
   if (!evolutionConfigured()) return NextResponse.json({ skipped: "WhatsApp não configurado" });
