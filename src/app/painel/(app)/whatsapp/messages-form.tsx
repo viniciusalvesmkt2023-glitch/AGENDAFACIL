@@ -27,7 +27,7 @@ export function MessagesForm({
       <label className="flex items-start gap-3 text-sm">
         <input type="checkbox" name="whatsappRemindersEnabled" defaultChecked={enabled} className="mt-0.5 h-4 w-4 accent-brand-600" />
         <span>
-          <strong>Enviar mensagens automáticas</strong>: confirmação ao agendar e lembretes 24 horas e 2 horas antes.
+          <strong>Enviar mensagens automáticas</strong>: confirmação ao agendar, lembrete 24 horas antes (para quem agendou com mais de um dia de antecedência) e lembrete 1 hora antes.
         </span>
       </label>
 
@@ -42,7 +42,7 @@ export function MessagesForm({
       </div>
 
       <MessageEditor label="Mensagem de confirmação (enviada ao agendar)" name="msgConfirmation" value={conf} onChange={setConf} defaultText={DEFAULT_CONFIRMATION} preview={renderMessage(conf, sample)} />
-      <MessageEditor label="Mensagem de lembrete (24h e 2h antes)" name="msgReminder" value={rem} onChange={setRem} defaultText={DEFAULT_REMINDER} preview={renderMessage(rem, sample)} />
+      <MessageEditor label="Mensagem de lembrete (24h e 1h antes)" name="msgReminder" value={rem} onChange={setRem} defaultText={DEFAULT_REMINDER} preview={renderMessage(rem, sample)} />
 
       <FormMessage error={state?.error} success={state?.success} />
       <SubmitButton>Salvar mensagens</SubmitButton>

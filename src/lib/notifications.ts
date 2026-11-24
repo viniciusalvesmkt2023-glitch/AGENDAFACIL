@@ -12,7 +12,7 @@ type MessageType = "CONFIRMATION" | ReminderType;
 const SENT_FIELD = {
   CONFIRMATION: "confirmationSentAt",
   REMINDER_24H: "reminder24hSentAt",
-  REMINDER_2H: "reminder2hSentAt",
+  REMINDER_1H: "reminder1hSentAt",
 } as const;
 
 /**

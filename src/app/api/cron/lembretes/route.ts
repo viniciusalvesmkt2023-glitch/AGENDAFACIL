@@ -35,7 +35,7 @@ export async function GET(req: NextRequest) {
     where: {
       date: { in: [today, addDays(today, 1), addDays(today, 2)] },
       status: { in: ["SCHEDULED", "CONFIRMED"] },
-      reminder2hSentAt: null,
+      reminder1hSentAt: null,
       business: { whatsappRemindersEnabled: true, whatsappStatus: "CONNECTED" },
     },
     select: {
@@ -44,7 +44,7 @@ export async function GET(req: NextRequest) {
       startMinutes: true,
       createdAt: true,
       reminder24hSentAt: true,
-      reminder2hSentAt: true,
+      reminder1hSentAt: true,
       business: { select: { subscriptionStatus: true, trialEndsAt: true, currentPeriodEnd: true } },
     },
     take: 2000,
@@ -53,7 +53,7 @@ export async function GET(req: NextRequest) {
   const due = candidates
     .filter((a) => hasAccess(a.business, now))
     .map((a) => ({ id: a.id, type: dueReminder({ ...a, start: localToUtc(a.date, a.startMinutes) }, now) }))
-    .filter((a): a is { id: string; type: "REMINDER_24H" | "REMINDER_2H" } => a.type !== null);
+    .filter((a): a is { id: string; type: "REMINDER_24H" | "REMINDER_1H" } => a.type !== null);
 
   const results = { SENT: 0, FAILED: 0, SKIPPED: 0 };
   // Lotes de 10 em paralelo, com uma pequena pausa entre lotes para não parecer disparo em massa

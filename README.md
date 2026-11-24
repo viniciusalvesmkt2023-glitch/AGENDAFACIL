@@ -105,7 +105,7 @@ Datas são guardadas como `YYYY-MM-DD` e horários como minutos desde 00:00, no 
 ## Lembretes no WhatsApp (Evolution API)
 
 Cada estabelecimento conecta **o próprio WhatsApp** lendo um QR code no painel (menu *WhatsApp*). As mensagens
-(confirmação ao agendar e lembretes 24h e 2h antes) saem do número do salão, e o texto pode ser personalizado
+(confirmação ao agendar e lembretes 24h e 1h antes) saem do número do salão, e o texto pode ser personalizado
 com as variáveis `{nome}`, `{estabelecimento}`, `{quando}`, `{servico}`, `{profissional}` e `{link}`.
 
 Usa a [Evolution API](https://doc.evolution-api.com) (código aberto), instalada em um servidor próprio:

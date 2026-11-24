@@ -7,7 +7,7 @@ import { ConnectPanel } from "./connect-panel";
 import { MessagesForm, TestMessageForm } from "./messages-form";
 import { disconnectWhatsapp } from "./actions";
 
-const TYPES: Record<string, string> = { CONFIRMATION: "Confirmação", REMINDER_24H: "Lembrete 24h", REMINDER_2H: "Lembrete 2h" };
+const TYPES: Record<string, string> = { CONFIRMATION: "Confirmação", REMINDER_24H: "Lembrete 24h", REMINDER_1H: "Lembrete 1h" };
 
 export default async function WhatsappPage() {
   const user = await requireActiveUser();
