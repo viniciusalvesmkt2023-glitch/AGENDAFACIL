@@ -1,3 +1,4 @@
+import { timingSafeEqual } from "node:crypto";
 import { NextResponse, type NextRequest } from "next/server";
 import { db } from "@/lib/db";
 import { dueReminder } from "@/lib/reminders";
@@ -11,9 +12,18 @@ import { evolutionConfigured } from "@/lib/evolution";
 // com o cabeçalho  Authorization: Bearer <CRON_SECRET>
 export const maxDuration = 60;
 
+/** Confere a chave ignorando espaços sobrando e maiúsculas/minúsculas em "Bearer". */
+function isAuthorized(header: string | null): boolean {
+  const expected = process.env.CRON_SECRET?.trim();
+  const received = header?.trim().replace(/^bearer\s+/i, "").trim();
+  if (!expected || !received) return false;
+  const a = Buffer.from(received);
+  const b = Buffer.from(expected);
+  return a.length === b.length && timingSafeEqual(a, b);
+}
+
 export async function GET(req: NextRequest) {
-  const secret = process.env.CRON_SECRET;
-  if (!secret || req.headers.get("authorization") !== `Bearer ${secret}`) {
+  if (!isAuthorized(req.headers.get("authorization"))) {
     return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
   }
   if (!evolutionConfigured()) return NextResponse.json({ skipped: "WhatsApp não configurado" });
