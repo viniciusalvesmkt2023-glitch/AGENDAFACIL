@@ -3,7 +3,8 @@ import { requireUser } from "@/lib/auth";
 import { getAccessState } from "@/lib/subscription";
 import { monthlyEquivalentCents, PLAN_LIST, PLANS, isPlanId } from "@/lib/plans";
 import { formatMoney } from "@/lib/format";
-import { getStripe } from "@/lib/stripe";
+import { ensureStripeSubscriptionExists, getStripe } from "@/lib/stripe";
+import { redirect } from "next/navigation";
 import { getPixProvider } from "@/lib/pix";
 import { PageHeader } from "@/components/ui";
 import { PlanPicker } from "./plan-picker";
@@ -25,6 +26,8 @@ export default async function SubscriptionPage({ searchParams }: Props) {
   const user = await requireUser();
   const { sucesso, erro } = await searchParams;
   const b = user.business;
+  // Assinatura de cartão que não existe mais na Stripe (ex.: era do modo de teste) é limpa automaticamente
+  if (b.paymentMethod === "CARD" && !(await ensureStripeSubscriptionExists(b))) redirect("/painel/assinatura");
   const state = getAccessState(b);
   const payments = await db.payment.findMany({
     where: { businessId: b.id, status: { in: ["PAID", "PENDING"] } },

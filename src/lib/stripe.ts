@@ -85,3 +85,42 @@ export async function recordStripeInvoice(invoice: Stripe.Invoice, sub: Stripe.S
     },
   });
 }
+
+/** Erro da Stripe de "não existe" (ex.: cliente/assinatura criados no modo de teste e agora estamos no modo real). */
+function isMissing(e: unknown): boolean {
+  const err = e as { code?: string; statusCode?: number };
+  return err?.code === "resource_missing" || err?.statusCode === 404;
+}
+
+/**
+ * Confere se a assinatura de cartão salva ainda existe na conta da Stripe em uso.
+ * Se não existir (troca do modo de teste para o real), limpa os dados para o estabelecimento poder assinar de novo.
+ * Erros de rede não apagam nada.
+ */
+export async function ensureStripeSubscriptionExists(business: {
+  id: string;
+  stripeSubscriptionId: string | null;
+  trialEndsAt: Date;
+}): Promise<boolean> {
+  const stripe = getStripe();
+  if (!stripe || !business.stripeSubscriptionId) return true;
+  try {
+    await stripe.subscriptions.retrieve(business.stripeSubscriptionId);
+    return true;
+  } catch (e) {
+    if (!isMissing(e)) return true;
+    console.warn(`[stripe] assinatura ${business.stripeSubscriptionId} não existe nesta conta; limpando dados`);
+    await db.business.update({
+      where: { id: business.id },
+      data: {
+        stripeSubscriptionId: null,
+        stripeCustomerId: null,
+        paymentMethod: null,
+        plan: null,
+        currentPeriodEnd: null,
+        subscriptionStatus: business.trialEndsAt > new Date() ? "TRIALING" : "CANCELED",
+      },
+    });
+    return false;
+  }
+}
