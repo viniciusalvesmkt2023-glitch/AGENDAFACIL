@@ -12,7 +12,7 @@ export default function TermsPage() {
       <p>
         Estes Termos regulam o uso do {APP_NAME}, plataforma de agendamento online para estabelecimentos que atendem com
         horário marcado (“Estabelecimentos”). Ao criar uma conta, você declara ter lido e concordado com estes Termos e com
-        a nossa <a href="/privacidade" className="text-brand-600 underline">Política de Privacidade</a>.
+        a nossa <a href="/privacidade" className="text-brand-700 underline">Política de Privacidade</a>.
       </p>
 
       <h2>1. O serviço</h2>
@@ -70,7 +70,7 @@ export default function TermsPage() {
       </p>
 
       <h2>8. Contato</h2>
-      <p>Dúvidas sobre estes Termos: <a href={`mailto:${SUPPORT_EMAIL}`} className="text-brand-600 underline">{SUPPORT_EMAIL}</a>.</p>
+      <p>Dúvidas sobre estes Termos: <a href={`mailto:${SUPPORT_EMAIL}`} className="text-brand-700 underline">{SUPPORT_EMAIL}</a>.</p>
     </LegalPage>
   );
 }

@@ -170,7 +170,7 @@ function MessageEditor({
         <div className="flex items-center justify-between">
           <label className="label" htmlFor={name}>{label}</label>
           {value !== defaultText && (
-            <button type="button" onClick={() => onChange(defaultText)} className="mb-1 text-xs text-brand-600 hover:underline">
+            <button type="button" onClick={() => onChange(defaultText)} className="mb-1 text-xs text-brand-700 hover:underline">
               Restaurar padrão
             </button>
           )}

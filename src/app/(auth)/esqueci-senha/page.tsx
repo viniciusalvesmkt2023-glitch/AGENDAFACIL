@@ -25,7 +25,7 @@ export default function ForgotPasswordPage() {
         </form>
       )}
       <p className="mt-6 text-center text-sm text-zinc-500">
-        <Link href="/entrar" className="font-medium text-brand-600">Voltar para o login</Link>
+        <Link href="/entrar" className="font-medium text-brand-700">Voltar para o login</Link>
       </p>
     </>
   );

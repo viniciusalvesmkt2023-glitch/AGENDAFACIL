@@ -221,7 +221,7 @@ function Step({
           {!active && summary && <p className="truncate text-sm text-zinc-500">{summary}</p>}
         </div>
         {!active && done && onEdit && (
-          <button type="button" onClick={onEdit} className="text-sm font-medium text-brand-600 hover:underline">Alterar</button>
+          <button type="button" onClick={onEdit} className="text-sm font-medium text-brand-700 hover:underline">Alterar</button>
         )}
       </div>
       {active && <div className="mt-4">{children}</div>}

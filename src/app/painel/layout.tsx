@@ -27,7 +27,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
         <div className="mb-4 hidden rounded-lg bg-zinc-50 p-3 md:block">
           <p className="truncate text-sm font-medium">{user.business.name}</p>
           <p className="mt-1 text-xs text-zinc-500">Seu link de agendamento:</p>
-          <Link href={publicPath} target="_blank" className="block truncate text-xs font-medium text-brand-600">
+          <Link href={publicPath} target="_blank" className="block truncate text-xs font-medium text-brand-700">
             {publicPath}
           </Link>
           <div className="mt-2">

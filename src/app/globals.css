@@ -1,13 +1,23 @@
 @import "tailwindcss";
+@import "@fontsource/nunito/700.css";
+@import "@fontsource/nunito/800.css";
 
 @theme {
-  --color-brand-50: #f5f3ff;
-  --color-brand-100: #ede9fe;
-  --color-brand-200: #ddd6fe;
-  --color-brand-500: #8b5cf6;
-  --color-brand-600: #7c3aed;
-  --color-brand-700: #6d28d9;
-  --color-brand-900: #4c1d95;
+  /* Laranja HoraBoa (logo: #FE6E02) */
+  --color-brand-50: #fff4ec;
+  --color-brand-100: #ffe5d2;
+  --color-brand-200: #ffc9a3;
+  --color-brand-300: #ffa766;
+  --color-brand-500: #fe6e02;
+  --color-brand-600: #e85f00;
+  --color-brand-700: #c24e00;
+  --color-brand-900: #6b2b00;
+  /* Azul-marinho HoraBoa */
+  --color-navy-600: #2c4373;
+  --color-navy-700: #22355c;
+  --color-navy-800: #1b2b4b;
+  --color-navy-900: #15233e;
+  --font-display: "Nunito", ui-sans-serif, system-ui, sans-serif;
   --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
 }
 

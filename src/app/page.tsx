@@ -48,10 +48,10 @@ export default function Home() {
           Para barbearias, salões e clínicas
         </span>
         <h1 className="mt-6 text-4xl font-bold tracking-tight text-zinc-900 sm:text-6xl">
-          Sua agenda cheia, <span className="text-brand-600">sem esforço</span>.
+          Sua agenda cheia, <span className="text-brand-500">sem esforço</span>.
         </h1>
         <p className="mx-auto mt-6 max-w-2xl text-lg text-zinc-600">
-          Pare de perder tempo marcando horário pelo WhatsApp. Com o AgendaFácil seus clientes agendam sozinhos
+          Pare de perder tempo marcando horário pelo WhatsApp. Com o HoraBoa seus clientes agendam sozinhos
           e você controla tudo em um só lugar.
         </p>
         <div className="mt-8 flex flex-wrap justify-center gap-3">
@@ -76,7 +76,7 @@ export default function Home() {
       </section>
 
       <footer className="py-8 text-center text-sm text-zinc-500">
-        © {new Date().getFullYear()} AgendaFácil ·{" "}
+        © {new Date().getFullYear()} HoraBoa ·{" "}
         <Link href="/termos" className="hover:underline">Termos de Uso</Link> ·{" "}
         <Link href="/privacidade" className="hover:underline">Privacidade</Link>
       </footer>

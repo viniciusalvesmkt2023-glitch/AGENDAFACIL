@@ -55,7 +55,7 @@ export default function PrivacyPage() {
       <p>
         Você pode solicitar acesso, correção, anonimização, portabilidade ou exclusão dos seus dados, além de informações
         sobre o compartilhamento. Clientes finais podem fazer o pedido diretamente ao Estabelecimento ou a nós, que o
-        encaminharemos. Contato: <a href={`mailto:${SUPPORT_EMAIL}`} className="text-brand-600 underline">{SUPPORT_EMAIL}</a>.
+        encaminharemos. Contato: <a href={`mailto:${SUPPORT_EMAIL}`} className="text-brand-700 underline">{SUPPORT_EMAIL}</a>.
       </p>
     </LegalPage>
   );

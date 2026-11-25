@@ -28,7 +28,7 @@ export default async function NewAppointmentPage({ searchParams }: Props) {
       />
       {services.length === 0 ? (
         <EmptyState title="Cadastre um serviço primeiro.">
-          <Link href="/painel/servicos" className="text-brand-600 underline">Ir para Serviços</Link>
+          <Link href="/painel/servicos" className="text-brand-700 underline">Ir para Serviços</Link>
         </EmptyState>
       ) : (
         <ManualBookingForm

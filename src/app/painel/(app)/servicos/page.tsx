@@ -21,7 +21,7 @@ export default async function ServicesPage({ searchParams }: Props) {
     <>
       {params.bemvindo && (
         <div className="mb-6 rounded-xl border border-brand-200 bg-brand-50 p-4 text-sm text-brand-900">
-          <p className="font-semibold">Bem-vindo ao AgendaFácil! 🎉</p>
+          <p className="font-semibold">Bem-vindo ao HoraBoa! 🎉</p>
           <p className="mt-1">
             Para começar a receber agendamentos: <strong>1)</strong> cadastre seus serviços aqui,{" "}
             <strong>2)</strong> confira sua equipe em <Link className="underline" href="/painel/profissionais">Profissionais</Link>,{" "}

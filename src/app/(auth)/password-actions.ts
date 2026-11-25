@@ -41,11 +41,11 @@ export async function requestPasswordReset(_: ResetState, formData: FormData): P
     text: `Olá, ${user.name.split(" ")[0]}!\n\nRecebemos um pedido para redefinir a senha da sua conta no ${APP_NAME}.\nPara criar uma nova senha, acesse: ${link}\n\nO link vale por ${TOKEN_TTL_MINUTES} minutos. Se não foi você, ignore este e-mail.`,
     html: `
       <div style="font-family:Arial,sans-serif;max-width:480px;margin:auto;color:#18181b">
-        <h2 style="color:#6d28d9">${APP_NAME}</h2>
+        <h2 style="font-family:Arial,sans-serif;margin:0 0 16px"><span style="color:#15233e">Hora</span><span style="color:#fe6e02">Boa</span></h2>
         <p>Olá, ${escapeHtml(user.name.split(" ")[0])}!</p>
         <p>Recebemos um pedido para redefinir a senha da sua conta.</p>
         <p style="margin:28px 0">
-          <a href="${link}" style="background:#7c3aed;color:#fff;padding:12px 20px;border-radius:8px;text-decoration:none;font-weight:bold">Criar nova senha</a>
+          <a href="${link}" style="background:#e85f00;color:#fff;padding:12px 20px;border-radius:8px;text-decoration:none;font-weight:bold">Criar nova senha</a>
         </p>
         <p style="color:#71717a;font-size:13px">O link vale por ${TOKEN_TTL_MINUTES} minutos. Se não foi você, ignore este e-mail — sua senha continua a mesma.</p>
       </div>`,

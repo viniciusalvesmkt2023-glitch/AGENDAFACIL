@@ -41,9 +41,9 @@ export default async function PublicBookingPage({ params }: Props) {
 
   return (
     <div className="min-h-screen bg-zinc-50">
-      <header className="bg-gradient-to-br from-brand-700 to-brand-500 text-white">
+      <header className="bg-gradient-to-br from-navy-900 to-navy-700 text-white">
         <div className="mx-auto max-w-3xl px-4 pb-16 pt-10">
-          <div className="grid h-14 w-14 place-items-center rounded-2xl bg-white/20 text-2xl font-bold">
+          <div className="grid h-14 w-14 place-items-center rounded-2xl bg-brand-500 text-2xl font-bold">
             {business.name.charAt(0).toUpperCase()}
           </div>
           <h1 className="mt-4 text-3xl font-bold">{business.name}</h1>
@@ -88,7 +88,10 @@ export default async function PublicBookingPage({ params }: Props) {
           />
         )}
         <p className="mt-8 text-center text-xs text-zinc-400">
-          Agendamento online por <a href="/" className="font-medium">AgendaFácil</a>
+          Agendamento online por{" "}
+          <a href="/" className="font-display font-extrabold">
+            <span className="text-navy-900">Hora</span><span className="text-brand-500">Boa</span>
+          </a>
         </p>
       </main>
     </div>

@@ -120,7 +120,7 @@ export default async function SubscriptionPage({ searchParams }: Props) {
                 <span className="font-medium">
                   {formatMoney(p.amountCents)} · {PAYMENT_STATUS[p.status] ?? p.status}
                   {p.status === "PENDING" && p.method === "PIX" && (
-                    <a href={`/painel/assinatura/pix/${p.id}`} className="ml-2 text-brand-600 underline">ver Pix</a>
+                    <a href={`/painel/assinatura/pix/${p.id}`} className="ml-2 text-brand-700 underline">ver Pix</a>
                   )}
                 </span>
               </li>

@@ -20,7 +20,7 @@ export default function LoginPage() {
         <div>
           <div className="flex items-center justify-between">
             <label className="label" htmlFor="password">Senha</label>
-            <Link href="/esqueci-senha" className="mb-1 text-xs font-medium text-brand-600">Esqueci minha senha</Link>
+            <Link href="/esqueci-senha" className="mb-1 text-xs font-medium text-brand-700">Esqueci minha senha</Link>
           </div>
           <input className="input" id="password" name="password" type="password" required autoComplete="current-password" />
         </div>
@@ -28,7 +28,7 @@ export default function LoginPage() {
         <SubmitButton className="btn-primary w-full" pendingText="Entrando...">Entrar</SubmitButton>
       </form>
       <p className="mt-6 text-center text-sm text-zinc-500">
-        Ainda não tem conta? <Link href="/cadastro" className="font-medium text-brand-600">Criar conta grátis</Link>
+        Ainda não tem conta? <Link href="/cadastro" className="font-medium text-brand-700">Criar conta grátis</Link>
       </p>
     </>
   );

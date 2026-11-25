@@ -1,8 +1,8 @@
-# AgendaFácil
+# HoraBoa
 
 SaaS de agendamento online para **barbearias, salões de beleza, clínicas de estética** e qualquer negócio que atende com horário marcado.
 
-Cada estabelecimento ganha um painel de gestão e uma página pública de agendamento (ex.: `agendafacil.com/barbearia-do-joao`), onde os clientes marcam horário sozinhos, 24h por dia.
+Cada estabelecimento ganha um painel de gestão e uma página pública de agendamento (ex.: `horaboa.com/barbearia-do-joao`), onde os clientes marcam horário sozinhos, 24h por dia.
 
 ## Telas
 

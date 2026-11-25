@@ -32,15 +32,15 @@ export default function SignupPage() {
         <label className="flex items-start gap-2 text-sm text-zinc-600">
           <input type="checkbox" name="acceptTerms" required defaultChecked={state?.values?.acceptTerms === "on"} className="mt-0.5 h-4 w-4 accent-brand-600" />
           <span>
-            Li e aceito os <Link href="/termos" target="_blank" className="text-brand-600 underline">Termos de Uso</Link> e a{" "}
-            <Link href="/privacidade" target="_blank" className="text-brand-600 underline">Política de Privacidade</Link>.
+            Li e aceito os <Link href="/termos" target="_blank" className="text-brand-700 underline">Termos de Uso</Link> e a{" "}
+            <Link href="/privacidade" target="_blank" className="text-brand-700 underline">Política de Privacidade</Link>.
           </span>
         </label>
         <FormMessage error={state?.error} />
         <SubmitButton className="btn-primary w-full" pendingText="Criando conta...">Criar conta</SubmitButton>
       </form>
       <p className="mt-6 text-center text-sm text-zinc-500">
-        Já tem conta? <Link href="/entrar" className="font-medium text-brand-600">Entrar</Link>
+        Já tem conta? <Link href="/entrar" className="font-medium text-brand-700">Entrar</Link>
       </p>
     </>
   );

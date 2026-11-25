@@ -1,5 +1,5 @@
 // Nome e dados da marca em um só lugar — para renomear o produto, altere aqui.
-export const APP_NAME = "AgendaFácil";
+export const APP_NAME = "HoraBoa";
 export const SUPPORT_EMAIL = "contato@horaboa.com";
 
 /** URL pública do sistema (usada em e-mails, mensagens e redirecionamentos de pagamento). */
