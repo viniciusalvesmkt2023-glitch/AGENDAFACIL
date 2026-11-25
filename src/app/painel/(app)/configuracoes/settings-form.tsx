@@ -4,6 +4,7 @@ import { useActionState } from "react";
 import { saveSettings } from "@/app/painel/actions";
 import { FormMessage } from "@/components/ui";
 import { SubmitButton } from "@/components/submit-button";
+import { SlugField } from "@/components/slug-field";
 
 type Business = {
   name: string;
@@ -29,10 +30,7 @@ export function SettingsForm({ business }: { business: Business }) {
           </div>
           <div>
             <label className="label" htmlFor="slug">Endereço da página</label>
-            <div className="flex min-h-11 items-center rounded-xl border border-zinc-200 bg-zinc-50 focus-within:border-brand-500 md:min-h-10">
-              <span className="pl-3 text-sm text-zinc-500">horaboa.com/</span>
-              <input className="w-full min-w-0 bg-transparent px-1 py-2 text-base outline-none md:text-sm" id="slug" name="slug" defaultValue={business.slug} required />
-            </div>
+            <SlugField defaultValue={business.slug} />
           </div>
           <div>
             <label className="label" htmlFor="phone">WhatsApp</label>

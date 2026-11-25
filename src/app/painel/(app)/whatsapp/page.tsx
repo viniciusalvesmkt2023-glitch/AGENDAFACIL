@@ -47,7 +47,7 @@ export default async function WhatsappPage() {
             </form>
           </div>
         ) : (
-          <ConnectPanel connecting={b.whatsappStatus === "CONNECTING"} />
+          <ConnectPanel connecting={b.whatsappStatus === "CONNECTING"} defaultPhone={b.phone ?? ""} />
         )}
       </section>
 

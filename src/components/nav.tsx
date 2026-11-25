@@ -4,7 +4,9 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   CalendarDays,
+  CircleHelp,
   CreditCard,
+  KeyRound,
   Clock,
   Menu,
   MessageCircle,
@@ -28,6 +30,8 @@ export const NAV_ITEMS: Item[] = [
   { href: "/painel/whatsapp", label: "WhatsApp", icon: MessageCircle },
   { href: "/painel/configuracoes", label: "Configurações", icon: Settings },
   { href: "/painel/assinatura", label: "Assinatura", icon: CreditCard },
+  { href: "/painel/conta", label: "Minha conta", icon: KeyRound },
+  { href: "/painel/suporte", label: "Suporte", icon: CircleHelp },
 ];
 
 function isActive(pathname: string, href: string) {
@@ -58,7 +62,7 @@ export function SidebarNav() {
   );
 }
 
-const MORE_PATHS = ["/painel/profissionais", "/painel/horarios", "/painel/whatsapp", "/painel/configuracoes", "/painel/assinatura", "/painel/mais"];
+const MORE_PATHS = ["/painel/profissionais", "/painel/horarios", "/painel/whatsapp", "/painel/configuracoes", "/painel/assinatura", "/painel/conta", "/painel/suporte", "/painel/mais"];
 
 /** Barra de navegação fixa embaixo (celular). */
 export function BottomNav() {

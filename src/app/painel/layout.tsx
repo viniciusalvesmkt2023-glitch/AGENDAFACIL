@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { AlertTriangle, Clock3, ExternalLink, LogOut, WifiOff } from "lucide-react";
+import { AlertTriangle, Clock3, ExternalLink, ListChecks, LogOut, WifiOff } from "lucide-react";
 import { requireUser } from "@/lib/auth";
 import { BrandIcon, Logo } from "@/components/ui";
 import { BottomNav, SidebarNav } from "@/components/nav";
@@ -54,7 +54,12 @@ export default async function DashboardLayout({ children }: { children: React.Re
 
         <main className="px-4 pb-28 pt-4 sm:px-6 md:px-8 md:pb-10 md:pt-8">
           <div className="mx-auto max-w-5xl space-y-3">
-            {access.kind === "trial" && (
+            {!b.onboardedAt && (
+              <Banner tone="brand" icon={<ListChecks className="h-4 w-4" />} href="/comecar" action="Continuar">
+                <strong>Falta pouco!</strong> Termine de configurar sua agenda.
+              </Banner>
+            )}
+            {access.kind === "trial" && b.onboardedAt && (
               <Banner tone="brand" icon={<Clock3 className="h-4 w-4" />} href="/painel/assinatura" action="Assinar">
                 Teste grátis: <strong>{access.daysLeft === 1 ? "último dia" : `${access.daysLeft} dias`}</strong>
               </Banner>

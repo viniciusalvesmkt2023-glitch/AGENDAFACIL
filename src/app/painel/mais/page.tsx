@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ChevronRight, CreditCard, Clock, ExternalLink, LogOut, MessageCircle, Settings, UserRound } from "lucide-react";
+import { ChevronRight, CircleHelp, CreditCard, Clock, ExternalLink, KeyRound, LogOut, MessageCircle, Settings, UserRound } from "lucide-react";
 import { requireUser } from "@/lib/auth";
 import { logout } from "../../(auth)/actions";
 import { ShareLinkButton } from "@/components/copy-button";
@@ -10,6 +10,8 @@ const ITEMS = [
   { href: "/painel/whatsapp", label: "WhatsApp", desc: "Conexão, confirmações e lembretes", icon: MessageCircle },
   { href: "/painel/configuracoes", label: "Configurações", desc: "Dados do salão e regras de agendamento", icon: Settings },
   { href: "/painel/assinatura", label: "Assinatura", desc: "Plano e pagamentos", icon: CreditCard },
+  { href: "/painel/conta", label: "Minha conta", desc: "Seus dados, senha e privacidade", icon: KeyRound },
+  { href: "/painel/suporte", label: "Suporte", desc: "Dúvidas e ajuda", icon: CircleHelp },
 ];
 
 export default async function MorePage() {

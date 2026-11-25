@@ -8,8 +8,8 @@ import { z } from "zod";
 import { db } from "@/lib/db";
 import { requireActiveUser } from "@/lib/auth";
 import { BookingError, createAppointment } from "@/lib/booking";
-import { parseMoneyToCents, slugify } from "@/lib/format";
-import { RESERVED_SLUGS } from "@/lib/brand";
+import { parseMoneyToCents } from "@/lib/format";
+import { checkSlug } from "@/lib/slug-check";
 import { timeToMinutes } from "@/lib/time";
 
 export type ActionState = { error?: string | null; success?: string | null; values?: Record<string, string> } | undefined;
@@ -247,10 +247,9 @@ export async function saveSettings(_: ActionState, formData: FormData): Promise<
   if (!parsed.success) return { error: parsed.error.issues[0].message };
   const d = parsed.data;
 
-  const slug = slugify(d.slug);
-  if (slug.length < 3 || RESERVED_SLUGS.has(slug)) return { error: "Este endereço não está disponível." };
-  const taken = await db.business.findFirst({ where: { slug, id: { not: user.businessId } } });
-  if (taken) return { error: "Este endereço já está em uso por outro estabelecimento." };
+  const check = await checkSlug(d.slug, { businessId: user.businessId });
+  if (!check.available) return { error: check.message };
+  const slug = check.slug;
 
   await db.business.update({
     where: { id: user.businessId },

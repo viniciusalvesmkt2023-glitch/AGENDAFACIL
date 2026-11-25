@@ -35,9 +35,13 @@ const preview = [
   { time: "11:30", name: "Lucas Oliveira", service: "Barba", status: "Agendado", tone: "bg-blue-50 text-blue-700" },
 ];
 
-export default function Home() {
+export default async function Home({ searchParams }: { searchParams: Promise<{ conta?: string }> }) {
+  const deleted = (await searchParams).conta === "excluida";
   return (
     <div className="bg-white">
+      {deleted && (
+        <p className="bg-navy-900 px-4 py-2.5 text-center text-sm text-white">Sua conta foi excluída. Obrigado por ter usado o HoraBoa.</p>
+      )}
       <header className="sticky top-0 z-30 border-b border-zinc-100 bg-white/90 backdrop-blur">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3 sm:px-6">
           <Logo />

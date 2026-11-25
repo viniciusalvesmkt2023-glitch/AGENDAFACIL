@@ -3,13 +3,14 @@
 import { revalidatePath } from "next/cache";
 import { db } from "@/lib/db";
 import { requireActiveUser } from "@/lib/auth";
-import { createInstance, deleteInstance, evolutionConfigured, logoutInstance, sendText } from "@/lib/evolution";
+import { createInstance, deleteInstance, evolutionConfigured, getPairingCode, logoutInstance, sendText } from "@/lib/evolution";
 import { DEFAULT_CONFIRMATION, DEFAULT_REMINDER, MAX_MESSAGE_LENGTH, renderMessage } from "@/lib/messages";
 import { appUrl } from "@/lib/brand";
 import { DAY_MODES, SHORT_OPTIONS, type DayMode } from "@/lib/reminders";
 import { timeToMinutes } from "@/lib/time";
 
 export type WhatsappState = { error?: string | null; success?: string | null } | undefined;
+export type PairingState = { error?: string | null; code?: string | null; phone?: string } | undefined;
 
 function instanceName(businessId: string) {
   return `ag_${businessId}`;
@@ -31,6 +32,26 @@ export async function startWhatsappConnection(): Promise<WhatsappState> {
   });
   revalidatePath("/painel/whatsapp");
   return { success: null };
+}
+
+/** Conectar pelo próprio celular: gera um código para digitar no WhatsApp (sem QR code). */
+export async function requestPairingCode(_: PairingState, formData: FormData): Promise<PairingState> {
+  const user = await requireActiveUser();
+  const phone = String(formData.get("phone") ?? "").trim();
+  const digits = phone.replace(/\D/g, "");
+  if (digits.length < 10 || digits.length > 13) return { error: "Informe o número do WhatsApp com DDD.", phone };
+  if (!evolutionConfigured()) return { error: "O servidor de WhatsApp ainda não foi configurado.", phone };
+  const name = user.business.whatsappInstance ?? instanceName(user.businessId);
+  try {
+    await createInstance(name);
+    const code = await getPairingCode(name, phone);
+    if (!code) return { error: "Não foi possível gerar o código agora. Tente de novo ou use o QR code.", phone };
+    await db.business.update({ where: { id: user.businessId }, data: { whatsappInstance: name, whatsappStatus: "CONNECTING" } });
+    return { code, phone };
+  } catch (e) {
+    console.error("[whatsapp] erro ao gerar código de pareamento", e);
+    return { error: "Não foi possível falar com o servidor de WhatsApp. Tente novamente em instantes.", phone };
+  }
 }
 
 export async function disconnectWhatsapp() {

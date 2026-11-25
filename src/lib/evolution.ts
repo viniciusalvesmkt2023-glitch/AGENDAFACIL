@@ -74,6 +74,15 @@ export async function getQrCode(name: string): Promise<{ image: string | null; c
   };
 }
 
+/**
+ * Pede um código de pareamento (8 letras) para conectar pelo próprio celular,
+ * sem precisar escanear QR code: WhatsApp → Aparelhos conectados → Conectar com número de telefone.
+ */
+export async function getPairingCode(name: string, phone: string): Promise<string | null> {
+  const data = await call<{ pairingCode?: string | null }>("GET", `/instance/connect/${enc(name)}?number=${enc(normalizePhone(phone))}`);
+  return data.pairingCode ?? null;
+}
+
 export async function getConnectionState(name: string): Promise<ConnectionState> {
   try {
     const data = await call<{ instance?: { state?: string }; state?: string }>("GET", `/instance/connectionState/${enc(name)}`);

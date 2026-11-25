@@ -6,7 +6,9 @@ import { getConnectedNumber, getConnectionState, getQrCode } from "@/lib/evoluti
 
 // Status da conexão do WhatsApp do estabelecimento logado.
 // Enquanto não conecta, devolve o QR code atualizado (ele muda a cada ~30 segundos).
-export async function GET() {
+export async function GET(req: Request) {
+  // mode=code: conexão por código de pareamento — não pede QR novo (isso invalidaria o código)
+  const codeMode = new URL(req.url).searchParams.get("mode") === "code";
   const session = await getSession();
   if (!session) return NextResponse.json({ error: "Não autenticado" }, { status: 401 });
   const business = await db.business.findUnique({ where: { id: session.businessId } });
@@ -24,6 +26,7 @@ export async function GET() {
       }
       return NextResponse.json({ status: "CONNECTED" });
     }
+    if (codeMode) return NextResponse.json({ status: "CONNECTING" });
     const qr = await getQrCode(name);
     const image = qr.image ?? (qr.code ? await QRCode.toDataURL(qr.code, { margin: 1, width: 280 }) : null);
     if (business.whatsappStatus === "CONNECTED") {

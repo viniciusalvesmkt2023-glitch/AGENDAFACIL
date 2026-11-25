@@ -21,6 +21,12 @@ model Business {
   phone             String?
   address           String?
   description       String?
+  // BARBEARIA | SALAO | ESTETICA | UNHAS | SOBRANCELHA | SAUDE | OUTRO
+  businessType      String   @default("OUTRO")
+  // Atende sem endereço fixo (a domicílio)
+  homeService       Boolean  @default(false)
+  // Quando terminou (ou pulou) a configuração inicial; null = ainda não terminou
+  onboardedAt       DateTime?
   // Intervalo entre horários exibidos na página de agendamento (minutos)
   slotInterval      Int      @default(30)
   // Antecedência mínima para o cliente agendar (minutos)
