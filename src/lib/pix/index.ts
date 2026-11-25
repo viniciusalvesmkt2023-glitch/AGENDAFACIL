@@ -4,6 +4,7 @@ import { extendPeriod } from "../subscription";
 import { isPlanId, PLANS } from "../plans";
 import { mockPixProvider } from "./mock";
 import { syncPayProvider } from "./syncpay";
+import { asaasConfigured, asaasProvider } from "./asaas";
 import type { PixProvider } from "./types";
 
 export type { PixProvider } from "./types";
@@ -13,6 +14,7 @@ export function getPixProvider(): PixProvider | null {
   const name = process.env.PIX_PROVIDER?.toLowerCase();
   // O provedor de teste nunca roda na Vercel (só no computador local)
   if (name === "mock" && !process.env.VERCEL) return mockPixProvider;
+  if (asaasConfigured()) return asaasProvider;
   if (process.env.SYNCPAY_CLIENT_ID && process.env.SYNCPAY_CLIENT_SECRET && process.env.SYNCPAY_WEBHOOK_SECRET) {
     return syncPayProvider;
   }
@@ -42,9 +44,16 @@ export async function confirmPixPayment(externalId: string) {
         subscriptionStatus: "ACTIVE",
         paymentMethod: "PIX",
         plan: plan.id,
-        currentPeriodEnd: extendPeriod(business.currentPeriodEnd, plan.months),
+        // Soma a partir do fim do período atual ou do fim do teste grátis (quem paga durante o teste não perde dias)
+        currentPeriodEnd: extendPeriod(laterOf(business.currentPeriodEnd, business.trialEndsAt), plan.months),
       },
     });
     return { ...payment, status: "PAID" };
   });
+}
+
+function laterOf(a: Date | null, b: Date | null): Date | null {
+  if (!a) return b;
+  if (!b) return a;
+  return a > b ? a : b;
 }

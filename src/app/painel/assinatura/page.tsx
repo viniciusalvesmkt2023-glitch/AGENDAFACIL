@@ -8,9 +8,9 @@ import { redirect } from "next/navigation";
 import { getPixProvider } from "@/lib/pix";
 import { PageHeader } from "@/components/ui";
 import { PlanPicker } from "./plan-picker";
-import { openCardPortal } from "./actions";
+import { cancelPixSubscription, openCardPortal } from "./actions";
 
-type Props = { searchParams: Promise<{ sucesso?: string; erro?: string }> };
+type Props = { searchParams: Promise<{ sucesso?: string; erro?: string; cancelado?: string }> };
 
 const dateFmt = new Intl.DateTimeFormat("pt-BR", { day: "2-digit", month: "2-digit", year: "numeric", timeZone: "America/Sao_Paulo" });
 
@@ -24,7 +24,7 @@ const PAYMENT_STATUS: Record<string, string> = {
 
 export default async function SubscriptionPage({ searchParams }: Props) {
   const user = await requireUser();
-  const { sucesso, erro } = await searchParams;
+  const { sucesso, erro, cancelado } = await searchParams;
   const b = user.business;
   // Assinatura de cartão que não existe mais na Stripe (ex.: era do modo de teste) é limpa automaticamente
   if (b.paymentMethod === "CARD" && !(await ensureStripeSubscriptionExists(b))) redirect("/painel/assinatura");
@@ -47,6 +47,16 @@ export default async function SubscriptionPage({ searchParams }: Props) {
         </div>
       )}
 
+      {cancelado && (
+        <div className="mb-6 rounded-xl border border-zinc-200 bg-white p-4 text-sm text-zinc-700">
+          Assinatura Pix cancelada. Nenhuma nova cobrança será gerada; seu acesso continua até o fim do período já pago.
+        </div>
+      )}
+      {erro === "cancelar" && (
+        <div className="mb-6 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-800">
+          Não foi possível cancelar agora. Tente novamente em alguns minutos ou fale com o suporte.
+        </div>
+      )}
       {erro === "portal" && (
         <div className="mb-6 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-800">
           Não foi possível abrir o gerenciamento do cartão agora. Tente novamente em alguns minutos ou fale com o suporte.
@@ -82,6 +92,17 @@ export default async function SubscriptionPage({ searchParams }: Props) {
             sua página de agendamento estão bloqueados. Escolha um plano para reativar — seus dados continuam salvos.
           </p>
         )}
+        {b.asaasSubscriptionId && (
+          <div className="mt-4 space-y-3">
+            <p className="text-sm text-zinc-600">
+              Assinatura Pix com <strong>renovação automática</strong>: a cobrança de cada período é gerada
+              sozinha. Se você autorizou o <strong>Pix Automático</strong> no seu banco, ela é debitada no vencimento.
+            </p>
+            <form action={cancelPixSubscription}>
+              <button className="btn-secondary">Cancelar assinatura Pix</button>
+            </form>
+          </div>
+        )}
         {hasCardSubscription && (
           <form action={openCardPortal} className="mt-4">
             <button className="btn-secondary">Gerenciar cartão / cancelar</button>
@@ -97,6 +118,7 @@ export default async function SubscriptionPage({ searchParams }: Props) {
           <PlanPicker
             cardEnabled={!!getStripe()}
             pixEnabled={!!getPixProvider()}
+            pixRecurring={getPixProvider()?.name === "ASAAS"}
             defaultTaxId={b.taxId ?? ""}
             defaultPhone={b.billingPhone ?? b.phone ?? ""}
             plans={PLAN_LIST.map((p) => ({

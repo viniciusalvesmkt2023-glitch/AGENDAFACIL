@@ -40,6 +40,10 @@ model Business {
   stripeSubscriptionId String?   @unique
   taxId                String? // CPF/CNPJ (necessário para Pix)
   billingPhone         String? // telefone do pagador (necessário para Pix)
+  // Pix pela Asaas (assinatura com renovação gerada pela Asaas)
+  asaasCustomerId      String?   @unique
+  asaasSubscriptionId  String?   @unique
+  asaasPlan            String? // plano da assinatura Asaas (MONTHLY | SEMIANNUAL | ANNUAL)
 
   // ----- WhatsApp (Evolution API: o salão conecta o próprio número por QR code) -----
   whatsappRemindersEnabled Boolean   @default(true)

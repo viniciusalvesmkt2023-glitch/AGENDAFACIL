@@ -5,7 +5,7 @@ import { confirmPixPayment, getPixProvider } from "@/lib/pix";
 // Webhook do provedor Pix (SyncPay): confirma o pagamento e libera a assinatura.
 export async function POST(req: NextRequest) {
   const provider = getPixProvider();
-  if (!provider) return NextResponse.json({ error: "Pix não configurado" }, { status: 503 });
+  if (!provider?.parseWebhook) return NextResponse.json({ error: "Pix não configurado" }, { status: 503 });
 
   const rawBody = await req.text();
   const result = await provider.parseWebhook(rawBody, req.headers);

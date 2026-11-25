@@ -13,12 +13,14 @@ export function PlanPicker({
   pixEnabled,
   defaultTaxId,
   defaultPhone,
+  pixRecurring = false,
 }: {
   plans: PlanView[];
   cardEnabled: boolean;
   pixEnabled: boolean;
   defaultTaxId: string;
   defaultPhone: string;
+  pixRecurring?: boolean;
 }) {
   const [plan, setPlan] = useState(plans[plans.length - 1].id);
   const [method, setMethod] = useState<"CARD" | "PIX">(cardEnabled || !pixEnabled ? "CARD" : "PIX");
@@ -89,8 +91,15 @@ export function PlanPicker({
               </div>
             </div>
             <p className="text-sm text-zinc-600">
-              Pague com QR code ou copia e cola. A liberação é automática assim que o pagamento é confirmado.
-              No Pix, a renovação não é automática: avisaremos antes do vencimento.
+              Pague com QR code ou copia e cola. A liberação é automática assim que o pagamento é confirmado.{" "}
+              {pixRecurring ? (
+                <>
+                  A cobrança de cada período é gerada automaticamente. Ao pagar, o seu banco pode oferecer o{" "}
+                  <strong>Pix Automático</strong>: autorizando, as próximas são debitadas sozinhas no vencimento.
+                </>
+              ) : (
+                "No Pix, a renovação não é automática: avisaremos antes do vencimento."
+              )}
             </p>
             <FormMessage error={pixState?.error} />
             <SubmitButton pendingText="Gerando Pix..." className="btn-primary">Gerar Pix</SubmitButton>

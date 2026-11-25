@@ -22,9 +22,12 @@ export type PixWebhookResult = { externalId: string; status: PixStatus } | null;
 
 export interface PixProvider {
   name: string;
-  createCharge(input: PixChargeInput): Promise<PixCharge>;
+  /** Cobrança avulsa (SyncPay/teste). A Asaas usa assinatura e não implementa. */
+  createCharge?(input: PixChargeInput): Promise<PixCharge>;
+  /** Busca o código Pix de uma cobrança já existente (ex.: renovação gerada pela Asaas). */
+  getPixCode?(externalId: string): Promise<{ copyPaste: string; qrCode: string | null; expiresAt: Date }>;
   /** Consulta o status (usado como reserva caso o webhook atrase). */
   getStatus?(externalId: string): Promise<PixStatus>;
   /** Valida a autenticidade do webhook e extrai o resultado. Retorna null se inválido ou irrelevante. */
-  parseWebhook(rawBody: string, headers: Headers): Promise<PixWebhookResult>;
+  parseWebhook?(rawBody: string, headers: Headers): Promise<PixWebhookResult>;
 }

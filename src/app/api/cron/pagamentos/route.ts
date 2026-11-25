@@ -18,6 +18,7 @@ export async function GET(req: NextRequest) {
   const pending = await db.payment.findMany({
     where: {
       method: "PIX",
+      provider: provider.name,
       status: "PENDING",
       externalId: { not: null },
       statusChecks: { lt: MAX_CHECKS },

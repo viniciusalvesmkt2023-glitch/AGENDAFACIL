@@ -98,6 +98,15 @@ Datas são guardadas como `YYYY-MM-DD` e horários como minutos desde 00:00, no 
      `checkout.session.completed`, `customer.subscription.created`, `customer.subscription.updated`,
      `customer.subscription.deleted` e `invoice.paid`. Copie o *Signing secret* para `STRIPE_WEBHOOK_SECRET`.
   3. Em *Settings → Billing → Customer portal*, salve a configuração do portal (permitir cancelar e atualizar cartão).
+- **Pix (Asaas):** assinatura Pix com renovação gerada pela Asaas e oferta de **Pix Automático** (o cliente autoriza no
+  banco e as próximas cobranças são debitadas sozinhas). Código em `src/lib/pix/asaas.ts` e `src/lib/pix/asaas-billing.ts`
+  ([documentação da Asaas](https://docs.asaas.com)).
+  1. Na Asaas, em *Integrações → Chaves de API*, gere uma chave → `ASAAS_API_KEY` (chaves de Sandbox usam o Sandbox automaticamente).
+  2. Em *Integrações → Webhooks*, crie um webhook para `https://SEU-DOMINIO/api/webhooks/asaas` com um **token de autenticação**
+     (32+ caracteres) → `ASAAS_WEBHOOK_TOKEN`, e marque os eventos de **cobranças** e de **assinaturas**.
+  3. Para o Pix Automático, a conta precisa estar elegível (conta e documentos aprovados, chave Pix cadastrada).
+  - O 1º vencimento é no fim do teste grátis (pode pagar antes) e cada pagamento estende o plano. Ao assinar no cartão,
+    a assinatura Pix é encerrada automaticamente.
 - **Pix (SyncPay):** tela com QR code e copia e cola; liberação automática pelo webhook. Integração em `src/lib/pix/syncpay.ts`
   ([documentação da SyncPay](https://docs.syncpayments.com.br)):
   1. No painel da SyncPay, em *Developer → API*, crie uma chave com as permissões **Consulta** e **Venda**

@@ -8,6 +8,7 @@ import { isValidTaxId } from "@/lib/format";
 import { isPlanId, PLANS } from "@/lib/plans";
 import { getStripe } from "@/lib/stripe";
 import { getPixProvider } from "@/lib/pix";
+import { AsaasBillingError, cancelAsaasSubscription, startAsaasPix } from "@/lib/pix/asaas-billing";
 
 export type BillingState = { error?: string | null } | undefined;
 
@@ -117,6 +118,20 @@ export async function startPixPayment(_: BillingState, formData: FormData): Prom
     await db.business.update({ where: { id: business.id }, data: { taxId, billingPhone: phone } });
   }
 
+  // Asaas: assinatura Pix (a Asaas gera as cobranças de cada período)
+  if (provider.name === "ASAAS") {
+    let paymentId: string;
+    try {
+      paymentId = await startAsaasPix({ business, user, planId: plan.id, taxId, phone });
+    } catch (e) {
+      if (e instanceof AsaasBillingError) return { error: e.message };
+      console.error("[asaas] erro ao iniciar Pix", e);
+      return { error: "Não foi possível gerar o Pix agora. Tente novamente em alguns minutos." };
+    }
+    redirect(`/painel/assinatura/pix/${paymentId}`);
+  }
+  if (!provider.createCharge) return { error: "Pagamento com Pix indisponível." };
+
   // Reaproveita uma cobrança pendente do mesmo plano que ainda não expirou
   const pending = await db.payment.findFirst({
     where: { businessId: business.id, method: "PIX", plan: plan.id, status: "PENDING", expiresAt: { gt: new Date(Date.now() + 5 * 60_000) } },
@@ -147,4 +162,15 @@ export async function startPixPayment(_: BillingState, formData: FormData): Prom
   }
 
   redirect(`/painel/assinatura/pix/${payment.id}`);
+}
+
+export async function cancelPixSubscription() {
+  const user = await requireUser();
+  try {
+    await cancelAsaasSubscription(user.business, true);
+  } catch (e) {
+    console.error("[asaas] erro ao cancelar assinatura", e);
+    redirect("/painel/assinatura?erro=cancelar");
+  }
+  redirect("/painel/assinatura?cancelado=1");
 }

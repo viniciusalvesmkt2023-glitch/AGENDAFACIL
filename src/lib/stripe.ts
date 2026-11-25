@@ -2,6 +2,7 @@ import "server-only";
 import Stripe from "stripe";
 import { db } from "./db";
 import { isPlanId } from "./plans";
+import { cancelAsaasSubscription } from "./pix/asaas-billing";
 
 let client: Stripe | null = null;
 
@@ -59,6 +60,11 @@ export async function syncStripeSubscription(sub: Stripe.Subscription) {
       ...(isPlanId(plan) ? { plan } : {}),
     },
   });
+
+  // Mudou para cartão: encerra a assinatura Pix da Asaas para não cobrar em dobro
+  if (status === "ACTIVE" && business.asaasSubscriptionId) {
+    await cancelAsaasSubscription(business, false).catch((e) => console.error("[asaas] erro ao cancelar ao migrar para cartão", e));
+  }
 }
 
 /** Registra uma fatura paga no histórico de pagamentos. */
