@@ -21,8 +21,7 @@ export function ProfessionalForm({
   }, [state, professional]);
 
   return (
-    <form ref={formRef} action={action} className="card space-y-4 p-5">
-      <h2 className="font-semibold">{professional ? "Editar profissional" : "Novo profissional"}</h2>
+    <form ref={formRef} action={action} className="space-y-4">
       {professional && <input type="hidden" name="id" value={professional.id} />}
       <div>
         <label className="label" htmlFor="name">Nome</label>
@@ -39,13 +38,13 @@ export function ProfessionalForm({
         ) : (
           <div className="space-y-2">
             {services.map((s) => (
-              <label key={s.id} className="flex items-center gap-2 text-sm">
+              <label key={s.id} className="flex items-center gap-3 rounded-xl border border-zinc-200 px-3 py-2.5 text-sm has-[:checked]:border-brand-300 has-[:checked]:bg-brand-50">
                 <input
                   type="checkbox"
                   name="serviceIds"
                   value={s.id}
                   defaultChecked={professional ? professional.serviceIds.includes(s.id) : true}
-                  className="h-4 w-4 accent-brand-600"
+                  className="h-5 w-5 accent-brand-600"
                 />
                 {s.name}
               </label>

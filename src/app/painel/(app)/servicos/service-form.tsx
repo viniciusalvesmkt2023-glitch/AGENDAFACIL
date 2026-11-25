@@ -15,8 +15,7 @@ export function ServiceForm({ service }: { service?: Service }) {
   }, [state, service]);
 
   return (
-    <form ref={formRef} action={action} className="card space-y-4 p-5">
-      <h2 className="font-semibold">{service ? "Editar serviço" : "Novo serviço"}</h2>
+    <form ref={formRef} action={action} className="space-y-4">
       {service && <input type="hidden" name="id" value={service.id} />}
       <div>
         <label className="label" htmlFor="name">Nome</label>

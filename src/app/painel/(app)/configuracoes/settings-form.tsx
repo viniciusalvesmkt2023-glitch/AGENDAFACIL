@@ -20,8 +20,8 @@ export function SettingsForm({ business }: { business: Business }) {
   const [state, action] = useActionState(saveSettings, undefined);
   return (
     <form action={action} className="space-y-6">
-      <section className="card space-y-4 p-5">
-        <h2 className="font-semibold">Dados do estabelecimento</h2>
+      <section className="card space-y-4 p-4 md:p-5">
+        <h2 className="text-lg font-bold">Dados do estabelecimento</h2>
         <div className="grid gap-4 sm:grid-cols-2">
           <div>
             <label className="label" htmlFor="name">Nome</label>
@@ -29,9 +29,9 @@ export function SettingsForm({ business }: { business: Business }) {
           </div>
           <div>
             <label className="label" htmlFor="slug">Endereço da página</label>
-            <div className="flex items-center rounded-lg border border-zinc-300 bg-zinc-50 focus-within:border-brand-500">
-              <span className="pl-3 text-sm text-zinc-500">/</span>
-              <input className="w-full bg-transparent px-1 py-2 text-sm outline-none" id="slug" name="slug" defaultValue={business.slug} required />
+            <div className="flex min-h-11 items-center rounded-xl border border-zinc-200 bg-zinc-50 focus-within:border-brand-500 md:min-h-10">
+              <span className="pl-3 text-sm text-zinc-500">horaboa.com/</span>
+              <input className="w-full min-w-0 bg-transparent px-1 py-2 text-base outline-none md:text-sm" id="slug" name="slug" defaultValue={business.slug} required />
             </div>
           </div>
           <div>
@@ -49,8 +49,8 @@ export function SettingsForm({ business }: { business: Business }) {
         </div>
       </section>
 
-      <section className="card space-y-4 p-5">
-        <h2 className="font-semibold">Regras de agendamento online</h2>
+      <section className="card space-y-4 p-4 md:p-5">
+        <h2 className="text-lg font-bold">Regras de agendamento online</h2>
         <div className="grid gap-4 sm:grid-cols-3">
           <div>
             <label className="label" htmlFor="slotInterval">Intervalo entre horários</label>
@@ -84,7 +84,7 @@ export function SettingsForm({ business }: { business: Business }) {
       </section>
 
       <FormMessage error={state?.error} success={state?.success} />
-      <SubmitButton>Salvar configurações</SubmitButton>
+      <SubmitButton className="btn-primary w-full md:w-auto">Salvar configurações</SubmitButton>
     </form>
   );
 }

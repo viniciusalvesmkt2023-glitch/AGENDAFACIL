@@ -63,7 +63,7 @@ export default async function SubscriptionPage({ searchParams }: Props) {
         </div>
       )}
 
-      <section className="card mb-8 p-5">
+      <section className="card mb-6 p-4 md:p-5">
         {state.kind === "trial" && (
           <p>
             Você está no <strong>teste grátis</strong>: {state.daysLeft === 1 ? "último dia" : `faltam ${state.daysLeft} dias`}{" "}
@@ -112,7 +112,7 @@ export default async function SubscriptionPage({ searchParams }: Props) {
 
       {!hasCardSubscription && (
         <>
-          <h2 className="mb-4 text-lg font-semibold">
+          <h2 className="mb-3 text-lg font-bold">
             {state.kind === "active" ? "Renovar ou trocar de plano" : "Escolha seu plano"}
           </h2>
           <PlanPicker
@@ -135,7 +135,7 @@ export default async function SubscriptionPage({ searchParams }: Props) {
 
       {payments.length > 0 && (
         <section className="mt-10">
-          <h2 className="mb-3 text-lg font-semibold">Pagamentos</h2>
+          <h2 className="mb-3 text-lg font-bold">Pagamentos</h2>
           <ul className="card divide-y divide-zinc-100 text-sm">
             {payments.map((p) => (
               <li key={p.id} className="flex flex-wrap items-center justify-between gap-2 p-4">

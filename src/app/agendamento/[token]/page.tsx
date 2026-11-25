@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { MessageCircle } from "lucide-react";
 import { notFound } from "next/navigation";
 import { db } from "@/lib/db";
 import { formatDateLong, minutesToTime, nowInTimezone } from "@/lib/time";
@@ -43,7 +44,7 @@ export default async function AppointmentPage({ params, searchParams }: Props) {
           <Row label="Status"><StatusBadge status={a.status} /></Row>
           <Row label="Serviço">{a.service.name}</Row>
           <Row label="Profissional">{a.professional.name}</Row>
-          <Row label="Quando"><span className="capitalize">{when}</span></Row>
+          <Row label="Quando"><span className="inline-block first-letter:uppercase">{when}</span></Row>
           <Row label="Valor">{formatMoney(a.priceCents)}</Row>
           {a.business.address && <Row label="Endereço">{a.business.address}</Row>}
         </dl>
@@ -63,7 +64,7 @@ export default async function AppointmentPage({ params, searchParams }: Props) {
               target="_blank"
               className="btn-primary w-full"
             >
-              Falar com o estabelecimento no WhatsApp
+              <MessageCircle className="h-4 w-4" /> Falar no WhatsApp
             </a>
           )}
           {canCancel && (

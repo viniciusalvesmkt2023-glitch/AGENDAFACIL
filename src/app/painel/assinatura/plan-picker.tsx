@@ -29,7 +29,7 @@ export function PlanPicker({
 
   return (
     <div className="space-y-6">
-      <div className="grid gap-4 md:grid-cols-3">
+      <div className="grid gap-3 pt-2 md:grid-cols-3 md:gap-4">
         {plans.map((p) => {
           const selected = p.id === plan;
           return (
@@ -37,7 +37,7 @@ export function PlanPicker({
               key={p.id}
               type="button"
               onClick={() => setPlan(p.id)}
-              className={`relative rounded-xl border-2 bg-white p-5 text-left transition ${
+              className={`relative rounded-2xl border-2 bg-white p-4 text-left transition md:p-5 ${
                 selected ? "border-brand-600 shadow-md" : "border-zinc-200 hover:border-brand-300"
               }`}
             >
@@ -56,9 +56,9 @@ export function PlanPicker({
         })}
       </div>
 
-      <div className="card p-5">
+      <div className="card p-4 md:p-5">
         <p className="label">Forma de pagamento</p>
-        <div className="mb-4 flex gap-2">
+        <div className="mb-4 grid grid-cols-2 gap-2 sm:flex">
           <button type="button" onClick={() => setMethod("CARD")} className={method === "CARD" ? "btn-primary" : "btn-secondary"}>
             Cartão de crédito
           </button>
@@ -74,7 +74,7 @@ export function PlanPicker({
               Renovação automática no cartão. Você será direcionado ao ambiente seguro da Stripe. Cancele quando quiser.
             </p>
             <FormMessage error={cardState?.error} />
-            <SubmitButton pendingText="Abrindo pagamento..." className="btn-primary" >Assinar com cartão</SubmitButton>
+            <SubmitButton pendingText="Abrindo pagamento..." className="btn-primary w-full sm:w-auto">Assinar com cartão</SubmitButton>
             {!cardEnabled && <p className="text-xs text-amber-600">Pagamento com cartão em configuração.</p>}
           </form>
         ) : (
@@ -102,7 +102,7 @@ export function PlanPicker({
               )}
             </p>
             <FormMessage error={pixState?.error} />
-            <SubmitButton pendingText="Gerando Pix..." className="btn-primary">Gerar Pix</SubmitButton>
+            <SubmitButton pendingText="Gerando Pix..." className="btn-primary w-full sm:w-auto">Gerar Pix</SubmitButton>
             {!pixEnabled && <p className="text-xs text-amber-600">Pagamento com Pix em configuração.</p>}
           </form>
         )}

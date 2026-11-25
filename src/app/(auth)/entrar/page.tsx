@@ -10,7 +10,7 @@ export default function LoginPage() {
   const [state, action] = useActionState(login, undefined);
   return (
     <>
-      <h1 className="text-xl font-semibold">Entrar</h1>
+      <h1 className="text-2xl font-extrabold">Entrar</h1>
       <p className="mt-1 text-sm text-zinc-500">Acesse o painel do seu estabelecimento.</p>
       <form action={action} className="mt-6 space-y-4">
         <div>

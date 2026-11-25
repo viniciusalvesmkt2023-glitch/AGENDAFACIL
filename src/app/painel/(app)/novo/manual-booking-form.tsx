@@ -19,6 +19,7 @@ export function ManualBookingForm({ slug, canSendWhatsapp, initialDate, services
   const [serviceId, setServiceId] = useState("");
   const [professionalId, setProfessionalId] = useState("");
   const [date, setDate] = useState(initialDate);
+  const [time, setTime] = useState<number | null>(null);
   const { slots, loading } = useSlots({ slug, serviceId, professionalId, date, painel: true });
 
   const availablePros = useMemo(
@@ -27,7 +28,7 @@ export function ManualBookingForm({ slug, canSendWhatsapp, initialDate, services
   );
 
   return (
-    <form action={action} className="card max-w-2xl space-y-4 p-6">
+    <form action={action} className="card max-w-2xl space-y-4 p-4 md:p-6">
       <div className="grid gap-4 sm:grid-cols-2">
         <div>
           <label className="label" htmlFor="serviceId">Serviço</label>
@@ -39,6 +40,7 @@ export function ManualBookingForm({ slug, canSendWhatsapp, initialDate, services
             onChange={(e) => {
               setServiceId(e.target.value);
               setProfessionalId("");
+              setTime(null);
             }}
             required
           >
@@ -55,7 +57,10 @@ export function ManualBookingForm({ slug, canSendWhatsapp, initialDate, services
             id="professionalId"
             name="professionalId"
             value={professionalId}
-            onChange={(e) => setProfessionalId(e.target.value)}
+            onChange={(e) => {
+              setProfessionalId(e.target.value);
+              setTime(null);
+            }}
           >
             <option value="">Qualquer disponível</option>
             {availablePros.map((p) => (
@@ -65,18 +70,36 @@ export function ManualBookingForm({ slug, canSendWhatsapp, initialDate, services
         </div>
         <div>
           <label className="label" htmlFor="date">Data</label>
-          <input className="input" type="date" id="date" name="date" value={date} onChange={(e) => setDate(e.target.value)} required />
+          <input className="input" type="date" id="date" name="date" value={date} onChange={(e) => {
+            setDate(e.target.value);
+            setTime(null);
+          }} required />
         </div>
-        <div>
-          <label className="label" htmlFor="time">Horário</label>
-          <select className="input" id="time" name="time" required disabled={!serviceId || loading}>
-            <option value="">
-              {!serviceId ? "Escolha o serviço" : loading ? "Carregando..." : slots.length ? "Selecione..." : "Sem horários livres"}
-            </option>
-            {slots.map((s) => (
-              <option key={s.time} value={s.time}>{s.label}</option>
-            ))}
-          </select>
+        <div className="sm:col-span-2">
+          <p className="label">Horário</p>
+          <input type="hidden" name="time" value={time ?? ""} />
+          {!serviceId ? (
+            <p className="rounded-xl bg-zinc-50 px-3 py-3 text-sm text-zinc-500">Escolha o serviço para ver os horários livres.</p>
+          ) : loading ? (
+            <p className="rounded-xl bg-zinc-50 px-3 py-3 text-sm text-zinc-500">Buscando horários...</p>
+          ) : slots.length === 0 ? (
+            <p className="rounded-xl bg-amber-50 px-3 py-3 text-sm text-amber-800">Nenhum horário livre nesta data.</p>
+          ) : (
+            <div className="grid grid-cols-4 gap-2 sm:grid-cols-6">
+              {slots.map((s) => (
+                <button
+                  key={s.time}
+                  type="button"
+                  onClick={() => setTime(s.time)}
+                  className={`min-h-11 rounded-xl border text-sm font-semibold transition ${
+                    time === s.time ? "border-navy-900 bg-navy-900 text-white" : "border-zinc-200 bg-white text-navy-900 active:bg-zinc-50"
+                  }`}
+                >
+                  {s.label}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
         <div>
           <label className="label" htmlFor="clientName">Nome do cliente</label>
@@ -93,12 +116,12 @@ export function ManualBookingForm({ slug, canSendWhatsapp, initialDate, services
       </div>
       {canSendWhatsapp && (
         <label className="flex items-center gap-2 text-sm text-zinc-700">
-          <input type="checkbox" name="sendWhatsapp" defaultChecked className="h-4 w-4 accent-brand-600" />
+          <input type="checkbox" name="sendWhatsapp" defaultChecked className="h-5 w-5 accent-brand-600" />
           Enviar confirmação pelo WhatsApp para o cliente
         </label>
       )}
       <FormMessage error={state?.error} />
-      <SubmitButton pendingText="Agendando...">Confirmar agendamento</SubmitButton>
+      <SubmitButton pendingText="Agendando..." className="btn-primary w-full md:w-auto">Confirmar agendamento</SubmitButton>
     </form>
   );
 }

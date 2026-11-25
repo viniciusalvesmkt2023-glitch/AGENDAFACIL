@@ -13,6 +13,8 @@
   --color-brand-700: #c24e00;
   --color-brand-900: #6b2b00;
   /* Azul-marinho HoraBoa */
+  --color-navy-50: #f1f4fa;
+  --color-navy-100: #e1e7f2;
   --color-navy-600: #2c4373;
   --color-navy-700: #22355c;
   --color-navy-800: #1b2b4b;
@@ -21,36 +23,73 @@
   --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
 }
 
-body {
-  @apply bg-zinc-50 text-zinc-900 antialiased;
+/* Estilos base ficam na camada "base" para que as classes utilitárias (ex.: text-white) possam sobrescrever */
+@layer base {
+  html {
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  body {
+    @apply bg-[#f6f7fb] text-zinc-900 antialiased;
+  }
+
+  /* Títulos na fonte da marca */
+  h1,
+  h2 {
+    @apply font-display tracking-tight text-navy-900;
+  }
 }
 
+/* Botões: altura confortável para o dedo no celular (44px), mais compactos no computador */
 @utility btn {
-  @apply inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition
-    disabled:cursor-not-allowed disabled:opacity-50;
+  @apply inline-flex min-h-11 items-center justify-center gap-2 rounded-xl px-4 text-sm font-semibold transition
+    active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50 md:min-h-10;
 }
 
 @utility btn-primary {
-  @apply btn bg-brand-600 text-white hover:bg-brand-700;
+  @apply btn bg-brand-600 text-white shadow-sm shadow-brand-600/20 hover:bg-brand-700;
+}
+
+@utility btn-navy {
+  @apply btn bg-navy-900 text-white hover:bg-navy-800;
 }
 
 @utility btn-secondary {
-  @apply btn border border-zinc-300 bg-white text-zinc-700 hover:bg-zinc-50;
+  @apply btn border border-zinc-200 bg-white text-zinc-700 hover:bg-zinc-50;
 }
 
 @utility btn-danger {
   @apply btn border border-red-200 bg-white text-red-600 hover:bg-red-50;
 }
 
+@utility btn-sm {
+  @apply min-h-9 rounded-lg px-3 text-xs md:min-h-8;
+}
+
+/* Botão quadrado só com ícone */
+@utility btn-icon {
+  @apply inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-zinc-200 bg-white text-zinc-600
+    transition hover:bg-zinc-50 active:scale-95;
+}
+
+/* 16px no celular: evita o zoom automático do iPhone ao tocar no campo */
 @utility input {
-  @apply w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm outline-none transition
-    focus:border-brand-500 focus:ring-2 focus:ring-brand-100;
+  @apply min-h-11 w-full rounded-xl border border-zinc-200 bg-white px-3 py-2 text-base text-zinc-900 outline-none transition
+    placeholder:text-zinc-400 focus:border-brand-500 focus:ring-4 focus:ring-brand-100 md:min-h-10 md:text-sm;
 }
 
 @utility label {
-  @apply mb-1 block text-sm font-medium text-zinc-700;
+  @apply mb-1.5 block text-sm font-medium text-zinc-700;
 }
 
 @utility card {
-  @apply rounded-xl border border-zinc-200 bg-white shadow-sm;
+  @apply rounded-2xl border border-zinc-200/80 bg-white shadow-[0_1px_2px_rgba(21,35,62,0.04)];
+}
+
+/* Esconde a barra de rolagem em faixas que rolam de lado (dias da agenda) */
+@utility no-scrollbar {
+  scrollbar-width: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
 }

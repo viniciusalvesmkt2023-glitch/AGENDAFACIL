@@ -10,7 +10,7 @@ export default function ForgotPasswordPage() {
   const [state, action] = useActionState(requestPasswordReset, undefined);
   return (
     <>
-      <h1 className="text-xl font-semibold">Esqueceu sua senha?</h1>
+      <h1 className="text-2xl font-extrabold">Esqueceu sua senha?</h1>
       <p className="mt-1 text-sm text-zinc-500">Informe seu e-mail e enviaremos um link para criar uma nova.</p>
       {state?.success ? (
         <div className="mt-6"><FormMessage success={state.success} /></div>

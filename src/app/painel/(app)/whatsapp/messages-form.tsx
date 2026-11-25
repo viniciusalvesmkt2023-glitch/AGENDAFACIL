@@ -64,10 +64,10 @@ export function MessagesForm(props: Settings) {
               </span>
             </label>
 
-            <div className="grid gap-3 sm:grid-cols-[220px_1fr] sm:items-center">
+            <div className="grid gap-2 sm:grid-cols-[220px_1fr] sm:items-center">
               <label className="text-sm font-medium" htmlFor="reminderDayMode">Lembrete antecipado</label>
               <div className="flex flex-wrap items-center gap-2">
-                <select id="reminderDayMode" name="reminderDayMode" value={dayMode} onChange={(e) => setDayMode(e.target.value)} className="input w-auto">
+                <select id="reminderDayMode" name="reminderDayMode" value={dayMode} onChange={(e) => setDayMode(e.target.value)} className="input sm:w-auto">
                   <option value="OFF">Desligado</option>
                   <option value="24H">24 horas antes</option>
                   <option value="EVENING">Na véspera, em horário fixo</option>
@@ -81,9 +81,9 @@ export function MessagesForm(props: Settings) {
               </div>
             </div>
 
-            <div className="grid gap-3 sm:grid-cols-[220px_1fr] sm:items-center">
+            <div className="grid gap-2 sm:grid-cols-[220px_1fr] sm:items-center">
               <label className="text-sm font-medium" htmlFor="reminderShortMinutes">Lembrete próximo do horário</label>
-              <select id="reminderShortMinutes" name="reminderShortMinutes" value={shortMinutes} onChange={(e) => setShortMinutes(Number(e.target.value))} className="input w-auto">
+              <select id="reminderShortMinutes" name="reminderShortMinutes" value={shortMinutes} onChange={(e) => setShortMinutes(Number(e.target.value))} className="input sm:w-auto">
                 {SHORT_OPTIONS.map((m) => (
                   <option key={m} value={m}>{shortLabel(m)}</option>
                 ))}
@@ -125,7 +125,7 @@ export function MessagesForm(props: Settings) {
       )}
 
       <FormMessage error={state?.error} success={state?.success} />
-      <SubmitButton>Salvar</SubmitButton>
+      <SubmitButton className="btn-primary w-full md:w-auto">Salvar</SubmitButton>
     </form>
   );
 }
@@ -188,10 +188,10 @@ function MessageEditor({
 export function TestMessageForm({ defaultPhone }: { defaultPhone: string }) {
   const [state, action] = useActionState(sendTestMessage, undefined);
   return (
-    <form action={action} className="flex flex-wrap items-end gap-2">
-      <div>
+    <form action={action} className="grid gap-2 sm:flex sm:items-end">
+      <div className="min-w-0 sm:w-64">
         <label className="label" htmlFor="to">Enviar mensagem de teste para</label>
-        <input id="to" name="to" defaultValue={defaultPhone} placeholder="(11) 99999-9999" inputMode="tel" className="input w-56" />
+        <input id="to" name="to" defaultValue={defaultPhone} placeholder="(11) 99999-9999" inputMode="tel" className="input" />
       </div>
       <SubmitButton className="btn-secondary" pendingText="Enviando...">Enviar teste</SubmitButton>
       <div className="w-full"><FormMessage error={state?.error} success={state?.success} /></div>

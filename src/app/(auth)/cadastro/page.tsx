@@ -10,7 +10,7 @@ export default function SignupPage() {
   const [state, action] = useActionState(signup, undefined);
   return (
     <>
-      <h1 className="text-xl font-semibold">Crie sua conta</h1>
+      <h1 className="text-2xl font-extrabold">Crie sua conta</h1>
       <p className="mt-1 text-sm text-zinc-500">Comece a receber agendamentos em poucos minutos.</p>
       <form action={action} className="mt-6 space-y-4">
         <div>

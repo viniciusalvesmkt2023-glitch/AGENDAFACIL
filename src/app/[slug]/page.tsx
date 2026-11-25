@@ -46,7 +46,7 @@ export default async function PublicBookingPage({ params }: Props) {
           <div className="grid h-14 w-14 place-items-center rounded-2xl bg-brand-500 text-2xl font-bold">
             {business.name.charAt(0).toUpperCase()}
           </div>
-          <h1 className="mt-4 text-3xl font-bold">{business.name}</h1>
+          <h1 className="mt-4 text-3xl font-extrabold text-white">{business.name}</h1>
           {business.description && <p className="mt-2 text-white/80">{business.description}</p>}
           <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-sm text-white/80">
             {business.address && <span>📍 {business.address}</span>}

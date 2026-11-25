@@ -28,7 +28,7 @@ export default async function HoursPage() {
     <>
       <PageHeader
         title="Horários de funcionamento"
-        description="Os clientes só verão horários disponíveis dentro destes períodos. Deixe o intervalo vazio se não houver pausa."
+        description="Os clientes só veem horários dentro destes períodos. Deixe o intervalo vazio se não houver pausa."
       />
       <HoursForm days={days} />
     </>

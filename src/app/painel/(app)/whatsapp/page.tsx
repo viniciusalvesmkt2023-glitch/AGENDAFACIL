@@ -21,9 +21,9 @@ export default async function WhatsappPage() {
     <>
       <PageHeader title="WhatsApp" description="Confirmações e lembretes automáticos enviados do WhatsApp do seu estabelecimento." />
 
-      <section className="card mb-6 p-5">
+      <section className="card mb-4 p-4 md:p-5">
         <div className="mb-4 flex flex-wrap items-center gap-3">
-          <h2 className="font-semibold">Conexão</h2>
+          <h2 className="text-lg font-bold">Conexão</h2>
           <span
             className={`rounded-full px-2 py-0.5 text-xs font-medium ring-1 ring-inset ${
               connected ? "bg-emerald-50 text-emerald-700 ring-emerald-200" : "bg-zinc-100 text-zinc-600 ring-zinc-200"
@@ -43,7 +43,7 @@ export default async function WhatsappPage() {
             </p>
             <TestMessageForm defaultPhone={b.phone ?? ""} />
             <form action={disconnectWhatsapp}>
-              <button className="btn-danger">Desconectar WhatsApp</button>
+              <button className="btn-danger w-full md:w-auto">Desconectar WhatsApp</button>
             </form>
           </div>
         ) : (
@@ -51,8 +51,8 @@ export default async function WhatsappPage() {
         )}
       </section>
 
-      <section className="card mb-6 p-5">
-        <h2 className="mb-4 font-semibold">Mensagens automáticas</h2>
+      <section className="card mb-4 p-4 md:p-5">
+        <h2 className="mb-4 text-lg font-bold">Mensagens automáticas</h2>
         <MessagesForm
           enabled={b.whatsappRemindersEnabled}
           confirmationEnabled={b.confirmationEnabled}
@@ -65,8 +65,8 @@ export default async function WhatsappPage() {
         />
       </section>
 
-      <section className="card p-5">
-        <h2 className="mb-1 font-semibold">Boas práticas para não ter o número bloqueado</h2>
+      <section className="card p-4 md:p-5">
+        <h2 className="mb-1 text-lg font-bold">Boas práticas para não ter o número bloqueado</h2>
         <ul className="list-disc space-y-1 pl-5 text-sm text-zinc-600">
           <li>Use um número que já tenha conversas e histórico (números novos são mais vigiados).</li>
           <li>O sistema só envia mensagens a quem agendou — não use este WhatsApp para propagandas em massa.</li>
