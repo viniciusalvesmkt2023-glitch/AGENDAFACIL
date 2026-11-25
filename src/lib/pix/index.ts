@@ -13,7 +13,9 @@ export function getPixProvider(): PixProvider | null {
   const name = process.env.PIX_PROVIDER?.toLowerCase();
   // O provedor de teste nunca roda na Vercel (só no computador local)
   if (name === "mock" && !process.env.VERCEL) return mockPixProvider;
-  if (name === "syncpay" && process.env.SYNCPAY_API_KEY) return syncPayProvider;
+  if (process.env.SYNCPAY_CLIENT_ID && process.env.SYNCPAY_CLIENT_SECRET && process.env.SYNCPAY_WEBHOOK_SECRET) {
+    return syncPayProvider;
+  }
   return null;
 }
 

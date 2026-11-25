@@ -1,4 +1,3 @@
-import { timingSafeEqual } from "node:crypto";
 import { NextResponse, type NextRequest } from "next/server";
 import { db } from "@/lib/db";
 import { dueReminder, reminderSchedule, type ReminderType } from "@/lib/reminders";
@@ -6,25 +5,15 @@ import { sendAppointmentMessage } from "@/lib/notifications";
 import { hasAccess } from "@/lib/subscription";
 import { addDays, todayInTimezone } from "@/lib/time";
 import { evolutionConfigured } from "@/lib/evolution";
+import { isCronAuthorized } from "@/lib/cron-auth";
 
 // Envia os lembretes de WhatsApp que estão no horário, conforme a configuração de cada estabelecimento.
 // Deve ser chamada a cada 15 minutos por um agendador (Vercel Cron ou cron-job.org),
 // com o cabeçalho  Authorization: Bearer <CRON_SECRET>  ou com  ?key=<CRON_SECRET>  no endereço
 export const maxDuration = 60;
 
-/** Confere a chave ignorando espaços sobrando e maiúsculas/minúsculas em "Bearer". */
-function isAuthorized(header: string | null): boolean {
-  const expected = process.env.CRON_SECRET?.trim();
-  const received = header?.trim().replace(/^bearer\s+/i, "").trim();
-  if (!expected || !received) return false;
-  const a = Buffer.from(received);
-  const b = Buffer.from(expected);
-  return a.length === b.length && timingSafeEqual(a, b);
-}
-
 export async function GET(req: NextRequest) {
-  // Chave no cabeçalho "Authorization: Bearer ..." (Vercel Cron) ou no endereço "?key=..." (cron-job.org)
-  if (!isAuthorized(req.headers.get("authorization")) && !isAuthorized(req.nextUrl.searchParams.get("key"))) {
+  if (!isCronAuthorized(req)) {
     return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
   }
   if (!evolutionConfigured()) return NextResponse.json({ skipped: "WhatsApp não configurado" });

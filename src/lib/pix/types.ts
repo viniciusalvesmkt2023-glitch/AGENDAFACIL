@@ -3,7 +3,7 @@ export type PixChargeInput = {
   description: string;
   /** Nosso ID interno do pagamento (vai como referência externa no provedor). */
   reference: string;
-  customer: { name: string; email: string; taxId: string; phone?: string | null };
+  customer: { name: string; email: string; taxId: string; phone: string };
   /** Minutos até o QR code expirar. */
   expiresInMinutes: number;
 };
@@ -16,13 +16,15 @@ export type PixCharge = {
   expiresAt: Date;
 };
 
-export type PixWebhookResult = { externalId: string; status: "PAID" | "EXPIRED" | "FAILED" | "PENDING" } | null;
+export type PixStatus = "PAID" | "EXPIRED" | "FAILED" | "PENDING" | "REFUNDED";
+
+export type PixWebhookResult = { externalId: string; status: PixStatus } | null;
 
 export interface PixProvider {
   name: string;
   createCharge(input: PixChargeInput): Promise<PixCharge>;
   /** Consulta o status (usado como reserva caso o webhook atrase). */
-  getStatus?(externalId: string): Promise<"PAID" | "EXPIRED" | "FAILED" | "PENDING">;
+  getStatus?(externalId: string): Promise<PixStatus>;
   /** Valida a autenticidade do webhook e extrai o resultado. Retorna null se inválido ou irrelevante. */
   parseWebhook(rawBody: string, headers: Headers): Promise<PixWebhookResult>;
 }

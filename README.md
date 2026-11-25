@@ -98,9 +98,17 @@ Datas são guardadas como `YYYY-MM-DD` e horários como minutos desde 00:00, no 
      `checkout.session.completed`, `customer.subscription.created`, `customer.subscription.updated`,
      `customer.subscription.deleted` e `invoice.paid`. Copie o *Signing secret* para `STRIPE_WEBHOOK_SECRET`.
   3. Em *Settings → Billing → Customer portal*, salve a configuração do portal (permitir cancelar e atualizar cartão).
-- **Pix (SyncPay):** tela com QR code e copia e cola, liberação automática via webhook `https://SEU-DOMINIO/api/webhooks/pix`.
-  A integração com a API da SyncPay fica em `src/lib/pix/syncpay.ts` (**pendente** da documentação oficial).
-  Para testar localmente, use `PIX_PROVIDER="mock"`.
+- **Pix (SyncPay):** tela com QR code e copia e cola; liberação automática pelo webhook. Integração em `src/lib/pix/syncpay.ts`
+  ([documentação da SyncPay](https://docs.syncpayments.com.br)):
+  1. No painel da SyncPay, em *Developer → API*, crie uma chave com as permissões **Consulta** e **Venda**
+     → `SYNCPAY_CLIENT_ID` e `SYNCPAY_CLIENT_SECRET`.
+  2. Crie um webhook do evento **`transaction`** para `https://SEU-DOMINIO/api/webhooks/pix` e guarde o segredo (token)
+     → `SYNCPAY_WEBHOOK_SECRET`. A assinatura `X-SyncPay-Signature` (HMAC-SHA256) é verificada em cada aviso.
+  3. **IPs autorizados:** a SyncPay só aceita chamadas de IPs cadastrados, e a Vercel não tem IP fixo — combine com o
+     suporte da SyncPay antes de ir para produção.
+  4. A consulta de status é só contingência (`/api/cron/pagamentos`, a cada 15 min, no máximo 4 consultas por cobrança),
+     pois a SyncPay limita a 5 consultas por transação.
+  - Pix Automático (renovação automática) ainda não implementado.
 
 ## Lembretes no WhatsApp (Evolution API)
 

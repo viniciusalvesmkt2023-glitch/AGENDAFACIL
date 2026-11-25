@@ -39,6 +39,7 @@ model Business {
   stripeCustomerId     String?   @unique
   stripeSubscriptionId String?   @unique
   taxId                String? // CPF/CNPJ (necessário para Pix)
+  billingPhone         String? // telefone do pagador (necessário para Pix)
 
   // ----- WhatsApp (Evolution API: o salão conecta o próprio número por QR code) -----
   whatsappRemindersEnabled Boolean   @default(true)
@@ -108,9 +109,12 @@ model Payment {
   pixQrCode   String? // imagem base64 ou URL do QR code
   expiresAt   DateTime?
   paidAt      DateTime?
+  // Consultas de status feitas ao provedor (a SyncPay limita a 5 por cobrança)
+  statusChecks Int      @default(0)
   createdAt   DateTime  @default(now())
 
   @@index([businessId, createdAt])
+  @@index([status, method, createdAt])
 }
 
 // Registro de mensagens enviadas (WhatsApp)

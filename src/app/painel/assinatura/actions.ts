@@ -107,11 +107,14 @@ export async function startPixPayment(_: BillingState, formData: FormData): Prom
   const taxId = String(formData.get("taxId") ?? "").replace(/\D/g, "");
   if (!isValidTaxId(taxId)) return { error: "Informe um CPF ou CNPJ válido." };
 
+  const phone = String(formData.get("phone") ?? "").replace(/\D/g, "");
+  if (phone.length < 10) return { error: "Informe um telefone com DDD." };
+
   const provider = getPixProvider();
   if (!provider) return { error: "Pagamento com Pix ainda não está disponível. Tente o cartão ou fale com o suporte." };
 
-  if (business.taxId !== taxId) {
-    await db.business.update({ where: { id: business.id }, data: { taxId } });
+  if (business.taxId !== taxId || business.billingPhone !== phone) {
+    await db.business.update({ where: { id: business.id }, data: { taxId, billingPhone: phone } });
   }
 
   // Reaproveita uma cobrança pendente do mesmo plano que ainda não expirou
@@ -130,7 +133,7 @@ export async function startPixPayment(_: BillingState, formData: FormData): Prom
       amountCents: plan.priceCents,
       description: `${APP_NAME} — Plano ${plan.name}`,
       reference: payment.id,
-      customer: { name: business.name, email: user.email, taxId, phone: business.phone },
+      customer: { name: business.name, email: user.email, taxId, phone },
       expiresInMinutes: 60,
     });
     await db.payment.update({

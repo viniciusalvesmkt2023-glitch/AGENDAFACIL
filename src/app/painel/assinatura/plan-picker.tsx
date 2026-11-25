@@ -12,11 +12,13 @@ export function PlanPicker({
   cardEnabled,
   pixEnabled,
   defaultTaxId,
+  defaultPhone,
 }: {
   plans: PlanView[];
   cardEnabled: boolean;
   pixEnabled: boolean;
   defaultTaxId: string;
+  defaultPhone: string;
 }) {
   const [plan, setPlan] = useState(plans[plans.length - 1].id);
   const [method, setMethod] = useState<"CARD" | "PIX">(cardEnabled || !pixEnabled ? "CARD" : "PIX");
@@ -76,9 +78,15 @@ export function PlanPicker({
         ) : (
           <form action={pixAction} className="space-y-3">
             <input type="hidden" name="plan" value={plan} />
-            <div className="max-w-xs">
-              <label className="label" htmlFor="taxId">CPF ou CNPJ do pagador</label>
-              <input className="input" id="taxId" name="taxId" defaultValue={defaultTaxId} required inputMode="numeric" placeholder="000.000.000-00" />
+            <div className="grid max-w-xl gap-3 sm:grid-cols-2">
+              <div>
+                <label className="label" htmlFor="taxId">CPF ou CNPJ do pagador</label>
+                <input className="input" id="taxId" name="taxId" defaultValue={defaultTaxId} required inputMode="numeric" placeholder="000.000.000-00" />
+              </div>
+              <div>
+                <label className="label" htmlFor="phone">Telefone com DDD</label>
+                <input className="input" id="phone" name="phone" defaultValue={defaultPhone} required inputMode="tel" placeholder="(11) 99999-9999" />
+              </div>
             </div>
             <p className="text-sm text-zinc-600">
               Pague com QR code ou copia e cola. A liberação é automática assim que o pagamento é confirmado.

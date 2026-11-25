@@ -98,6 +98,7 @@ export default async function SubscriptionPage({ searchParams }: Props) {
             cardEnabled={!!getStripe()}
             pixEnabled={!!getPixProvider()}
             defaultTaxId={b.taxId ?? ""}
+            defaultPhone={b.billingPhone ?? b.phone ?? ""}
             plans={PLAN_LIST.map((p) => ({
               id: p.id,
               name: p.name,
