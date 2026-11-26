@@ -28,14 +28,7 @@ import { Cta } from "@/components/landing/cta";
 import { formatMoney } from "@/lib/format";
 import { discountPercent, monthlyEquivalentCents, PLANS, TRIAL_DAYS, type Plan } from "@/lib/plans";
 
-const TYPES = [
-  ["💈", "Barbearias"],
-  ["💇‍♀️", "Salões de beleza"],
-  ["💅", "Manicure e pedicure"],
-  ["👁️", "Sobrancelhas e cílios"],
-  ["🧖‍♀️", "Estética e spa"],
-  ["🩺", "Clínicas"],
-];
+const TYPES = ["Barbearias", "Salões de beleza", "Manicure e pedicure", "Sobrancelhas e cílios", "Estética e spa", "Clínicas"];
 
 const FEATURES = [
   { icon: CalendarDays, color: "g-brand", title: "Agenda do dia na palma da mão", text: "Próximo cliente em destaque, concluir, marcar falta e remarcar com um toque." },
@@ -118,15 +111,19 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ c
         </div>
       </section>
 
-      {/* Para quem é */}
-      <section className="types">
-        <div className="lp-wrap">
-          <p>Feito para quem trabalha com horário marcado</p>
-          <div className="marq">
-            {TYPES.map(([emoji, label]) => (
-              <span key={label} className="lp-glass"><i>{emoji}</i>{label}</span>
-            ))}
-          </div>
+      {/* Para quem é: faixa laranja passando em loop */}
+      <section className="lp-band" aria-label="Feito para quem trabalha com horário marcado">
+        <div className="lp-band-track">
+          {[0, 1].map((copy) => (
+            <div key={copy} className="lp-band-group" aria-hidden={copy === 1 ? true : undefined}>
+              {[...TYPES, ...TYPES].map((label, i) => (
+                <span key={`${label}-${i}`}>
+                  {label}
+                  <i>✦</i>
+                </span>
+              ))}
+            </div>
+          ))}
         </div>
       </section>
 

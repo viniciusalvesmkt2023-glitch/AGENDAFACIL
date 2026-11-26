@@ -325,3 +325,18 @@
 .lp .final .lp-cta { margin-top: 30px; }
 @media (prefers-reduced-motion: reduce) { .lp .lp-cta::before { animation: none; } }
 }
+
+@layer components {
+/* ---------- Faixa laranja com os tipos de negócio passando em loop ---------- */
+.lp .lp-band { position: relative; margin: 26px 0 0; overflow: hidden; height: 60px; display: flex; align-items: center;
+  background: linear-gradient(90deg, #e45a00, var(--b) 30%, #ff8a2b 50%, var(--b) 70%, #e45a00);
+  box-shadow: 0 18px 40px rgba(254, 110, 2, .28), inset 0 1px 0 rgba(255, 255, 255, .25), inset 0 -1px 0 rgba(0, 0, 0, .08); }
+.lp .lp-band-track { display: flex; width: max-content; animation: lp-faixa 38s linear infinite; }
+.lp .lp-band:hover .lp-band-track { animation-play-state: paused; }
+.lp .lp-band-group { display: flex; flex-shrink: 0; }
+.lp .lp-band-group span { display: inline-flex; align-items: center; color: #fff; font-weight: 800; font-size: 15px; letter-spacing: .2em; text-transform: uppercase; white-space: nowrap; }
+.lp .lp-band-group i { font-style: normal; font-size: 14px; margin: 0 30px; opacity: .85; }
+@keyframes lp-faixa { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+@media (max-width: 700px) { .lp .lp-band { height: 52px; margin-top: 18px; } .lp .lp-band-group span { font-size: 13px; } .lp .lp-band-group i { margin: 0 20px; } }
+@media (prefers-reduced-motion: reduce) { .lp .lp-band-track { animation: none; } }
+}
