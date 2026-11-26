@@ -1,59 +1,81 @@
 import Link from "next/link";
-import { CalendarOff, ChevronRight, Palette, CircleHelp, CreditCard, Clock, ExternalLink, KeyRound, LogOut, MessageCircle, Settings, UserRound } from "lucide-react";
+import { ChevronRight, ExternalLink, LogOut } from "lucide-react";
 import { requireUser } from "@/lib/auth";
 import { logout } from "../../(auth)/actions";
 import { ShareLinkButton } from "@/components/copy-button";
+import { NAV_ITEMS } from "@/components/nav-items";
+import { getAccessState } from "@/lib/subscription";
 
-const ITEMS = [
-  { href: "/painel/pagina", label: "Minha página", desc: "Logo, capa, cor e redes sociais", icon: Palette },
-  { href: "/painel/profissionais", label: "Profissionais", desc: "Equipe e serviços de cada um", icon: UserRound },
-  { href: "/painel/horarios", label: "Horários", desc: "Dias e horários de funcionamento", icon: Clock },
-  { href: "/painel/bloqueios", label: "Bloqueios", desc: "Folgas, férias e compromissos", icon: CalendarOff },
-  { href: "/painel/whatsapp", label: "WhatsApp", desc: "Conexão, confirmações e lembretes", icon: MessageCircle },
-  { href: "/painel/configuracoes", label: "Configurações", desc: "Dados do salão e regras de agendamento", icon: Settings },
-  { href: "/painel/assinatura", label: "Assinatura", desc: "Plano e pagamentos", icon: CreditCard },
-  { href: "/painel/conta", label: "Minha conta", desc: "Seus dados, senha e privacidade", icon: KeyRound },
-  { href: "/painel/suporte", label: "Suporte", desc: "Dúvidas e ajuda", icon: CircleHelp },
+// Itens do menu em grupos (os da barra de baixo não se repetem aqui)
+const GROUPS = [
+  ["/painel/pagina", "/painel/profissionais", "/painel/horarios", "/painel/bloqueios"],
+  ["/painel/whatsapp", "/painel/configuracoes", "/painel/assinatura"],
+  ["/painel/conta", "/painel/suporte"],
 ];
 
 export default async function MorePage() {
   const user = await requireUser();
-  const publicPath = `/${user.business.slug}`;
-  return (
-    <div className="space-y-4">
-      <h1 className="text-2xl font-extrabold">Mais</h1>
+  const b = user.business;
+  const publicPath = `/${b.slug}`;
+  const access = getAccessState(b);
 
-      <div className="card p-4">
-        <p className="text-sm font-medium text-zinc-500">Seu link de agendamento</p>
-        <p className="mt-0.5 truncate font-display text-lg font-bold text-navy-900">horaboa.com{publicPath}</p>
-        <div className="mt-3 grid grid-cols-2 gap-2">
-          <ShareLinkButton value={publicPath} title={user.business.name} className="btn-primary" label="Compartilhar" />
-          <Link href={publicPath} target="_blank" className="btn-secondary">
-            <ExternalLink className="h-4 w-4" /> Ver página
+  // Etiquetas de situação ao lado de alguns itens
+  const tags: Record<string, { text: string; tone: "" | "ok" | "bad" } | undefined> = {
+    "/painel/whatsapp": b.whatsappStatus === "CONNECTED" ? { text: "Conectado", tone: "ok" } : b.whatsappConnectedAt ? { text: "Desconectado", tone: "bad" } : undefined,
+    "/painel/assinatura":
+      access.kind === "trial"
+        ? { text: access.daysLeft === 1 ? "Último dia grátis" : `${access.daysLeft} dias grátis`, tone: "" }
+        : access.kind === "grace" || access.kind === "blocked"
+          ? { text: "Vencida", tone: "bad" }
+          : access.kind === "active"
+            ? { text: "Ativa", tone: "ok" }
+            : undefined,
+  };
+
+  return (
+    <div className="space-y-3">
+      <h1 className="pn-h1 pt-1">Mais</h1>
+
+      <div className="pn-link pn-card">
+        <small>Seu link de agendamento</small>
+        <b>
+          horaboa.com/<span>{b.slug}</span>
+        </b>
+        <div className="mt-3.5 grid grid-cols-2 gap-2">
+          <ShareLinkButton value={publicPath} title={b.name} className="pn-btn pn-g-green" label="Compartilhar" />
+          <Link href={publicPath} target="_blank" className="pn-btn pn-g-blue">
+            <ExternalLink /> Ver página
           </Link>
         </div>
       </div>
 
-      <ul className="card divide-y divide-zinc-100 overflow-hidden">
-        {ITEMS.map(({ href, label, desc, icon: Icon }) => (
-          <li key={href}>
-            <Link href={href} className="flex items-center gap-3 px-4 py-3.5 active:bg-zinc-50">
-              <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-navy-50 text-navy-700">
-                <Icon className="h-5 w-5" />
-              </span>
-              <span className="min-w-0 flex-1">
-                <span className="block font-medium text-navy-900">{label}</span>
-                <span className="block truncate text-sm text-zinc-500">{desc}</span>
-              </span>
-              <ChevronRight className="h-5 w-5 text-zinc-300" />
-            </Link>
-          </li>
-        ))}
-      </ul>
+      {GROUPS.map((group, gi) => (
+        <ul key={gi} className="pn-group pn-card">
+          {group.map((href) => {
+            const item = NAV_ITEMS.find((i) => i.href === href)!;
+            const Icon = item.icon;
+            const tag = tags[href];
+            return (
+              <li key={href}>
+                <Link href={href} className="pn-row">
+                  <span className={`ic ${item.color}`}>
+                    <Icon />
+                  </span>
+                  <span className="tx">
+                    <b>{item.label}</b>
+                    <small>{item.desc}</small>
+                  </span>
+                  {tag ? <span className={`pn-tag ${tag.tone}`}>{tag.text}</span> : <ChevronRight className="chev" />}
+                </Link>
+              </li>
+            );
+          })}
+        </ul>
+      ))}
 
       <form action={logout}>
-        <button className="btn-secondary w-full text-red-600">
-          <LogOut className="h-4 w-4" /> Sair da conta
+        <button className="pn-btn soft w-full text-red-600" style={{ color: "#ef4444" }}>
+          <LogOut /> Sair da conta
         </button>
       </form>
     </div>

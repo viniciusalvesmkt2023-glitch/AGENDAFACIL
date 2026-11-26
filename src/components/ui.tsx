@@ -71,7 +71,17 @@ export function EmptyState({ title, children, icon }: { title: string; children?
 
 export function FormMessage({ error, success }: { error?: string | null; success?: string | null }) {
   if (error) return <p className="rounded-xl bg-red-50 px-3 py-2.5 text-sm text-red-700">{error}</p>;
-  if (success) return <p className="rounded-xl bg-emerald-50 px-3 py-2.5 text-sm text-emerald-700">{success}</p>;
+  if (success)
+    return (
+      <p className="flex items-center gap-2.5 rounded-xl bg-emerald-50 px-3 py-2.5 text-sm font-medium text-emerald-700" role="status">
+        <span className="grid h-6 w-6 shrink-0 animate-[ui-pop_0.5s_cubic-bezier(0.2,1.4,0.4,1)_both] place-items-center rounded-full bg-gradient-to-br from-[#4ade80] to-[#16a34a] text-white shadow-sm">
+          <svg viewBox="0 0 24 24" className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth={3.2} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <path d="M20 6 9 17l-5-5" />
+          </svg>
+        </span>
+        {success}
+      </p>
+    );
   return null;
 }
 

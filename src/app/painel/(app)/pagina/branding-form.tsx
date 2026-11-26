@@ -73,8 +73,8 @@ export function BrandingForm({ business: b, services }: { business: Business; se
   return (
     <div className="grid gap-6 lg:grid-cols-[1fr_340px] lg:items-start">
       {/* Celular: alterna entre editar e ver a prévia */}
-      <div className="sticky top-[61px] z-20 -mx-4 bg-[#f6f7fb]/95 px-4 py-2 backdrop-blur lg:hidden">
-        <div className="grid grid-cols-2 gap-1 rounded-xl bg-zinc-200/70 p-1">
+      <div className="sticky top-[78px] z-20 py-1 lg:hidden">
+        <div className="pn-glass grid grid-cols-2 gap-1 rounded-2xl p-1">
           {(
             [
               ["edit", "Editar", Pencil],
@@ -273,7 +273,7 @@ export function BrandingForm({ business: b, services }: { business: Business; se
             </div>
           </section>
 
-          <div className="sticky bottom-24 z-10 space-y-2 md:bottom-4">
+          <div className="sticky bottom-[116px] z-10 space-y-2 md:bottom-4">
             <FormMessage error={state?.error} success={state?.success} />
             <SubmitButton className="btn-primary w-full shadow-lg md:w-auto md:px-8">Salvar página</SubmitButton>
           </div>

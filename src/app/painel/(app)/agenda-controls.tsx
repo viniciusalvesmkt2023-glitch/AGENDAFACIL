@@ -9,7 +9,7 @@ export function DatePickerButton({ date, professional }: { date: string; profess
   const ref = useRef<HTMLInputElement>(null);
   const router = useRouter();
   return (
-    <label className="btn-icon relative cursor-pointer overflow-hidden" aria-label="Escolher data">
+    <label className="pn-ib relative cursor-pointer overflow-hidden" aria-label="Escolher data">
       <CalendarDays className="h-5 w-5" />
       <input
         ref={ref}

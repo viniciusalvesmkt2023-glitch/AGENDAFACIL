@@ -110,6 +110,7 @@ model User {
   businessId   String
   business     Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
   termsAcceptedAt DateTime?
+  panelTheme   String   @default("LIGHT") // tema do painel: LIGHT | DARK (chave no topo do painel)
   createdAt    DateTime @default(now())
 
   passwordResetTokens PasswordResetToken[]

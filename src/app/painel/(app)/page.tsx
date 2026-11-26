@@ -1,16 +1,58 @@
 import Link from "next/link";
-import { CalendarClock, CalendarOff, CalendarPlus, Check, CheckCheck, ChevronLeft, ChevronRight, Lock, MessageCircle, MoreHorizontal, Phone, RotateCcw, UserX, X } from "lucide-react";
+import {
+  CalendarClock,
+  CalendarOff,
+  CalendarPlus,
+  Check,
+  CheckCheck,
+  ChevronLeft,
+  ChevronRight,
+  DollarSign,
+  Lock,
+  MessageCircle,
+  MoreHorizontal,
+  Phone,
+  RotateCcw,
+  UserX,
+  X,
+} from "lucide-react";
 import { db } from "@/lib/db";
 import { requireActiveUser } from "@/lib/auth";
 import { addDays, formatDateLong, isValidDate, minutesToTime, nowInTimezone, WEEKDAYS_SHORT, weekdayOf } from "@/lib/time";
-import { formatMoney, formatPhone, whatsappLink } from "@/lib/format";
-import { EmptyState, FormMessage, StatusBadge } from "@/components/ui";
+import { formatMoney, whatsappLink } from "@/lib/format";
+import { FormMessage } from "@/components/ui";
 import { updateAppointmentStatus } from "@/app/painel/actions";
 import { DatePickerButton } from "./agenda-controls";
 import { blockAppliesOn } from "@/lib/schedule";
 import { blockTime } from "@/lib/blocks";
 
 type Props = { searchParams: Promise<{ data?: string; profissional?: string; erro?: string }> };
+
+/** Cor e nome de cada situação do agendamento. */
+const STATUS: Record<string, { label: string; color: string }> = {
+  SCHEDULED: { label: "Agendado", color: "#8b5cf6" },
+  CONFIRMED: { label: "Confirmado", color: "#22c55e" },
+  COMPLETED: { label: "Concluído", color: "#3b82f6" },
+  NO_SHOW: { label: "Faltou", color: "#f59e0b" },
+  CANCELED: { label: "Cancelado", color: "#ef4444" },
+};
+const AVATARS = ["pn-g-gray", "pn-g-blue", "pn-g-purple", "pn-g-teal", "pn-g-pink", "pn-g-indigo"];
+const MONTHS = ["jan.", "fev.", "mar.", "abr.", "mai.", "jun.", "jul.", "ago.", "set.", "out.", "nov.", "dez."];
+const WEEKDAY_NAMES = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
+
+function greeting(minutes: number) {
+  if (minutes < 12 * 60) return "Bom dia";
+  if (minutes < 18 * 60) return "Boa tarde";
+  return "Boa noite";
+}
+
+function untilLabel(diff: number) {
+  if (diff <= 0) return "agora";
+  if (diff < 60) return `em ${diff} min`;
+  const h = Math.floor(diff / 60);
+  const m = diff % 60;
+  return `em ${h}h${m ? ` ${m}min` : ""}`;
+}
 
 export default async function AgendaPage({ searchParams }: Props) {
   const user = await requireActiveUser();
@@ -19,8 +61,10 @@ export default async function AgendaPage({ searchParams }: Props) {
   const today = now.date;
   const date = params.data && isValidDate(params.data) ? params.data : today;
   const pro = params.profissional || "";
+  // Faixa de dias: 3 antes e 10 depois da data escolhida
+  const days = Array.from({ length: 14 }, (_, i) => addDays(date, i - 3));
 
-  const [appointments, professionals, dayBlocks] = await Promise.all([
+  const [appointments, professionals, dayBlocks, perDay] = await Promise.all([
     db.appointment.findMany({
       where: { businessId: user.businessId, date, ...(pro ? { professionalId: pro } : {}) },
       include: { client: true, service: true, professional: true },
@@ -36,7 +80,14 @@ export default async function AgendaPage({ searchParams }: Props) {
       },
       include: { professional: { select: { name: true } } },
     }),
+    // Pontinho embaixo dos dias que têm agendamento
+    db.appointment.groupBy({
+      by: ["date"],
+      where: { businessId: user.businessId, date: { in: days }, status: { in: ["SCHEDULED", "CONFIRMED", "COMPLETED"] }, ...(pro ? { professionalId: pro } : {}) },
+      _count: true,
+    }),
   ]);
+  const busyDays = new Set(perDay.map((d) => d.date));
   const blocks = dayBlocks
     .filter((b) => blockAppliesOn(b, date, weekdayOf(date)))
     .sort((a, b) => (a.startMinutes ?? -1) - (b.startMinutes ?? -1));
@@ -46,220 +97,257 @@ export default async function AgendaPage({ searchParams }: Props) {
   const lost = appointments.filter((a) => a.status === "CANCELED" || a.status === "NO_SHOW").length;
   const href = (d: string, p = pro) => `/painel?data=${d}${p ? `&profissional=${p}` : ""}`;
   // Próximo atendimento (destaque), só no dia de hoje
-  const nextId =
+  const next =
     date === today
-      ? appointments.find((a) => a.endMinutes > now.minutes && (a.status === "SCHEDULED" || a.status === "CONFIRMED"))?.id
+      ? appointments.find((a) => a.endMinutes > now.minutes && (a.status === "SCHEDULED" || a.status === "CONFIRMED"))
       : undefined;
-  // Faixa de dias: 3 antes e 10 depois da data escolhida
-  const days = Array.from({ length: 14 }, (_, i) => addDays(date, i - 3));
+  const firstName = user.name.split(" ")[0];
+  const [, m, d] = date.split("-").map(Number);
+  const message = (a: (typeof appointments)[number]) =>
+    `Olá, ${a.client.name.split(" ")[0]}! Passando para confirmar seu horário na ${user.business.name}: ` +
+    `${a.service.name} com ${a.professional.name}, ${formatDateLong(a.date)} às ${minutesToTime(a.startMinutes)}. Podemos confirmar?`;
 
   return (
-    <>
-      <div className="mb-4 flex items-end justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-extrabold md:text-3xl">Agenda</h1>
-          <p className="text-sm text-zinc-500 first-letter:uppercase">
-            {formatDateLong(date)}
-            {date === today && " · hoje"}
+    <div className="space-y-4">
+      {/* Saudação e data */}
+      <div className="flex items-end justify-between gap-3 pt-1">
+        <div className="min-w-0">
+          <p className="pn-hello">
+            {greeting(now.minutes)}, {firstName} 👋
           </p>
+          <h1 className="pn-h1">
+            {date === today ? "Hoje" : WEEKDAY_NAMES[weekdayOf(date)]}, <em>{d} de {MONTHS[m - 1]}</em>
+          </h1>
         </div>
-        <div className="flex items-center gap-2">
-          <Link href={href(addDays(date, -1))} className="btn-icon hidden md:inline-flex" aria-label="Dia anterior">
-            <ChevronLeft className="h-5 w-5" />
+        <div className="flex shrink-0 items-center gap-2">
+          <Link href={href(addDays(date, -1))} className="pn-ib hidden md:grid" aria-label="Dia anterior">
+            <ChevronLeft />
           </Link>
           {date !== today && (
-            <Link href={href(today)} className="btn-secondary btn-sm">Hoje</Link>
+            <Link href={href(today)} className="pn-btn sm soft">
+              Hoje
+            </Link>
           )}
-          <Link href={href(addDays(date, 1))} className="btn-icon hidden md:inline-flex" aria-label="Próximo dia">
-            <ChevronRight className="h-5 w-5" />
+          <Link href={href(addDays(date, 1))} className="pn-ib hidden md:grid" aria-label="Próximo dia">
+            <ChevronRight />
           </Link>
           <DatePickerButton date={date} professional={pro} />
-          <Link href={`/painel/novo?data=${date}`} className="btn-primary hidden md:inline-flex">
-            <CalendarPlus className="h-4 w-4" /> Novo agendamento
+          <Link href={`/painel/novo?data=${date}`} className="pn-btn pn-g-brand hidden md:inline-flex">
+            <CalendarPlus /> Novo agendamento
           </Link>
         </div>
       </div>
 
       {/* Faixa de dias */}
-      <div className="no-scrollbar -mx-4 mb-4 flex gap-2 overflow-x-auto px-4 md:mx-0 md:px-0">
-        {days.map((d) => {
-          const selected = d === date;
-          return (
-            <Link
-              key={d}
-              href={href(d)}
-              className={`flex w-[52px] shrink-0 flex-col items-center rounded-2xl border py-2 transition ${
-                selected
-                  ? "border-navy-900 bg-navy-900 text-white shadow-md"
-                  : "border-zinc-200 bg-white text-zinc-700 active:bg-zinc-50"
-              }`}
-            >
-              <span className={`text-[11px] font-medium uppercase ${selected ? "text-white/70" : "text-zinc-400"}`}>
-                {d === today ? "Hoje" : WEEKDAYS_SHORT[weekdayOf(d)]}
-              </span>
-              <span className="font-display text-lg font-extrabold leading-tight">{Number(d.slice(8))}</span>
-            </Link>
-          );
-        })}
+      <div className="pn-days">
+        {days.map((day) => (
+          <Link key={day} href={href(day)} className={`pn-day pn-card ${day === date ? "sel" : ""}`} aria-current={day === date ? "date" : undefined}>
+            <small>{day === today ? "Hoje" : WEEKDAYS_SHORT[weekdayOf(day)]}</small>
+            <b>{Number(day.slice(8))}</b>
+            <i className={busyDays.has(day) ? "" : "no"} />
+          </Link>
+        ))}
+      </div>
+
+      {/* Resumo do dia */}
+      <div className="pn-stats">
+        <div className="pn-st pn-card">
+          <div className="ic pn-g-green"><Check strokeWidth={2.6} /></div>
+          <b>{active.length}</b>
+          <small>Agendados</small>
+        </div>
+        <div className="pn-st pn-card">
+          <div className="ic pn-g-blue"><DollarSign strokeWidth={2.6} /></div>
+          <b>{formatMoney(revenue).replace(",00", "")}</b>
+          <small>Previsto</small>
+        </div>
+        <div className="pn-st pn-card">
+          <div className="ic pn-g-red"><X strokeWidth={2.6} /></div>
+          <b>{lost}</b>
+          <small>Cancel./faltas</small>
+        </div>
       </div>
 
       {/* Filtro por profissional */}
       {professionals.length > 1 && (
-        <div className="no-scrollbar -mx-4 mb-4 flex gap-2 overflow-x-auto px-4 md:mx-0 md:px-0">
-          {[{ id: "", name: "Todos" }, ...professionals].map((p) => (
-            <Link
-              key={p.id || "todos"}
-              href={href(date, p.id)}
-              className={`shrink-0 rounded-full border px-3.5 py-1.5 text-sm font-medium ${
-                pro === p.id ? "border-brand-600 bg-brand-50 text-brand-700" : "border-zinc-200 bg-white text-zinc-600"
-              }`}
-            >
+        <div className="pn-chips">
+          <Link href={href(date, "")} className={`pn-chip plain pn-card ${pro === "" ? "on" : ""}`}>
+            Todos
+          </Link>
+          {professionals.map((p, i) => (
+            <Link key={p.id} href={href(date, p.id)} className={`pn-chip pn-card ${pro === p.id ? "on" : ""}`}>
+              <span className={`pn-av ${AVATARS[i % AVATARS.length]}`}>{p.name.charAt(0).toUpperCase()}</span>
               {p.name}
             </Link>
           ))}
         </div>
       )}
 
-      {/* Resumo do dia */}
-      <div className="card mb-4 grid grid-cols-3 divide-x divide-zinc-100">
-        <Stat label="Agendados" value={String(active.length)} />
-        <Stat label="Previsto" value={formatMoney(revenue).replace(",00", "")} />
-        <Stat label="Cancel./faltas" value={String(lost)} />
-      </div>
+      {params.erro === "conflito" && <FormMessage error="Não foi possível reabrir: o horário já está ocupado por outro agendamento." />}
 
-      {params.erro === "conflito" && (
-        <div className="mb-4">
-          <FormMessage error="Não foi possível reabrir: o horário já está ocupado por outro agendamento." />
-        </div>
+      {/* Próximo atendimento */}
+      {next && (
+        <section>
+          <div className="pn-sec">
+            <h3>Próximo</h3>
+            <span>{untilLabel(next.startMinutes - now.minutes)}</span>
+          </div>
+          <div className="pn-next pn-glass" data-testid="next-appointment">
+            <span className="pn-pill">
+              <span className="pn-live" /> {next.startMinutes <= now.minutes ? "Em atendimento" : `Às ${minutesToTime(next.startMinutes)}`}
+            </span>
+            <div className="pn-nrow">
+              <div className="pn-bigav">{next.client.name.charAt(0).toUpperCase()}</div>
+              <div className="min-w-0">
+                <b>{next.client.name}</b>
+                <small>
+                  {next.service.name} · {next.professional.name}
+                </small>
+              </div>
+              <div className="pn-ntime">
+                <b>{minutesToTime(next.startMinutes)}</b>
+                <small>até {minutesToTime(next.endMinutes)}</small>
+              </div>
+            </div>
+            <div className="pn-acts">
+              {next.status === "SCHEDULED" ? (
+                <StatusForm id={next.id} status="CONFIRMED" className="pn-btn pn-g-green">
+                  <Check /> Confirmar
+                </StatusForm>
+              ) : (
+                <StatusForm id={next.id} status="COMPLETED" className="pn-btn pn-g-green">
+                  <CheckCheck /> Concluir
+                </StatusForm>
+              )}
+              <a href={whatsappLink(next.client.phone, message(next))} target="_blank" className="pn-btn sq pn-g-wa" aria-label={`WhatsApp de ${next.client.name}`}>
+                <MessageCircle />
+              </a>
+              <a href={`tel:+${next.client.phone}`} className="pn-btn sq pn-g-blue" aria-label={`Ligar para ${next.client.name}`}>
+                <Phone />
+              </a>
+              <MoreMenu id={next.id} status={next.status} size="" />
+            </div>
+          </div>
+        </section>
       )}
 
       {/* Bloqueios do dia */}
-      {blocks.length > 0 && (
-        <ul className="mb-3 space-y-2">
-          {blocks.map((b) => (
-            <li key={b.id} className="flex items-center gap-3 rounded-2xl border border-dashed border-zinc-300 bg-zinc-100/70 px-3.5 py-2.5 text-sm">
-              <Lock className="h-4 w-4 shrink-0 text-zinc-500" />
-              <span className="min-w-0 flex-1 truncate text-zinc-600">
-                <strong className="font-semibold text-zinc-700 first-letter:uppercase">{blockTime(b)}</strong>
-                {" · "}
-                {b.professional?.name ?? "Todos"}
-                {b.reason && ` · ${b.reason}`}
-              </span>
-              <Link href="/painel/bloqueios" className="shrink-0 text-xs font-semibold text-brand-700">Ver</Link>
-            </li>
-          ))}
-        </ul>
-      )}
+      {blocks.map((b) => (
+        <div key={b.id} className="pn-block">
+          <span className="ic pn-g-amber"><Lock /></span>
+          <div className="min-w-0">
+            <b className="first-letter:uppercase">
+              {blockTime(b)}
+              {b.reason && ` · ${b.reason}`}
+            </b>
+            <small>Sem atendimento · {b.professional?.name ?? "todos"}</small>
+          </div>
+          <Link href="/painel/bloqueios">Ver</Link>
+        </div>
+      ))}
 
+      {/* Dia completo */}
       {appointments.length === 0 ? (
-        <EmptyState title="Nenhum agendamento neste dia" icon={<CalendarPlus className="h-6 w-6" />}>
-          Compartilhe seu link para os clientes agendarem ou toque em <strong>+ Novo</strong> para marcar um horário.
-          <Link href={`/painel/bloqueios?data=${date}`} className="mt-3 flex items-center justify-center gap-1.5 font-semibold text-brand-700">
-            <CalendarOff className="h-4 w-4" /> Bloquear este dia ou horário
+        <div className="pn-card flex flex-col items-center rounded-3xl px-6 py-10 text-center">
+          <span className="pn-g-brand mb-3 grid h-12 w-12 place-items-center rounded-2xl text-white">
+            <CalendarPlus className="h-6 w-6" />
+          </span>
+          <p className="font-bold" style={{ color: "var(--pn-fg)" }}>Nenhum agendamento neste dia</p>
+          <p className="mt-1 max-w-sm text-sm" style={{ color: "var(--pn-muted)" }}>
+            Compartilhe seu link para os clientes agendarem ou toque em <strong>+</strong> para marcar um horário.
+          </p>
+          <Link href={`/painel/bloqueios?data=${date}`} className="pn-btn sm soft mt-4">
+            <CalendarOff /> Bloquear este dia ou horário
           </Link>
-        </EmptyState>
+        </div>
       ) : (
-        <ul className="space-y-2.5">
-          {appointments.map((a) => {
-            const done = a.status === "CANCELED" || a.status === "NO_SHOW" || a.status === "COMPLETED";
-            const isNext = a.id === nextId;
-            const msg =
-              `Olá, ${a.client.name.split(" ")[0]}! Passando para confirmar seu horário na ${user.business.name}: ` +
-              `${a.service.name} com ${a.professional.name}, ${formatDateLong(a.date)} às ${minutesToTime(a.startMinutes)}. Podemos confirmar?`;
-            return (
-              <li
-                key={a.id}
-                className={`card flex gap-3 p-3.5 ${done ? "opacity-60" : ""} ${isNext ? "border-brand-300 ring-2 ring-brand-100" : ""}`}
-              >
-                <div className="w-14 shrink-0 text-center">
-                  <p className="font-display text-lg font-extrabold leading-tight text-navy-900">{minutesToTime(a.startMinutes)}</p>
-                  <p className="text-xs text-zinc-400">{minutesToTime(a.endMinutes)}</p>
-                  {isNext && <p className="mt-1 text-[10px] font-bold uppercase text-brand-600">Próximo</p>}
-                </div>
-                <div className="min-w-0 flex-1 border-l border-zinc-100 pl-3">
-                  <div className="flex items-start justify-between gap-2">
-                    <p className="truncate font-semibold text-navy-900">{a.client.name}</p>
-                    <StatusBadge status={a.status} />
+        <section>
+          <div className="pn-sec">
+            <h3>Dia completo</h3>
+            <span>
+              {appointments.length} horário{appointments.length === 1 ? "" : "s"}
+            </span>
+          </div>
+          <ul>
+            {appointments.map((a, i) => {
+              const s = STATUS[a.status] ?? { label: a.status, color: "#a1a1aa" };
+              const done = a.status === "CANCELED" || a.status === "NO_SHOW" || a.status === "COMPLETED";
+              const isNext = a.id === next?.id;
+              return (
+                <li key={a.id} className="pn-it" style={{ animationDelay: `${Math.min(i, 8) * 0.05}s` }}>
+                  <div className="pn-tm">
+                    <b>{minutesToTime(a.startMinutes)}</b>
+                    <small>{minutesToTime(a.endMinutes)}</small>
                   </div>
-                  <p className="truncate text-sm text-zinc-500">
-                    {a.service.name} · {a.professional.name}
-                  </p>
-                  <p className="text-sm font-medium text-zinc-700">{formatMoney(a.priceCents)}</p>
-                  {a.notes && <p className="mt-1 rounded-lg bg-zinc-50 px-2 py-1 text-xs text-zinc-600">“{a.notes}”</p>}
-
-                  <div className="mt-2.5 flex items-center gap-2">
-                    {a.status === "SCHEDULED" && (
-                      <StatusForm id={a.id} status="CONFIRMED" className="btn-navy btn-sm flex-1 sm:flex-none">
-                        <Check className="h-4 w-4" /> Confirmar
-                      </StatusForm>
-                    )}
-                    {a.status === "CONFIRMED" && (
-                      <StatusForm id={a.id} status="COMPLETED" className="btn-navy btn-sm flex-1 sm:flex-none">
-                        <CheckCheck className="h-4 w-4" /> Concluir
-                      </StatusForm>
-                    )}
-                    {done && (
-                      <StatusForm id={a.id} status="CONFIRMED" className="btn-secondary btn-sm flex-1 sm:flex-none">
-                        <RotateCcw className="h-4 w-4" /> Reabrir
-                      </StatusForm>
-                    )}
-                    <a
-                      href={whatsappLink(a.client.phone, msg)}
-                      target="_blank"
-                      className="btn-sm btn border border-emerald-200 bg-emerald-50 text-emerald-700"
-                      aria-label={`WhatsApp de ${a.client.name}`}
-                    >
-                      <MessageCircle className="h-4 w-4" />
-                      <span className="hidden sm:inline">WhatsApp</span>
-                    </a>
-                    <a href={`tel:+${a.client.phone}`} className="btn-secondary btn-sm" aria-label={`Ligar para ${a.client.name}`}>
-                      <Phone className="h-4 w-4" />
-                      <span className="hidden sm:inline">{formatPhone(a.client.phone)}</span>
-                    </a>
-                    {!done && (
-                      <details className="relative">
-                        <summary className="btn-secondary btn-sm list-none [&::-webkit-details-marker]:hidden" aria-label="Mais ações">
-                          <MoreHorizontal className="h-4 w-4" />
-                        </summary>
-                        <div className="absolute right-0 z-20 mt-1 w-44 overflow-hidden rounded-xl border border-zinc-200 bg-white py-1 shadow-lg">
-                          {a.status === "SCHEDULED" && (
-                            <MenuItem id={a.id} status="COMPLETED" icon={<CheckCheck className="h-4 w-4" />}>Concluir</MenuItem>
-                          )}
-                          <Link href={`/painel/remarcar/${a.id}`} className="flex w-full items-center gap-2 px-3 py-2.5 text-left text-sm text-zinc-700 hover:bg-zinc-50">
-                            <CalendarClock className="h-4 w-4" /> Remarcar
-                          </Link>
-                          <MenuItem id={a.id} status="NO_SHOW" icon={<UserX className="h-4 w-4" />}>Marcar falta</MenuItem>
-                          <MenuItem id={a.id} status="CANCELED" icon={<X className="h-4 w-4" />} danger>Cancelar</MenuItem>
-                        </div>
-                      </details>
+                  <div className={`pn-appt pn-card ${a.status === "CANCELED" || a.status === "NO_SHOW" ? "off" : ""} ${isNext ? "is-next" : ""}`} style={{ ["--c" as string]: s.color }}>
+                    <div className="r1">
+                      <b>{a.client.name}</b>
+                      <span className="pn-badge">{s.label}</span>
+                    </div>
+                    <small>
+                      {a.service.name} · {a.professional.name} · {formatMoney(a.priceCents)}
+                    </small>
+                    {a.notes && <p className="note">“{a.notes}”</p>}
+                    {!isNext && (
+                      <div className="pn-mini">
+                        {a.status === "SCHEDULED" && (
+                          <StatusForm id={a.id} status="CONFIRMED" className="pn-btn sm pn-g-green">
+                            <Check /> Confirmar
+                          </StatusForm>
+                        )}
+                        {a.status === "CONFIRMED" && (
+                          <StatusForm id={a.id} status="COMPLETED" className="pn-btn sm pn-g-green">
+                            <CheckCheck /> Concluir
+                          </StatusForm>
+                        )}
+                        {done && (
+                          <StatusForm id={a.id} status="CONFIRMED" className="pn-btn sm soft">
+                            <RotateCcw /> Reabrir
+                          </StatusForm>
+                        )}
+                        <a href={whatsappLink(a.client.phone, message(a))} target="_blank" className="pn-btn sm pn-g-wa" aria-label={`WhatsApp de ${a.client.name}`}>
+                          <MessageCircle /> <span className="hidden min-[420px]:inline">WhatsApp</span>
+                        </a>
+                        {!done && <MoreMenu id={a.id} status={a.status} size="sm" />}
+                      </div>
                     )}
                   </div>
-                </div>
-              </li>
-            );
-          })}
-        </ul>
+                </li>
+              );
+            })}
+          </ul>
+        </section>
       )}
-    </>
-  );
-}
-
-function Stat({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="px-3 py-3 text-center">
-      <p className="font-display text-xl font-extrabold text-navy-900">{value}</p>
-      <p className="text-[11px] font-medium uppercase tracking-wide text-zinc-400">{label}</p>
     </div>
   );
 }
 
 function StatusForm({ id, status, className, children }: { id: string; status: string; className: string; children: React.ReactNode }) {
   return (
-    <form action={updateAppointmentStatus} className={className.includes("flex-1") ? "flex flex-1 sm:flex-none" : undefined}>
+    <form action={updateAppointmentStatus}>
       <input type="hidden" name="id" value={id} />
       <input type="hidden" name="status" value={status} />
       <button className={`${className} w-full`}>{children}</button>
     </form>
+  );
+}
+
+/** Menu ⋯ com Remarcar, Falta e Cancelar. */
+function MoreMenu({ id, status, size }: { id: string; status: string; size: "sm" | "" }) {
+  return (
+    <details className="pn-more">
+      <summary className={`pn-btn sq soft ${size}`} aria-label="Mais ações">
+        <MoreHorizontal />
+      </summary>
+      <div className="pn-menu">
+        {status === "SCHEDULED" && <MenuItem id={id} status="COMPLETED" icon={<CheckCheck />}>Concluir</MenuItem>}
+        <Link href={`/painel/remarcar/${id}`}>
+          <CalendarClock /> Remarcar
+        </Link>
+        <MenuItem id={id} status="NO_SHOW" icon={<UserX />}>Marcar falta</MenuItem>
+        <MenuItem id={id} status="CANCELED" icon={<X />} danger>Cancelar</MenuItem>
+      </div>
+    </details>
   );
 }
 
@@ -268,7 +356,7 @@ function MenuItem({ id, status, icon, danger, children }: { id: string; status: 
     <form action={updateAppointmentStatus}>
       <input type="hidden" name="id" value={id} />
       <input type="hidden" name="status" value={status} />
-      <button className={`flex w-full items-center gap-2 px-3 py-2.5 text-left text-sm hover:bg-zinc-50 ${danger ? "text-red-600" : "text-zinc-700"}`}>
+      <button className={danger ? "danger" : ""}>
         {icon} {children}
       </button>
     </form>

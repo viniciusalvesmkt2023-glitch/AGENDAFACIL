@@ -1,14 +1,25 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { db } from "@/lib/db";
 import { requireActiveUser } from "@/lib/auth";
 import { formatDuration, formatMoney } from "@/lib/format";
-import { EmptyState, PageHeader } from "@/components/ui";
+import { EmptyState } from "@/components/ui";
 import { FormPanel } from "@/components/form-panel";
-import { Pencil, Power, Scissors } from "lucide-react";
+import { Pencil, Plus, Scissors } from "lucide-react";
 import { toggleService } from "@/app/painel/actions";
 import { ServiceForm } from "./service-form";
 
-type Props = { searchParams: Promise<{ editar?: string; bemvindo?: string }> };
+type Props = { searchParams: Promise<{ editar?: string; novo?: string; bemvindo?: string }> };
+
+// Cor do cartão quando o serviço não tem foto
+const PLACEHOLDERS = [
+  "linear-gradient(135deg,#3f3f46,#18181b)",
+  "linear-gradient(135deg,#92400e,#451a03)",
+  "linear-gradient(135deg,#1e3a8a,#0f172a)",
+  "linear-gradient(135deg,#065f46,#022c22)",
+  "linear-gradient(135deg,#6b21a8,#2e1065)",
+  "linear-gradient(135deg,#9f1239,#4c0519)",
+];
 
 export default async function ServicesPage({ searchParams }: Props) {
   const user = await requireActiveUser();
@@ -17,12 +28,15 @@ export default async function ServicesPage({ searchParams }: Props) {
     where: { businessId: user.businessId },
     orderBy: [{ active: "desc" }, { name: "asc" }],
   });
+  // Sem serviços: já abre o formulário (pelo endereço, para ele continuar aberto depois de salvar o primeiro)
+  if (services.length === 0 && !params.novo) redirect(`/painel/servicos?novo=1${params.bemvindo ? "&bemvindo=1" : ""}`);
   const editing = params.editar ? services.find((s) => s.id === params.editar) : undefined;
+  const showForm = !!editing || !!params.novo;
 
   return (
-    <>
+    <div className="space-y-4">
       {params.bemvindo && (
-        <div className="mb-4 rounded-2xl border border-brand-200 bg-brand-50 p-4 text-sm text-brand-900">
+        <div className="rounded-2xl border border-brand-200 bg-brand-50 p-4 text-sm text-brand-900">
           <p className="font-semibold">Bem-vindo ao HoraBoa! 🎉</p>
           <p className="mt-1">
             Para começar a receber agendamentos: <strong>1)</strong> cadastre seus serviços aqui,{" "}
@@ -32,58 +46,75 @@ export default async function ServicesPage({ searchParams }: Props) {
           </p>
         </div>
       )}
-      <PageHeader title="Serviços" description="O que seus clientes podem agendar." />
-      <div className="grid gap-4 lg:grid-cols-[1fr_360px] lg:items-start">
-        <div className="min-w-0 lg:order-2 lg:sticky lg:top-8">
-          <FormPanel key={editing?.id ?? "novo"} title={editing ? `Editar: ${editing.name}` : "Novo serviço"} open={!!editing || services.length === 0}>
-            <ServiceForm key={editing?.id ?? "new"} service={editing} />
-            {editing && (
-              <Link href="/painel/servicos" className="mt-3 block text-center text-sm text-zinc-500 hover:underline">
-                Cancelar edição
-              </Link>
-            )}
-          </FormPanel>
+      <div className="flex items-end justify-between gap-3 pt-1">
+        <div className="min-w-0">
+          <h1 className="pn-h1">Serviços</h1>
+          <p className="pn-hello">O que seus clientes podem agendar</p>
         </div>
-        <div className="min-w-0 lg:order-1">
+        {!showForm && (
+          <Link href="/painel/servicos?novo=1" className="pn-btn pn-g-brand shrink-0">
+            <Plus /> Novo
+          </Link>
+        )}
+      </div>
+
+      <div className="grid gap-4 lg:grid-cols-[1fr_360px] lg:items-start">
+        {showForm && (
+          <div className="min-w-0 lg:order-2 lg:sticky lg:top-8">
+            <FormPanel key={editing?.id ?? "novo"} title={editing ? `Editar: ${editing.name}` : "Novo serviço"} open>
+              <ServiceForm key={editing?.id ?? "new"} service={editing} />
+              {(editing || services.length > 0) && (
+                <Link href="/painel/servicos" className="mt-3 block text-center text-sm text-zinc-500 hover:underline">
+                  {editing ? "Cancelar edição" : "Fechar"}
+                </Link>
+              )}
+            </FormPanel>
+          </div>
+        )}
+        <div className={`min-w-0 lg:order-1 ${showForm ? "" : "lg:col-span-2"}`}>
           {services.length === 0 ? (
             <EmptyState title="Nenhum serviço cadastrado" icon={<Scissors className="h-6 w-6" />}>
-              Cadastre o que você oferece, com duração e preço.
+              Cadastre o que você oferece, com duração, preço e foto.
             </EmptyState>
           ) : (
-            <ul className="card divide-y divide-zinc-100 overflow-hidden">
-              {services.map((s) => (
-                <li key={s.id} className={`flex items-center gap-3 px-4 py-3 ${s.active ? "" : "opacity-50"}`}>
-                  {s.imageId ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img src={`/i/${s.imageId}`} alt="" className="h-10 w-10 shrink-0 rounded-xl object-cover" />
-                  ) : (
-                    <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-brand-50 text-brand-600">
-                      <Scissors className="h-5 w-5" />
-                    </span>
-                  )}
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate font-semibold text-navy-900">
-                      {s.name} {!s.active && <span className="text-xs font-normal text-zinc-500">(inativo)</span>}
-                    </p>
-                    <p className="text-sm text-zinc-500">
-                      {formatDuration(s.durationMinutes)} · <span className="font-medium text-zinc-700">{formatMoney(s.priceCents)}</span>
-                    </p>
+            <ul className="pn-svcs">
+              {services.map((s, i) => (
+                <li key={s.id} className={`pn-svc pn-card ${s.active ? "" : "off"}`} style={{ animationDelay: `${Math.min(i, 8) * 0.05}s` }}>
+                  <div
+                    className="ph"
+                    style={{ backgroundImage: s.imageId ? `url(/i/${s.imageId})` : PLACEHOLDERS[i % PLACEHOLDERS.length] }}
+                  >
+                    {!s.imageId && s.name.charAt(0).toUpperCase()}
                   </div>
-                  <Link href={`/painel/servicos?editar=${s.id}`} className="btn-icon" aria-label={`Editar ${s.name}`}>
-                    <Pencil className="h-4 w-4" />
+                  <span className="dur">{formatDuration(s.durationMinutes)}</span>
+                  <Link href={`/painel/servicos?editar=${s.id}`} className="edit" aria-label={`Editar ${s.name}`}>
+                    <Pencil />
                   </Link>
-                  <form action={toggleService}>
-                    <input type="hidden" name="id" value={s.id} />
-                    <button className={`btn-icon ${s.active ? "" : "text-emerald-600"}`} aria-label={s.active ? `Desativar ${s.name}` : `Ativar ${s.name}`} title={s.active ? "Desativar" : "Ativar"}>
-                      <Power className="h-4 w-4" />
-                    </button>
-                  </form>
+                  <div className="bd">
+                    <b>
+                      {s.name}
+                      {!s.active && " (inativo)"}
+                    </b>
+                    <div className="pr">
+                      <span>{formatMoney(s.priceCents)}</span>
+                      <form action={toggleService}>
+                        <input type="hidden" name="id" value={s.id} />
+                        <button
+                          className={`pn-sw ${s.active ? "" : "off"}`}
+                          role="switch"
+                          aria-checked={s.active}
+                          aria-label={s.active ? `Desativar ${s.name}` : `Ativar ${s.name}`}
+                          title={s.active ? "Desativar" : "Ativar"}
+                        />
+                      </form>
+                    </div>
+                  </div>
                 </li>
               ))}
             </ul>
           )}
         </div>
       </div>
-    </>
+    </div>
   );
 }

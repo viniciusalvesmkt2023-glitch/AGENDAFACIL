@@ -83,7 +83,7 @@ export function HoursForm({ days, professional }: { days: Day[]; professional?: 
         );
       })}
       </div>
-      <div className="sticky bottom-24 z-10 space-y-2 md:bottom-4">
+      <div className="sticky bottom-[116px] z-10 space-y-2 md:bottom-4">
         <FormMessage error={state?.error} success={state?.success} />
         <SubmitButton className="btn-primary w-full shadow-lg md:w-auto">Salvar horários</SubmitButton>
       </div>

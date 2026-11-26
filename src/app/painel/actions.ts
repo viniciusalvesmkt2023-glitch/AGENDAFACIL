@@ -6,7 +6,7 @@ import { after } from "next/server";
 import { sendAppointmentMessage } from "@/lib/notifications";
 import { z } from "zod";
 import { db } from "@/lib/db";
-import { requireActiveUser } from "@/lib/auth";
+import { requireActiveUser, requireUser } from "@/lib/auth";
 import { BookingError, createAppointment, rescheduleAppointment } from "@/lib/booking";
 import { parseMoneyToCents } from "@/lib/format";
 import { checkSlug } from "@/lib/slug-check";
@@ -360,4 +360,13 @@ export async function saveSettings(_: ActionState, formData: FormData): Promise<
   });
   revalidatePath("/painel", "layout");
   return { success: "Configurações salvas." };
+}
+
+// ---------- Tema do painel ----------
+
+/** Alterna o painel entre claro e escuro (fica salvo na conta do usuário). */
+export async function togglePanelTheme() {
+  const user = await requireUser();
+  await db.user.update({ where: { id: user.id }, data: { panelTheme: user.panelTheme === "DARK" ? "LIGHT" : "DARK" } });
+  revalidatePath("/painel", "layout");
 }
