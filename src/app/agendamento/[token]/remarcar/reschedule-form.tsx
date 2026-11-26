@@ -75,7 +75,7 @@ function SubmitChange() {
   const { pending } = useFormStatus();
   return (
     <button type="submit" className="hb-btn hb-btn-green" style={{ width: "auto", margin: 0, height: 48, padding: "0 18px" }} disabled={pending}>
-      {pending ? "Trocando..." : "Confirmar troca"}
+      {pending ? "Trocando..." : "Confirmar"}
     </button>
   );
 }

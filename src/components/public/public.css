@@ -272,3 +272,12 @@
   .hb-success, .hb-canceled, .hb-pulse { animation: none; }
   .hb-success svg path, .hb-canceled svg path { animation: none; stroke-dashoffset: 0; }
 }
+
+/* Fundo pontilhado das telas brancas (pontos em grade que somem para as bordas) */
+.hb.hb-white::before {
+  content: ""; position: absolute; inset: 0; z-index: -1; pointer-events: none;
+  background-image: radial-gradient(circle, rgba(15, 23, 42, 0.16) 1.1px, transparent 1.5px);
+  background-size: 18px 18px; background-position: center top;
+  -webkit-mask-image: radial-gradient(ellipse 90% 70% at 50% 0%, #000 35%, transparent 80%);
+  mask-image: radial-gradient(ellipse 90% 70% at 50% 0%, #000 35%, transparent 80%);
+}
