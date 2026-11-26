@@ -6,6 +6,7 @@ import { formatDateLong, minutesToTime, nowInTimezone } from "@/lib/time";
 import { formatMoney, whatsappLink } from "@/lib/format";
 import { clientCanChange, deadlineLabel } from "@/lib/policy";
 import { hasAccess } from "@/lib/subscription";
+import { brandPalette } from "@/lib/brand-colors";
 import { StatusBadge } from "@/components/ui";
 import { SubmitButton } from "@/components/submit-button";
 import { cancelByClient } from "./actions";
@@ -32,12 +33,17 @@ export default async function AppointmentPage({ params, searchParams }: Props) {
   const title = canceled ? "Agendamento cancelado" : remarcado ? "Horário alterado!" : novo === "1" ? "Agendamento realizado!" : "Seu agendamento";
 
   return (
-    <div className="min-h-screen px-4 py-8 sm:py-12">
+    <div className="min-h-screen px-4 py-8 sm:py-12" style={brandPalette(b.brandColor) as React.CSSProperties}>
       <div className="card mx-auto w-full max-w-md overflow-hidden">
         <div className={`px-6 py-7 text-center ${canceled ? "bg-zinc-100" : "bg-gradient-to-br from-navy-900 to-navy-700 text-white"}`}>
-          <div className={`mx-auto grid h-14 w-14 place-items-center rounded-2xl ${canceled ? "bg-zinc-200 text-zinc-500" : "bg-brand-500 text-white"}`}>
-            {canceled ? <X className="h-7 w-7" /> : <Check className="h-7 w-7" strokeWidth={3} />}
-          </div>
+          {b.logoImageId && !canceled ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={`/i/${b.logoImageId}`} alt="" className="mx-auto h-14 w-14 rounded-2xl bg-white object-cover ring-2 ring-white/30" />
+          ) : (
+            <div className={`mx-auto grid h-14 w-14 place-items-center rounded-2xl ${canceled ? "bg-zinc-200 text-zinc-500" : "bg-brand-600 text-white"}`}>
+              {canceled ? <X className="h-7 w-7" /> : <Check className="h-7 w-7" strokeWidth={3} />}
+            </div>
+          )}
           <h1 className={`mt-3 text-2xl font-extrabold ${canceled ? "" : "text-white"}`}>{title}</h1>
           <p className={`mt-0.5 text-sm ${canceled ? "text-zinc-500" : "text-white/75"}`}>{b.name}</p>
         </div>

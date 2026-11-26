@@ -2,7 +2,11 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { db } from "@/lib/db";
 import { todayInTimezone } from "@/lib/time";
-import { formatPhone, whatsappLink } from "@/lib/format";
+import { whatsappLink } from "@/lib/format";
+import { brandPalette } from "@/lib/brand-colors";
+import { directionsUrl } from "@/lib/links";
+import { PublicHeader } from "@/components/public-header";
+import { appUrl } from "@/lib/brand";
 import { BookingWizard } from "./booking-wizard";
 import { hasAccess } from "@/lib/subscription";
 import { blockAppliesOn, openWeekdays } from "@/lib/schedule";
@@ -30,8 +34,21 @@ async function getBusiness(slug: string) {
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
-  const business = await db.business.findUnique({ where: { slug }, select: { name: true } });
-  return { title: business ? `Agende seu horário — ${business.name}` : "Página não encontrada" };
+  const business = await db.business.findUnique({
+    where: { slug },
+    select: { name: true, tagline: true, description: true, logoImageId: true, coverImageId: true },
+  });
+  if (!business) return { title: "Página não encontrada" };
+  // Prévia bonita quando o link é enviado no WhatsApp/Instagram (usa a capa ou a logo)
+  const image = business.coverImageId ?? business.logoImageId;
+  const description = business.tagline ?? business.description ?? `Agende seu horário online em ${business.name}.`;
+  return {
+    title: `Agende seu horário — ${business.name}`,
+    description,
+    metadataBase: new URL(appUrl()),
+    openGraph: { title: business.name, description, ...(image ? { images: [`/i/${image}`] } : {}) },
+    ...(business.logoImageId ? { icons: { icon: `/i/${business.logoImageId}` } } : {}),
+  };
 }
 
 export default async function PublicBookingPage({ params }: Props) {
@@ -51,25 +68,22 @@ export default async function PublicBookingPage({ params }: Props) {
 
 
   return (
-    <div className="min-h-screen bg-zinc-50">
-      <header className="bg-gradient-to-br from-navy-900 to-navy-700 text-white">
-        <div className="mx-auto max-w-3xl px-4 pb-16 pt-10">
-          <div className="grid h-14 w-14 place-items-center rounded-2xl bg-brand-500 text-2xl font-bold">
-            {business.name.charAt(0).toUpperCase()}
-          </div>
-          <h1 className="mt-4 text-3xl font-extrabold text-white">{business.name}</h1>
-          {business.description && <p className="mt-2 text-white/80">{business.description}</p>}
-          <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-sm text-white/80">
-            {business.address && <span>📍 {business.address}</span>}
-            {business.phone && (
-              <a href={whatsappLink(business.phone, "Olá!")} target="_blank" className="hover:underline">
-                📱 {formatPhone(business.phone)}
-              </a>
-            )}
-          </div>
-        </div>
-      </header>
-      <main className="mx-auto -mt-8 max-w-3xl px-4 pb-16">
+    // A cor escolhida pelo estabelecimento substitui o laranja padrão em toda a página
+    <div className="min-h-screen bg-zinc-50" style={brandPalette(business.brandColor) as React.CSSProperties}>
+      <PublicHeader
+        name={business.name}
+        tagline={business.tagline}
+        description={business.description}
+        address={business.address}
+        homeService={business.homeService}
+        whatsappHref={business.phone ? whatsappLink(business.phone, "Olá! Vim pelo seu link de agendamento.") : null}
+        instagram={business.instagram}
+        directionsHref={directionsUrl(business.mapsUrl, business.address)}
+        reviewHref={business.reviewUrl}
+        logoUrl={business.logoImageId ? `/i/${business.logoImageId}` : null}
+        coverUrl={business.coverImageId ? `/i/${business.coverImageId}` : null}
+      />
+      <main className="mx-auto mt-5 max-w-3xl px-4 pb-16">
         {!hasAccess(business) ? (
           <div className="card p-8 text-center text-zinc-500">
             O agendamento online deste estabelecimento está temporariamente indisponível. Entre em contato diretamente.
@@ -102,7 +116,7 @@ export default async function PublicBookingPage({ params }: Props) {
         <p className="mt-8 text-center text-xs text-zinc-400">
           Agendamento online por{" "}
           <a href="/" className="font-display font-extrabold">
-            <span className="text-navy-900">Hora</span><span className="text-brand-500">Boa</span>
+            <span className="text-navy-900">Hora</span><span className="text-[#FE6E02]">Boa</span>
           </a>
         </p>
       </main>

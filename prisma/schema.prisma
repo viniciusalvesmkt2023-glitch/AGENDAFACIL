@@ -42,6 +42,15 @@ model Business {
   cancelDeadlineMinutes Int     @default(120)
   // Cliente pode trocar dia/horário pelo link (respeitando o mesmo prazo do cancelamento)
   clientCanReschedule   Boolean @default(true)
+
+  // ----- Página pública (visual) -----
+  brandColor    String? // cor dos botões, ex.: #E85F00 (null = laranja HoraBoa)
+  tagline       String? // frase curta abaixo do nome
+  instagram     String? // @perfil
+  mapsUrl       String? // link do Google Maps (se vazio, usa o endereço)
+  reviewUrl     String? // link "Avalie no Google"
+  logoImageId   String?
+  coverImageId  String?
   createdAt         DateTime @default(now())
 
   // ----- Assinatura do estabelecimento -----
@@ -86,6 +95,7 @@ model Business {
   payments      Payment[]
   messageLogs   MessageLog[]
   timeBlocks    TimeBlock[]
+  images        BusinessImage[]
 }
 
 model User {
@@ -297,4 +307,18 @@ model Appointment {
   @@index([businessId, date])
   @@index([date, status])
   @@index([professionalId, date])
+}
+
+// Imagens da página pública (logo e capa), já reduzidas no navegador antes do envio.
+// Cada envio cria uma imagem nova (URL nunca muda de conteúdo, então pode ficar em cache para sempre).
+model BusinessImage {
+  id         String   @id @default(cuid())
+  businessId String
+  business   Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  kind       String // LOGO | COVER
+  mime       String
+  data       Bytes
+  createdAt  DateTime @default(now())
+
+  @@index([businessId])
 }

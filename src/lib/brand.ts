@@ -11,5 +11,5 @@ export function appUrl(): string {
 /** Endereços do sistema que não podem ser usados como link de estabelecimento. */
 export const RESERVED_SLUGS = new Set([
   "entrar", "cadastro", "painel", "api", "agendamento", "sair", "admin",
-  "esqueci-senha", "redefinir-senha", "comecar", "conta", "termos", "privacidade", "suporte", "ajuda", "planos", "precos", "blog",
+  "esqueci-senha", "redefinir-senha", "comecar", "conta", "pagina", "termos", "privacidade", "suporte", "ajuda", "planos", "precos", "blog",
 ]);

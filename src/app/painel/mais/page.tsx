@@ -1,10 +1,11 @@
 import Link from "next/link";
-import { CalendarOff, ChevronRight, CircleHelp, CreditCard, Clock, ExternalLink, KeyRound, LogOut, MessageCircle, Settings, UserRound } from "lucide-react";
+import { CalendarOff, ChevronRight, Palette, CircleHelp, CreditCard, Clock, ExternalLink, KeyRound, LogOut, MessageCircle, Settings, UserRound } from "lucide-react";
 import { requireUser } from "@/lib/auth";
 import { logout } from "../../(auth)/actions";
 import { ShareLinkButton } from "@/components/copy-button";
 
 const ITEMS = [
+  { href: "/painel/pagina", label: "Minha página", desc: "Logo, capa, cor e redes sociais", icon: Palette },
   { href: "/painel/profissionais", label: "Profissionais", desc: "Equipe e serviços de cada um", icon: UserRound },
   { href: "/painel/horarios", label: "Horários", desc: "Dias e horários de funcionamento", icon: Clock },
   { href: "/painel/bloqueios", label: "Bloqueios", desc: "Folgas, férias e compromissos", icon: CalendarOff },

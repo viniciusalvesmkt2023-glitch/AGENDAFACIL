@@ -54,10 +54,10 @@ export function SettingsForm({ business }: { business: Business }) {
             <input className="input" id="address" name="address" defaultValue={business.address ?? ""} placeholder="Rua, número - bairro, cidade" />
           </div>
         </div>
-        <div>
-          <label className="label" htmlFor="description">Descrição (aparece na página de agendamento)</label>
-          <textarea className="input" id="description" name="description" rows={2} defaultValue={business.description ?? ""} />
-        </div>
+        <p className="text-sm text-zinc-500">
+          Logo, foto de capa, cor e apresentação ficam em{" "}
+          <a href="/painel/pagina" className="font-semibold text-brand-700">Minha página</a>.
+        </p>
       </section>
 
       <section className="card space-y-4 p-4 md:p-5">
