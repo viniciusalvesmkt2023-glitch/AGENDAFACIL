@@ -6,11 +6,12 @@ import { whatsappLink } from "@/lib/format";
 import { directionsUrl } from "@/lib/links";
 import { PublicFooter, PublicFrame, PublicHero } from "@/components/public/frame";
 import { openStatus } from "@/lib/open-status";
+import { loadClosedDates } from "@/lib/closed-dates";
 import { appUrl } from "@/lib/brand";
 import { BookingWizard } from "./booking-wizard";
 import { hasAccess } from "@/lib/subscription";
 import { blockAppliesOn, openWeekdays } from "@/lib/schedule";
-import { addDays, nowInTimezone, weekdayOf } from "@/lib/time";
+import { nowInTimezone, weekdayOf } from "@/lib/time";
 
 type Props = { params: Promise<{ slug: string }> };
 
@@ -56,16 +57,9 @@ export default async function PublicBookingPage({ params }: Props) {
   const business = await getBusiness(slug);
   if (!business) notFound();
 
-  // Dias bloqueados inteiros (folga, férias, feriado) aparecem como "Fechado" na escolha da data
+  // Dias bloqueados inteiros (folga, férias, feriado) aparecem como "fechado" na escolha da data
   const today = todayInTimezone();
-  const lastDay = addDays(today, business.maxAdvanceDays);
-  const fullDayBlocks = await db.timeBlock.findMany({
-    where: { businessId: business.id, startMinutes: null, date: { lte: lastDay }, OR: [{ endDate: null }, { endDate: { gte: today } }] },
-  });
-  const days = Array.from({ length: business.maxAdvanceDays + 1 }, (_, i) => addDays(today, i));
-  const closedDatesFor = (proId: string) =>
-    days.filter((d) => fullDayBlocks.some((b) => (b.professionalId === null || b.professionalId === proId) && blockAppliesOn(b, d, weekdayOf(d))));
-
+  const { blocks: fullDayBlocks, closedDatesFor } = await loadClosedDates(business.id, today, business.maxAdvanceDays);
 
   // "Aberto agora · até 19h" (fechado se houver bloqueio do dia inteiro para todos hoje)
   const now = nowInTimezone();

@@ -224,3 +224,51 @@
 .hb-pbox .hb-slot.sel { background: #fff; border-color: #fff; color: #111; box-shadow: 0 6px 20px rgba(255, 255, 255, 0.22); }
 .hb-light .hb-pbox .hb-slot.sel { background: #111; border-color: #111; color: #fff; box-shadow: 0 6px 20px rgba(0, 0, 0, 0.18); }
 .hb-day.sel em { opacity: 0.85; }
+
+/* Confirmação de cancelamento */
+.hb-confirm { margin-top: 10px; padding: 14px; border-radius: 18px; background: rgba(239, 68, 68, 0.08); border: 1px solid rgba(239, 68, 68, 0.28); animation: hb-in 0.25s ease; }
+.hb-confirm p { font-size: 14px; color: var(--muted); text-align: center; }
+.hb-confirm p b { display: block; font-size: 16px; color: var(--fg); margin-bottom: 2px; }
+.hb-confirm-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 12px; }
+.hb-confirm-actions .hb-btn { margin: 0; height: 48px; }
+.hb-primary.hb-primary-danger { background: linear-gradient(135deg, #f87171, #dc2626); box-shadow: 0 10px 26px rgba(220, 38, 38, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.3); }
+
+/* ===== Telas depois de agendar (confirmação, trocar horário, cancelado): padrão branco ===== */
+.hb.hb-white { --bg: #ffffff; --glass: #ffffff; --glass2: #f8f8f7; --line: rgba(0, 0, 0, 0.07); --line2: rgba(0, 0, 0, 0.12); --shadow: 0 1px 2px rgba(15, 15, 20, 0.04), 0 18px 40px rgba(15, 15, 20, 0.06); }
+.hb.hb-white .hb-card { box-shadow: var(--shadow); }
+.hb-status { display: flex; flex-direction: column; align-items: center; text-align: center; padding: 8px 4px 4px; }
+.hb-status h1 { margin-top: 18px; font-size: 24px; font-weight: 800; letter-spacing: -0.02em; color: var(--fg); }
+.hb-status p { margin-top: 6px; font-size: 14.5px; color: var(--muted); }
+.hb-status p::first-letter { text-transform: uppercase; }
+
+/* Ícone de sucesso: círculo verde que "pula" e o ✓ sendo desenhado */
+.hb-success { width: 84px; height: 84px; border-radius: 50%; display: grid; place-items: center; background: linear-gradient(135deg, #4ade80, #16a34a);
+  box-shadow: 0 0 0 10px rgba(34, 197, 94, 0.12), 0 14px 34px rgba(22, 163, 74, 0.35); animation: hb-pop 0.5s cubic-bezier(0.2, 1.4, 0.4, 1) both; }
+.hb-success svg path { stroke-dasharray: 30; stroke-dashoffset: 30; animation: hb-draw 0.45s 0.35s ease-out forwards; }
+@keyframes hb-draw { to { stroke-dashoffset: 0; } }
+
+/* Ícone de cancelado: círculo vermelho que aparece balançando e o X sendo desenhado */
+.hb-canceled { width: 84px; height: 84px; border-radius: 50%; display: grid; place-items: center; background: linear-gradient(135deg, #f87171, #dc2626);
+  box-shadow: 0 0 0 10px rgba(239, 68, 68, 0.1), 0 14px 34px rgba(220, 38, 38, 0.3); animation: hb-pop 0.5s cubic-bezier(0.2, 1.4, 0.4, 1) both, hb-shake 0.5s 0.5s ease-in-out; }
+.hb-canceled svg path { stroke-dasharray: 20; stroke-dashoffset: 20; animation: hb-draw 0.35s 0.35s ease-out forwards; }
+.hb-canceled svg path + path { animation-delay: 0.55s; }
+@keyframes hb-shake { 0%, 100% { transform: rotate(0); } 20% { transform: rotate(-10deg); } 40% { transform: rotate(8deg); } 60% { transform: rotate(-6deg); } 80% { transform: rotate(3deg); } }
+
+/* Botões coloridos */
+.hb-btn { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; height: 52px; border: 0; border-radius: 16px; margin-top: 10px;
+  font-weight: 700; font-size: 15.5px; color: #fff; text-decoration: none; cursor: pointer; }
+.hb-btn svg { width: 19px; height: 19px; }
+.hb-btn-green { background: linear-gradient(135deg, #22c55e, #15803d); box-shadow: 0 10px 24px rgba(22, 163, 74, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.3); }
+.hb-btn-blue { background: linear-gradient(135deg, #3b82f6, #1d4ed8); box-shadow: 0 10px 24px rgba(37, 99, 235, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.3); }
+.hb-btn-red { background: linear-gradient(135deg, #f87171, #dc2626); box-shadow: 0 10px 24px rgba(220, 38, 38, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.3); }
+.hb-btn-soft { background: #f4f4f5; color: #18181b; box-shadow: none; border: 1px solid rgba(0, 0, 0, 0.06); }
+.hb-btn:disabled { opacity: 0.55; }
+.hb-pulse { animation: hb-pulse 1.8s ease-in-out infinite; }
+@keyframes hb-pulse {
+  0%, 100% { transform: scale(1); box-shadow: 0 10px 24px rgba(22, 163, 74, 0.28), 0 0 0 0 rgba(34, 197, 94, 0.45); }
+  50% { transform: scale(1.025); box-shadow: 0 12px 28px rgba(22, 163, 74, 0.35), 0 0 0 12px rgba(34, 197, 94, 0); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .hb-success, .hb-canceled, .hb-pulse { animation: none; }
+  .hb-success svg path, .hb-canceled svg path { animation: none; stroke-dashoffset: 0; }
+}

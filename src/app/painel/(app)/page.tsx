@@ -199,7 +199,7 @@ export default async function AgendaPage({ searchParams }: Props) {
                       </StatusForm>
                     )}
                     {done && (
-                      <StatusForm id={a.id} status="SCHEDULED" className="btn-secondary btn-sm flex-1 sm:flex-none">
+                      <StatusForm id={a.id} status="CONFIRMED" className="btn-secondary btn-sm flex-1 sm:flex-none">
                         <RotateCcw className="h-4 w-4" /> Reabrir
                       </StatusForm>
                     )}

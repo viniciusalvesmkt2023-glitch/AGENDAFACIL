@@ -1,11 +1,11 @@
 "use client";
 
-import { useActionState, useEffect, useMemo, useRef, useState } from "react";
+import { useActionState, useCallback, useMemo, useRef, useState } from "react";
 import { useFormStatus } from "react-dom";
-import { CalendarDays, Check, ChevronLeft, Clock, Moon, Sun, Sunrise } from "lucide-react";
+import { CalendarDays, Check, ChevronLeft } from "lucide-react";
 import { bookOnline } from "./actions";
-import { useSlots } from "@/components/use-slots";
-import { addDays, formatDateLong, WEEKDAYS_SHORT, weekdayOf } from "@/lib/time";
+import { TimePicker, type TimeValue } from "@/components/public/time-picker";
+import { formatDateLong, WEEKDAYS_SHORT, weekdayOf } from "@/lib/time";
 import { formatDuration, formatMoney } from "@/lib/format";
 
 type Service = { id: string; name: string; description: string | null; durationMinutes: number; priceCents: number; imageUrl?: string | null };
@@ -21,12 +21,6 @@ type Props = {
 
 const ANY = "__any__";
 const TITLES = ["Escolha o serviço", "Com quem você quer ser atendido?", "Escolha o dia e o horário", "Seus dados"];
-const PERIODS = [
-  { key: "manha", label: "Manhã", from: 0, to: 12 * 60, Icon: Sunrise },
-  { key: "tarde", label: "Tarde", from: 12 * 60, to: 18 * 60, Icon: Sun },
-  { key: "noite", label: "Noite", from: 18 * 60, to: 24 * 60, Icon: Moon },
-];
-const MONTH = new Intl.DateTimeFormat("pt-BR", { month: "long", year: "numeric", timeZone: "UTC" });
 const SHORT = new Intl.DateTimeFormat("pt-BR", { weekday: "short", day: "numeric", month: "short", timeZone: "UTC" });
 const asDate = (d: string) => new Date(`${d}T12:00:00Z`);
 const capitalize = (t: string) => t.charAt(0).toUpperCase() + t.slice(1);
@@ -47,24 +41,14 @@ export function BookingWizard({ slug, today, maxAdvanceDays, services, professio
   const pro = pros.find((p) => p.id === professionalId);
   const onlyOnePro = pros.length === 1;
 
-  const { slots, loading, message, closed } = useSlots({
-    slug,
-    serviceId: professionalId ? serviceId : undefined,
-    professionalId: professionalId === ANY ? undefined : professionalId,
-    date,
-  });
-
-  // Dia fechado: o profissional escolhido não atende (ou, sem preferência, nenhum atende)
-  const isClosed = useMemo(() => {
-    const list = pro ? [pro] : pros;
-    return (d: string) => list.every((p) => !p.openWeekdays.includes(weekdayOf(d)) || p.closedDates.includes(d));
-  }, [pro, pros]);
-  const days = useMemo(() => Array.from({ length: maxAdvanceDays + 1 }, (_, i) => addDays(today, i)), [today, maxAdvanceDays]);
-
-  // Ao chegar na etapa de horários, já escolhe o primeiro dia aberto
-  useEffect(() => {
-    if (step === 2 && (!date || isClosed(date))) setDate(days.find((d) => !isClosed(d)));
-  }, [step, date, days, isClosed]);
+  const [timeLabel, setTimeLabel] = useState<string>();
+  const pickTime = useCallback((v: TimeValue) => {
+    setDate(v.date);
+    setTime(v.time);
+    setTimeLabel(v.label);
+  }, []);
+  // Dias fechados: os do profissional escolhido (ou, sem preferência, quando nenhum atende)
+  const dayPros = useMemo(() => (pro ? [pro] : pros), [pro, pros]);
 
   function go(next: number) {
     setDir(next >= step ? 1 : -1);
@@ -80,6 +64,7 @@ export function BookingWizard({ slug, today, maxAdvanceDays, services, professio
     if (id !== serviceId) {
       setServiceId(id);
       setTime(undefined);
+      setTimeLabel(undefined);
       const available = professionals.filter((p) => p.serviceIds.includes(id));
       // Só um profissional faz o serviço: já fica escolhido (a etapa é pulada)
       setProfessionalId(available.length === 1 ? available[0].id : undefined);
@@ -90,7 +75,7 @@ export function BookingWizard({ slug, today, maxAdvanceDays, services, professio
     else go(step + 1);
   }
 
-  const slotLabel = slots.find((s) => s.time === time)?.label;
+  const slotLabel = timeLabel;
   const proLabel = professionalId === ANY ? "Primeiro disponível" : pro?.name;
   const chips = [
     step > 0 && service && { label: service.name, to: 0 },
@@ -179,6 +164,7 @@ export function BookingWizard({ slug, today, maxAdvanceDays, services, professio
                 onClick={() => {
                   setProfessionalId(ANY);
                   setTime(undefined);
+      setTimeLabel(undefined);
                 }}
               />
             )}
@@ -191,86 +177,24 @@ export function BookingWizard({ slug, today, maxAdvanceDays, services, professio
                 onClick={() => {
                   setProfessionalId(p.id);
                   setTime(undefined);
+      setTimeLabel(undefined);
                 }}
               />
             ))}
           </div>
         )}
 
-        {step === 2 && (
-          <>
-            <div className="hb-label-row">
-              <span className="hb-label">Dia</span>
-              {date && <span className="hb-month">{MONTH.format(asDate(date))}</span>}
-            </div>
-            <div className="hb-days">
-              {days.map((d) => {
-                const off = isClosed(d);
-                return (
-                  <button
-                    key={d}
-                    type="button"
-                    disabled={off}
-                    className={`hb-day ${d === date ? "sel" : ""}`}
-                    onClick={() => {
-                      setDate(d);
-                      setTime(undefined);
-                    }}
-                    aria-label={`${formatDateLong(d)}${off ? " (fechado)" : ""}`}
-                  >
-                    <small>{d === today ? "Hoje" : WEEKDAYS_SHORT[weekdayOf(d)]}</small>
-                    <b>{Number(d.slice(8))}</b>
-                    {off && <em>fechado</em>}
-                  </button>
-                );
-              })}
-            </div>
-
-            <div className="hb-sep" />
-            <div className="hb-label-row">
-              <span className="hb-label">Horário</span>
-              {!loading && slots.length > 0 && <span className="hb-month">{slots.length} livres</span>}
-            </div>
-            {loading ? (
-              <p className="hb-loading">Buscando horários...</p>
-            ) : slots.length === 0 ? (
-              date && <p className="hb-empty" style={{ marginTop: 0 }}>{message ?? "Nenhum horário livre nesta data. Escolha outro dia."}</p>
-            ) : (
-              PERIODS.map(({ key, label, from, to, Icon }) => {
-                const list = slots.filter((s) => s.time >= from && s.time < to);
-                if (!list.length) return null;
-                return (
-                  <div key={key} className="hb-pbox">
-                    <div className="hb-phead">
-                      <span className={`hb-pico ${key}`}><Icon /></span>
-                      <b>{label}</b>
-                      <small>{list.length} {list.length === 1 ? "horário" : "horários"}</small>
-                    </div>
-                    <div className="hb-slots">
-                      {list.map((s) => (
-                        <button key={s.time} type="button" className={`hb-slot ${s.time === time ? "sel" : ""}`} onClick={() => setTime(s.time)} aria-pressed={s.time === time}>
-                          {s.label}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                );
-              })
-            )}
-            {!loading && slots.length > 0 && closed.length > 0 && (
-              <p className="hb-note">
-                <Clock />
-                <span>
-                  Sem atendimento{" "}
-                  {closed.map((c, i) => (
-                    <span key={c}>
-                      {i > 0 && " e "}das <b>{c}</b>
-                    </span>
-                  ))}
-                </span>
-              </p>
-            )}
-          </>
+        {step === 2 && service && (
+          <TimePicker
+            slug={slug}
+            serviceId={service.id}
+            professionalId={professionalId === ANY ? undefined : professionalId}
+            pros={dayPros}
+            today={today}
+            maxAdvanceDays={maxAdvanceDays}
+            value={{ date, time, label: timeLabel }}
+            onChange={pickTime}
+          />
         )}
 
         {step === 3 && service && date && time !== undefined && (

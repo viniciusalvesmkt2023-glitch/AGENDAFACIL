@@ -212,7 +212,7 @@ export async function createAppointment(input: {
         priceCents: service.priceCents,
         notes: input.notes || null,
         source: input.source,
-        status: "SCHEDULED",
+        status: "CONFIRMED",
       },
       include: { service: true, professional: true, client: true },
     });
@@ -264,7 +264,7 @@ export async function rescheduleAppointment(input: {
         date: input.date,
         startMinutes: input.startMinutes,
         endMinutes: input.startMinutes + duration,
-        status: "SCHEDULED",
+        status: "CONFIRMED",
         confirmationSentAt: null,
         reminderDaySentAt: null,
         reminderShortSentAt: null,
