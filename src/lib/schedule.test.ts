@@ -57,3 +57,28 @@ describe("intervalo entre atendimentos e bloqueios no cálculo", () => {
     expect(isSlotFree({ hours, durationMinutes: 30, busy: [], blocks, startMinutes: 630 })).toBe(false);
   });
 });
+
+import { closedPeriods, emptyDayReason, worksThatDay } from "./schedule";
+
+describe("explicações para o cliente", () => {
+  const h = { isOpen: true, startMinutes: 540, endMinutes: 1080, breakStart: 720, breakEnd: 780 };
+  it("dia todo bloqueado = não atende", () => {
+    expect(worksThatDay({ hours: h, blocks: [{ startMinutes: 0, endMinutes: 1440 }] })).toBe(false);
+    expect(emptyDayReason([{ hours: h, blocks: [{ startMinutes: 0, endMinutes: 1440 }] }], 0, 30)).toBe("CLOSED");
+    expect(emptyDayReason([{ hours: { ...h, isOpen: false }, blocks: [] }], 0, 30)).toBe("CLOSED");
+  });
+  it("horários de hoje já passaram vs. lotado", () => {
+    expect(emptyDayReason([{ hours: h, blocks: [] }], 1070, 30)).toBe("PAST");
+    expect(emptyDayReason([{ hours: h, blocks: [] }], 600, 30)).toBe("FULL");
+  });
+  it("períodos fechados: bloqueio 11h-13h junta com o almoço", () => {
+    expect(closedPeriods([{ hours: h, blocks: [{ startMinutes: 660, endMinutes: 780 }] }])).toEqual([{ startMinutes: 660, endMinutes: 780 }]);
+  });
+  it("com vários profissionais, só avisa o que vale para todos", () => {
+    const ana = { hours: { ...h, breakStart: null, breakEnd: null }, blocks: [{ startMinutes: 660, endMinutes: 780 }] };
+    const joao = { hours: h, blocks: [] };
+    expect(closedPeriods([ana, joao])).toEqual([{ startMinutes: 720, endMinutes: 780 }]);
+    const folga = { hours: h, blocks: [{ startMinutes: 0, endMinutes: 1440 }] };
+    expect(closedPeriods([ana, folga])).toEqual([{ startMinutes: 660, endMinutes: 780 }]); // quem está de folga não conta
+  });
+});

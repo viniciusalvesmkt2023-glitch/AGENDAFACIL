@@ -5,11 +5,12 @@ import { bookOnline } from "./actions";
 import { FormMessage } from "@/components/ui";
 import { SubmitButton } from "@/components/submit-button";
 import { useSlots } from "@/components/use-slots";
+import { ClosedPeriods, NoSlots } from "@/components/slot-notes";
 import { addDays, formatDateLong, WEEKDAYS_SHORT, weekdayOf } from "@/lib/time";
 import { formatDuration, formatMoney } from "@/lib/format";
 
 type Service = { id: string; name: string; description: string | null; durationMinutes: number; priceCents: number };
-type Professional = { id: string; name: string; serviceIds: string[]; openWeekdays: number[] };
+type Professional = { id: string; name: string; serviceIds: string[]; openWeekdays: number[]; closedDates: string[] };
 
 type Props = {
   slug: string;
@@ -31,13 +32,13 @@ export function BookingWizard({ slug, today, maxAdvanceDays, services, professio
   const service = services.find((s) => s.id === serviceId);
   const pros = useMemo(() => professionals.filter((p) => serviceId && p.serviceIds.includes(serviceId)), [professionals, serviceId]);
   const pro = pros.find((p) => p.id === professionalId);
-  // Dias em que dá para marcar: os do profissional escolhido, ou de qualquer um ("sem preferência")
-  const openWeekdays = useMemo(
-    () => (pro ? pro.openWeekdays : [...new Set(pros.flatMap((p) => p.openWeekdays))]),
-    [pro, pros],
-  );
+  // Dia fechado: o profissional escolhido não atende (ou, sem preferência, nenhum atende)
+  const isClosed = useMemo(() => {
+    const list = pro ? [pro] : pros;
+    return (d: string) => list.every((p) => !p.openWeekdays.includes(weekdayOf(d)) || p.closedDates.includes(d));
+  }, [pro, pros]);
 
-  const { slots, loading } = useSlots({
+  const { slots, loading, message, closed: closedPeriods } = useSlots({
     slug,
     serviceId: professionalId ? serviceId : undefined,
     professionalId: professionalId === ANY ? undefined : professionalId,
@@ -115,7 +116,7 @@ export function BookingWizard({ slug, today, maxAdvanceDays, services, professio
           <div className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-2">
             {days.map((d) => {
               const wd = weekdayOf(d);
-              const closed = !openWeekdays.includes(wd);
+              const closed = isClosed(d);
               const selected = d === date;
               return (
                 <button
@@ -133,7 +134,7 @@ export function BookingWizard({ slug, today, maxAdvanceDays, services, professio
                 >
                   <span className="text-xs">{d === today ? "Hoje" : WEEKDAYS_SHORT[wd]}</span>
                   <span className="text-lg font-semibold">{d.slice(8)}</span>
-                  <span className="text-xs">{d.slice(5, 7)}</span>
+                  <span className="text-xs">{closed ? "Fechado" : d.slice(5, 7)}</span>
                 </button>
               );
             })}
@@ -143,7 +144,7 @@ export function BookingWizard({ slug, today, maxAdvanceDays, services, professio
               {loading ? (
                 <p className="text-sm text-zinc-500">Buscando horários...</p>
               ) : slots.length === 0 ? (
-                <p className="text-sm text-zinc-500">Nenhum horário livre nesta data. Tente outro dia.</p>
+                <NoSlots message={message} />
               ) : (
                 <div className="grid grid-cols-4 gap-2 sm:grid-cols-6">
                   {slots.map((s) => (
@@ -158,6 +159,7 @@ export function BookingWizard({ slug, today, maxAdvanceDays, services, professio
                   ))}
                 </div>
               )}
+              {!loading && slots.length > 0 && <ClosedPeriods closed={closedPeriods} />}
             </div>
           )}
         </Step>

@@ -17,7 +17,7 @@ export async function GET(req: NextRequest) {
 
   const business = await db.business.findUnique({ where: { slug } });
   if (!business) return NextResponse.json({ error: "Estabelecimento não encontrado" }, { status: 404 });
-  if (!hasAccess(business)) return NextResponse.json({ slots: [] });
+  if (!hasAccess(business)) return NextResponse.json({ slots: [], message: "Agendamento online indisponível no momento.", closed: [] });
 
   // O dono logado pode ver horários fora da janela de agendamento online (encaixes)
   let enforceWindow = true;
@@ -42,7 +42,7 @@ export async function GET(req: NextRequest) {
     excludeAppointmentId = appt?.id;
   }
 
-  const slots = await getAvailability({
+  const day = await getAvailability({
     business,
     serviceId,
     date,
@@ -51,7 +51,20 @@ export async function GET(req: NextRequest) {
     excludeAppointmentId,
   });
 
+  // Explica ao cliente por que não há horário (para não parecer erro)
+  const pro = p.get("professionalId") ? await db.professional.findFirst({ where: { id: p.get("professionalId")!, businessId: business.id }, select: { name: true } }) : null;
+  const who = pro ? pro.name.split(" ")[0] : null;
+  const messages: Record<string, string> = {
+    CLOSED: who ? `${who} não atende neste dia. Escolha outra data.` : "Não estamos atendendo neste dia. Escolha outra data.",
+    PAST: "Os horários de hoje já passaram. Escolha outra data.",
+    FULL: "Todos os horários deste dia já foram preenchidos. Escolha outra data.",
+    WINDOW: "Esta data ainda não está aberta para agendamento.",
+  };
+
   return NextResponse.json({
-    slots: slots.map((s) => ({ time: s.time, label: minutesToTime(s.time) })),
+    slots: day.slots.map((s) => ({ time: s.time, label: minutesToTime(s.time) })),
+    empty: day.empty,
+    message: day.empty ? messages[day.empty] : null,
+    closed: day.closed.map((c) => `${minutesToTime(c.startMinutes)} às ${minutesToTime(c.endMinutes)}`),
   });
 }

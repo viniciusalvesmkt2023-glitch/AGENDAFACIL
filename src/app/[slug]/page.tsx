@@ -5,7 +5,8 @@ import { todayInTimezone } from "@/lib/time";
 import { formatPhone, whatsappLink } from "@/lib/format";
 import { BookingWizard } from "./booking-wizard";
 import { hasAccess } from "@/lib/subscription";
-import { openWeekdays } from "@/lib/schedule";
+import { blockAppliesOn, openWeekdays } from "@/lib/schedule";
+import { addDays, weekdayOf } from "@/lib/time";
 
 type Props = { params: Promise<{ slug: string }> };
 
@@ -37,6 +38,16 @@ export default async function PublicBookingPage({ params }: Props) {
   const { slug } = await params;
   const business = await getBusiness(slug);
   if (!business) notFound();
+
+  // Dias bloqueados inteiros (folga, férias, feriado) aparecem como "Fechado" na escolha da data
+  const today = todayInTimezone();
+  const lastDay = addDays(today, business.maxAdvanceDays);
+  const fullDayBlocks = await db.timeBlock.findMany({
+    where: { businessId: business.id, startMinutes: null, date: { lte: lastDay }, OR: [{ endDate: null }, { endDate: { gte: today } }] },
+  });
+  const days = Array.from({ length: business.maxAdvanceDays + 1 }, (_, i) => addDays(today, i));
+  const closedDatesFor = (proId: string) =>
+    days.filter((d) => fullDayBlocks.some((b) => (b.professionalId === null || b.professionalId === proId) && blockAppliesOn(b, d, weekdayOf(d))));
 
 
   return (
@@ -70,7 +81,7 @@ export default async function PublicBookingPage({ params }: Props) {
         ) : (
           <BookingWizard
             slug={business.slug}
-            today={todayInTimezone()}
+            today={today}
             maxAdvanceDays={business.maxAdvanceDays}
             services={business.services.map((s) => ({
               id: s.id,
@@ -84,6 +95,7 @@ export default async function PublicBookingPage({ params }: Props) {
               name: p.name,
               serviceIds: p.services.map((s) => s.serviceId),
               openWeekdays: openWeekdays(p, business.workingHours),
+              closedDates: closedDatesFor(p.id),
             }))}
           />
         )}

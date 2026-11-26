@@ -5,6 +5,7 @@ import { addDays, WEEKDAYS_SHORT, weekdayOf } from "@/lib/time";
 import { useSlots } from "./use-slots";
 import { FormMessage } from "./ui";
 import { SubmitButton } from "./submit-button";
+import { ClosedPeriods, NoSlots } from "./slot-notes";
 
 type State = { error?: string | null } | undefined;
 
@@ -40,7 +41,7 @@ export function ReschedulePicker({
   const [state, formAction] = useActionState(action, undefined);
   const [date, setDate] = useState<string>();
   const [time, setTime] = useState<number>();
-  const { slots, loading } = useSlots({ slug, serviceId, professionalId, date, painel, token, appointmentId });
+  const { slots, loading, message, closed } = useSlots({ slug, serviceId, professionalId, date, painel, token, appointmentId });
   const days = Array.from({ length: dayCount + 1 }, (_, i) => addDays(today, i));
 
   return (
@@ -89,7 +90,7 @@ export function ReschedulePicker({
           {loading ? (
             <p className="text-sm text-zinc-500">Buscando horários...</p>
           ) : slots.length === 0 ? (
-            <p className="rounded-xl bg-zinc-50 px-3 py-2.5 text-sm text-zinc-500">Nenhum horário livre nesse dia. Escolha outro.</p>
+            <NoSlots message={message} />
           ) : (
             <div className="grid grid-cols-4 gap-2 sm:grid-cols-6">
               {slots.map((s) => (
@@ -106,6 +107,7 @@ export function ReschedulePicker({
               ))}
             </div>
           )}
+          {!loading && slots.length > 0 && <ClosedPeriods closed={closed} />}
         </div>
       )}
 

@@ -17,6 +17,9 @@ export function useSlots(params: {
 }) {
   const { slug, serviceId, professionalId, date, painel, token, appointmentId } = params;
   const [slots, setSlots] = useState<Slot[]>([]);
+  // Motivo quando não há horários e períodos fechados no meio do dia (ex.: "11:00 às 13:00")
+  const [message, setMessage] = useState<string | null>(null);
+  const [closed, setClosed] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -33,9 +36,17 @@ export function useSlots(params: {
     setLoading(true);
     fetch(`/api/disponibilidade?${qs}`, { signal: controller.signal })
       .then((r) => r.json())
-      .then((data) => setSlots(data.slots ?? []))
+      .then((data) => {
+        setSlots(data.slots ?? []);
+        setMessage(data.message ?? null);
+        setClosed(data.closed ?? []);
+      })
       .catch((e) => {
-        if (e.name !== "AbortError") setSlots([]);
+        if (e.name !== "AbortError") {
+          setSlots([]);
+          setMessage("Não foi possível carregar os horários. Tente de novo.");
+          setClosed([]);
+        }
       })
       .finally(() => {
         if (!controller.signal.aborted) setLoading(false);
@@ -43,5 +54,5 @@ export function useSlots(params: {
     return () => controller.abort();
   }, [slug, serviceId, professionalId, date, painel, token, appointmentId]);
 
-  return { slots, loading };
+  return { slots, loading, message, closed };
 }

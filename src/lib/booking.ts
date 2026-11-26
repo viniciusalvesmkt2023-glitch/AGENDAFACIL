@@ -1,7 +1,7 @@
 import "server-only";
 import { db } from "./db";
 import { computeAvailableSlots, isSlotFree, type BusyInterval, type DayHours } from "./availability";
-import { blockIntervals, effectiveHours } from "./schedule";
+import { blockIntervals, closedPeriods, effectiveHours, emptyDayReason, type EmptyReason } from "./schedule";
 import type { Prisma } from "@prisma/client";
 import { diffDays, isValidDate, nowInTimezone, weekdayOf } from "./time";
 import { normalizePhone } from "./format";
@@ -92,6 +92,14 @@ async function loadDay(
  * Horários disponíveis para um serviço em uma data.
  * Se professionalId for omitido, considera qualquer profissional que realize o serviço.
  */
+export type DayAvailability = {
+  slots: { time: number; professionalIds: string[] }[];
+  /** Por que não há horários (para explicar ao cliente). WINDOW = fora do período aberto para agendamento. */
+  empty: EmptyReason | "WINDOW" | null;
+  /** Pausas e bloqueios no meio do dia (ex.: almoço, 11h às 13h) */
+  closed: BusyInterval[];
+};
+
 export async function getAvailability(opts: {
   business: BusinessRules;
   serviceId: string;
@@ -101,18 +109,19 @@ export async function getAvailability(opts: {
   enforceWindow?: boolean;
   /** Ao remarcar, o próprio agendamento não conta como ocupado. */
   excludeAppointmentId?: string;
-}): Promise<{ time: number; professionalIds: string[] }[]> {
+}): Promise<DayAvailability> {
   const { business, serviceId, date, professionalId, enforceWindow = true } = opts;
-  if (!isValidDate(date)) return [];
+  const none = (empty: DayAvailability["empty"]): DayAvailability => ({ slots: [], empty, closed: [] });
+  if (!isValidDate(date)) return none("CLOSED");
 
   const service = await db.service.findFirst({ where: { id: serviceId, businessId: business.id, active: true } });
-  if (!service) return [];
+  if (!service) return none("CLOSED");
 
   const earliestStart = earliestStartFor(business, date, enforceWindow);
-  if (earliestStart === null) return [];
+  if (earliestStart === null) return none("WINDOW");
 
   const pros = await loadDay(db, business.id, serviceId, date, { professionalId, excludeAppointmentId: opts.excludeAppointmentId });
-  if (pros.length === 0) return [];
+  if (pros.length === 0) return none("CLOSED");
 
   const result = new Map<number, string[]>();
   for (const pro of pros) {
@@ -127,7 +136,12 @@ export async function getAvailability(opts: {
     });
     for (const s of slots) result.set(s, [...(result.get(s) ?? []), pro.id]);
   }
-  return [...result.entries()].sort((a, b) => a[0] - b[0]).map(([time, professionalIds]) => ({ time, professionalIds }));
+  const slots = [...result.entries()].sort((a, b) => a[0] - b[0]).map(([time, professionalIds]) => ({ time, professionalIds }));
+  return {
+    slots,
+    empty: slots.length ? null : emptyDayReason(pros, earliestStart, service.durationMinutes),
+    closed: closedPeriods(pros),
+  };
 }
 
 export class BookingError extends Error {}

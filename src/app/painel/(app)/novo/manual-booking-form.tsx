@@ -20,7 +20,7 @@ export function ManualBookingForm({ slug, canSendWhatsapp, initialDate, services
   const [professionalId, setProfessionalId] = useState("");
   const [date, setDate] = useState(initialDate);
   const [time, setTime] = useState<number | null>(null);
-  const { slots, loading } = useSlots({ slug, serviceId, professionalId, date, painel: true });
+  const { slots, loading, message } = useSlots({ slug, serviceId, professionalId, date, painel: true });
 
   const availablePros = useMemo(
     () => professionals.filter((p) => !serviceId || p.serviceIds.includes(serviceId)),
@@ -83,7 +83,7 @@ export function ManualBookingForm({ slug, canSendWhatsapp, initialDate, services
           ) : loading ? (
             <p className="rounded-xl bg-zinc-50 px-3 py-3 text-sm text-zinc-500">Buscando horários...</p>
           ) : slots.length === 0 ? (
-            <p className="rounded-xl bg-amber-50 px-3 py-3 text-sm text-amber-800">Nenhum horário livre nesta data.</p>
+            <p className="rounded-xl bg-amber-50 px-3 py-3 text-sm text-amber-800">{message ?? "Nenhum horário livre nesta data."}</p>
           ) : (
             <div className="grid grid-cols-4 gap-2 sm:grid-cols-6">
               {slots.map((s) => (
