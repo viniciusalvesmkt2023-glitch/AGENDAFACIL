@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { CalendarPlus, Check, CheckCheck, ChevronLeft, ChevronRight, MessageCircle, MoreHorizontal, Phone, RotateCcw, UserX, X } from "lucide-react";
+import { CalendarClock, CalendarOff, CalendarPlus, Check, CheckCheck, ChevronLeft, ChevronRight, Lock, MessageCircle, MoreHorizontal, Phone, RotateCcw, UserX, X } from "lucide-react";
 import { db } from "@/lib/db";
 import { requireActiveUser } from "@/lib/auth";
 import { addDays, formatDateLong, isValidDate, minutesToTime, nowInTimezone, WEEKDAYS_SHORT, weekdayOf } from "@/lib/time";
@@ -7,6 +7,8 @@ import { formatMoney, formatPhone, whatsappLink } from "@/lib/format";
 import { EmptyState, FormMessage, StatusBadge } from "@/components/ui";
 import { updateAppointmentStatus } from "@/app/painel/actions";
 import { DatePickerButton } from "./agenda-controls";
+import { blockAppliesOn } from "@/lib/schedule";
+import { blockTime } from "@/lib/blocks";
 
 type Props = { searchParams: Promise<{ data?: string; profissional?: string; erro?: string }> };
 
@@ -18,14 +20,26 @@ export default async function AgendaPage({ searchParams }: Props) {
   const date = params.data && isValidDate(params.data) ? params.data : today;
   const pro = params.profissional || "";
 
-  const [appointments, professionals] = await Promise.all([
+  const [appointments, professionals, dayBlocks] = await Promise.all([
     db.appointment.findMany({
       where: { businessId: user.businessId, date, ...(pro ? { professionalId: pro } : {}) },
       include: { client: true, service: true, professional: true },
       orderBy: [{ startMinutes: "asc" }],
     }),
     db.professional.findMany({ where: { businessId: user.businessId, active: true }, orderBy: { name: "asc" } }),
+    db.timeBlock.findMany({
+      where: {
+        businessId: user.businessId,
+        date: { lte: date },
+        OR: [{ endDate: null }, { endDate: { gte: date } }],
+        ...(pro ? { AND: [{ OR: [{ professionalId: null }, { professionalId: pro }] }] } : {}),
+      },
+      include: { professional: { select: { name: true } } },
+    }),
   ]);
+  const blocks = dayBlocks
+    .filter((b) => blockAppliesOn(b, date, weekdayOf(date)))
+    .sort((a, b) => (a.startMinutes ?? -1) - (b.startMinutes ?? -1));
 
   const active = appointments.filter((a) => a.status !== "CANCELED");
   const revenue = active.filter((a) => a.status !== "NO_SHOW").reduce((sum, a) => sum + a.priceCents, 0);
@@ -119,9 +133,30 @@ export default async function AgendaPage({ searchParams }: Props) {
         </div>
       )}
 
+      {/* Bloqueios do dia */}
+      {blocks.length > 0 && (
+        <ul className="mb-3 space-y-2">
+          {blocks.map((b) => (
+            <li key={b.id} className="flex items-center gap-3 rounded-2xl border border-dashed border-zinc-300 bg-zinc-100/70 px-3.5 py-2.5 text-sm">
+              <Lock className="h-4 w-4 shrink-0 text-zinc-500" />
+              <span className="min-w-0 flex-1 truncate text-zinc-600">
+                <strong className="font-semibold text-zinc-700 first-letter:uppercase">{blockTime(b)}</strong>
+                {" · "}
+                {b.professional?.name ?? "Todos"}
+                {b.reason && ` · ${b.reason}`}
+              </span>
+              <Link href="/painel/bloqueios" className="shrink-0 text-xs font-semibold text-brand-700">Ver</Link>
+            </li>
+          ))}
+        </ul>
+      )}
+
       {appointments.length === 0 ? (
         <EmptyState title="Nenhum agendamento neste dia" icon={<CalendarPlus className="h-6 w-6" />}>
           Compartilhe seu link para os clientes agendarem ou toque em <strong>+ Novo</strong> para marcar um horário.
+          <Link href={`/painel/bloqueios?data=${date}`} className="mt-3 flex items-center justify-center gap-1.5 font-semibold text-brand-700">
+            <CalendarOff className="h-4 w-4" /> Bloquear este dia ou horário
+          </Link>
         </EmptyState>
       ) : (
         <ul className="space-y-2.5">
@@ -190,6 +225,9 @@ export default async function AgendaPage({ searchParams }: Props) {
                           {a.status === "SCHEDULED" && (
                             <MenuItem id={a.id} status="COMPLETED" icon={<CheckCheck className="h-4 w-4" />}>Concluir</MenuItem>
                           )}
+                          <Link href={`/painel/remarcar/${a.id}`} className="flex w-full items-center gap-2 px-3 py-2.5 text-left text-sm text-zinc-700 hover:bg-zinc-50">
+                            <CalendarClock className="h-4 w-4" /> Remarcar
+                          </Link>
                           <MenuItem id={a.id} status="NO_SHOW" icon={<UserX className="h-4 w-4" />}>Marcar falta</MenuItem>
                           <MenuItem id={a.id} status="CANCELED" icon={<X className="h-4 w-4" />} danger>Cancelar</MenuItem>
                         </div>

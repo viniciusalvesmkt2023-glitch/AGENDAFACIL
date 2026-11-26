@@ -11,8 +11,11 @@ export function useSlots(params: {
   professionalId?: string;
   date?: string;
   painel?: boolean;
+  /** Remarcação: ignora o próprio agendamento ao calcular os horários */
+  token?: string;
+  appointmentId?: string;
 }) {
-  const { slug, serviceId, professionalId, date, painel } = params;
+  const { slug, serviceId, professionalId, date, painel, token, appointmentId } = params;
   const [slots, setSlots] = useState<Slot[]>([]);
   const [loading, setLoading] = useState(false);
 
@@ -25,6 +28,8 @@ export function useSlots(params: {
     const qs = new URLSearchParams({ slug, serviceId, date });
     if (professionalId) qs.set("professionalId", professionalId);
     if (painel) qs.set("painel", "1");
+    if (token) qs.set("token", token);
+    if (appointmentId) qs.set("appointmentId", appointmentId);
     setLoading(true);
     fetch(`/api/disponibilidade?${qs}`, { signal: controller.signal })
       .then((r) => r.json())
@@ -36,7 +41,7 @@ export function useSlots(params: {
         if (!controller.signal.aborted) setLoading(false);
       });
     return () => controller.abort();
-  }, [slug, serviceId, professionalId, date, painel]);
+  }, [slug, serviceId, professionalId, date, painel, token, appointmentId]);
 
   return { slots, loading };
 }

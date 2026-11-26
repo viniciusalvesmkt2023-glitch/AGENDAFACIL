@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   CalendarDays,
+  CalendarOff,
   CircleHelp,
   CreditCard,
   KeyRound,
@@ -27,6 +28,7 @@ export const NAV_ITEMS: Item[] = [
   { href: "/painel/servicos", label: "Serviços", icon: Scissors },
   { href: "/painel/profissionais", label: "Profissionais", icon: UserRound },
   { href: "/painel/horarios", label: "Horários", icon: Clock },
+  { href: "/painel/bloqueios", label: "Bloqueios", icon: CalendarOff },
   { href: "/painel/whatsapp", label: "WhatsApp", icon: MessageCircle },
   { href: "/painel/configuracoes", label: "Configurações", icon: Settings },
   { href: "/painel/assinatura", label: "Assinatura", icon: CreditCard },
@@ -62,7 +64,7 @@ export function SidebarNav() {
   );
 }
 
-const MORE_PATHS = ["/painel/profissionais", "/painel/horarios", "/painel/whatsapp", "/painel/configuracoes", "/painel/assinatura", "/painel/conta", "/painel/suporte", "/painel/mais"];
+const MORE_PATHS = ["/painel/profissionais", "/painel/horarios", "/painel/bloqueios", "/painel/whatsapp", "/painel/configuracoes", "/painel/assinatura", "/painel/conta", "/painel/suporte", "/painel/mais"];
 
 /** Barra de navegação fixa embaixo (celular). */
 export function BottomNav() {

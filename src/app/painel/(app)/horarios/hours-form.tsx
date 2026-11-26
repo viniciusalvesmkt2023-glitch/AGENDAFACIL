@@ -1,7 +1,7 @@
 "use client";
 
 import { useActionState, useState } from "react";
-import { saveWorkingHours } from "@/app/painel/actions";
+import { saveProfessionalHours, saveWorkingHours } from "@/app/painel/actions";
 import { FormMessage } from "@/components/ui";
 import { SubmitButton } from "@/components/submit-button";
 import { Switch } from "@/components/switch";
@@ -16,12 +16,32 @@ type Day = {
   breakEnd: string;
 };
 
-export function HoursForm({ days }: { days: Day[] }) {
-  const [state, action] = useActionState(saveWorkingHours, undefined);
+/**
+ * Horários da semana. Sem `professional`: horário do estabelecimento.
+ * Com `professional`: horário próprio do profissional (com a opção de seguir o do estabelecimento).
+ */
+export function HoursForm({ days, professional }: { days: Day[]; professional?: { id: string; name: string; customHours: boolean } }) {
+  const [state, action] = useActionState(professional ? saveProfessionalHours : saveWorkingHours, undefined);
   const [open, setOpen] = useState<Record<number, boolean>>(Object.fromEntries(days.map((d) => [d.weekday, d.isOpen])));
+  const [custom, setCustom] = useState(professional?.customHours ?? true);
 
   return (
     <form action={action} className="space-y-3">
+      {professional && (
+        <>
+          <input type="hidden" name="professionalId" value={professional.id} />
+          <div className="card flex items-center gap-3 p-4">
+            <Switch name="customHours" label="Horário próprio" checked={custom} onChange={setCustom} />
+            <div className="min-w-0 flex-1">
+              <p className="font-semibold text-navy-900">Horário próprio</p>
+              <p className="text-sm text-zinc-500">
+                {custom ? `${professional.name} atende só nos dias e horários abaixo.` : `${professional.name} segue o horário do estabelecimento.`}
+              </p>
+            </div>
+          </div>
+        </>
+      )}
+      <div className={custom ? "space-y-3" : "hidden"}>
       {days.map((d) => {
         const isOpen = open[d.weekday];
         return (
@@ -62,6 +82,7 @@ export function HoursForm({ days }: { days: Day[] }) {
           </div>
         );
       })}
+      </div>
       <div className="sticky bottom-24 z-10 space-y-2 md:bottom-4">
         <FormMessage error={state?.error} success={state?.success} />
         <SubmitButton className="btn-primary w-full shadow-lg md:w-auto">Salvar horários</SubmitButton>

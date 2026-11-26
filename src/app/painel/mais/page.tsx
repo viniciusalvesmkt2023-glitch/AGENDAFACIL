@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ChevronRight, CircleHelp, CreditCard, Clock, ExternalLink, KeyRound, LogOut, MessageCircle, Settings, UserRound } from "lucide-react";
+import { CalendarOff, ChevronRight, CircleHelp, CreditCard, Clock, ExternalLink, KeyRound, LogOut, MessageCircle, Settings, UserRound } from "lucide-react";
 import { requireUser } from "@/lib/auth";
 import { logout } from "../../(auth)/actions";
 import { ShareLinkButton } from "@/components/copy-button";
@@ -7,6 +7,7 @@ import { ShareLinkButton } from "@/components/copy-button";
 const ITEMS = [
   { href: "/painel/profissionais", label: "Profissionais", desc: "Equipe e serviços de cada um", icon: UserRound },
   { href: "/painel/horarios", label: "Horários", desc: "Dias e horários de funcionamento", icon: Clock },
+  { href: "/painel/bloqueios", label: "Bloqueios", desc: "Folgas, férias e compromissos", icon: CalendarOff },
   { href: "/painel/whatsapp", label: "WhatsApp", desc: "Conexão, confirmações e lembretes", icon: MessageCircle },
   { href: "/painel/configuracoes", label: "Configurações", desc: "Dados do salão e regras de agendamento", icon: Settings },
   { href: "/painel/assinatura", label: "Assinatura", desc: "Plano e pagamentos", icon: CreditCard },

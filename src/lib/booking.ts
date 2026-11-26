@@ -1,6 +1,8 @@
 import "server-only";
 import { db } from "./db";
 import { computeAvailableSlots, isSlotFree, type BusyInterval, type DayHours } from "./availability";
+import { blockIntervals, effectiveHours } from "./schedule";
+import type { Prisma } from "@prisma/client";
 import { diffDays, isValidDate, nowInTimezone, weekdayOf } from "./time";
 import { normalizePhone } from "./format";
 
@@ -11,7 +13,10 @@ type BusinessRules = {
   slotInterval: number;
   minAdvanceMinutes: number;
   maxAdvanceDays: number;
+  bufferMinutes: number;
 };
+
+type Db = Prisma.TransactionClient | typeof db;
 
 /**
  * Menor horário (em minutos) permitido para a data, considerando a antecedência mínima.
@@ -27,31 +32,60 @@ function earliestStartFor(business: BusinessRules, date: string, enforceWindow: 
   return 0;
 }
 
-async function loadDay(businessId: string, date: string, professionalIds: string[]) {
-  const [hours, appointments] = await Promise.all([
-    db.workingHour.findUnique({ where: { businessId_weekday: { businessId, weekday: weekdayOf(date) } } }),
-    db.appointment.findMany({
-      where: { businessId, date, professionalId: { in: professionalIds }, status: { in: ACTIVE_STATUSES } },
-      select: { professionalId: true, startMinutes: true, endMinutes: true },
-    }),
-  ]);
-  const busyByPro = new Map<string, BusyInterval[]>();
-  for (const id of professionalIds) busyByPro.set(id, []);
-  for (const a of appointments) busyByPro.get(a.professionalId)?.push(a);
-  return { hours: hours as DayHours | null, busyByPro };
-}
+type ProDay = { id: string; name: string; hours: DayHours | null; busy: BusyInterval[]; blocks: BusyInterval[] };
 
-async function eligibleProfessionals(businessId: string, serviceId: string, professionalId?: string | null) {
-  return db.professional.findMany({
+/**
+ * Carrega, para cada profissional que faz o serviço, o horário do dia (próprio ou do estabelecimento),
+ * os atendimentos já marcados e os bloqueios.
+ */
+async function loadDay(
+  client: Db,
+  businessId: string,
+  serviceId: string,
+  date: string,
+  opts: { professionalId?: string | null; excludeAppointmentId?: string } = {},
+): Promise<ProDay[]> {
+  const weekday = weekdayOf(date);
+  const pros = await client.professional.findMany({
     where: {
       businessId,
       active: true,
-      ...(professionalId ? { id: professionalId } : {}),
+      ...(opts.professionalId ? { id: opts.professionalId } : {}),
       services: { some: { serviceId } },
     },
     orderBy: { name: "asc" },
-    select: { id: true, name: true },
+    select: { id: true, name: true, customHours: true, hours: { where: { weekday } } },
   });
+  if (pros.length === 0) return [];
+  const ids = pros.map((p) => p.id);
+  const [businessHours, appointments, blocks] = await Promise.all([
+    client.workingHour.findMany({ where: { businessId, weekday } }),
+    client.appointment.findMany({
+      where: {
+        businessId,
+        date,
+        professionalId: { in: ids },
+        status: { in: ACTIVE_STATUSES },
+        ...(opts.excludeAppointmentId ? { id: { not: opts.excludeAppointmentId } } : {}),
+      },
+      select: { professionalId: true, startMinutes: true, endMinutes: true },
+    }),
+    client.timeBlock.findMany({
+      where: {
+        businessId,
+        date: { lte: date },
+        OR: [{ endDate: null }, { endDate: { gte: date } }],
+        AND: [{ OR: [{ professionalId: null }, { professionalId: { in: ids } }] }],
+      },
+    }),
+  ]);
+  return pros.map((p) => ({
+    id: p.id,
+    name: p.name,
+    hours: effectiveHours(p, businessHours, weekday),
+    busy: appointments.filter((a) => a.professionalId === p.id),
+    blocks: blockIntervals(blocks, date, weekday, p.id),
+  }));
 }
 
 /**
@@ -65,6 +99,8 @@ export async function getAvailability(opts: {
   professionalId?: string | null;
   /** O painel do dono pode agendar fora da janela (ex.: encaixe de última hora). */
   enforceWindow?: boolean;
+  /** Ao remarcar, o próprio agendamento não conta como ocupado. */
+  excludeAppointmentId?: string;
 }): Promise<{ time: number; professionalIds: string[] }[]> {
   const { business, serviceId, date, professionalId, enforceWindow = true } = opts;
   if (!isValidDate(date)) return [];
@@ -75,18 +111,18 @@ export async function getAvailability(opts: {
   const earliestStart = earliestStartFor(business, date, enforceWindow);
   if (earliestStart === null) return [];
 
-  const pros = await eligibleProfessionals(business.id, serviceId, professionalId);
+  const pros = await loadDay(db, business.id, serviceId, date, { professionalId, excludeAppointmentId: opts.excludeAppointmentId });
   if (pros.length === 0) return [];
-
-  const { hours, busyByPro } = await loadDay(business.id, date, pros.map((p) => p.id));
 
   const result = new Map<number, string[]>();
   for (const pro of pros) {
     const slots = computeAvailableSlots({
-      hours,
+      hours: pro.hours,
       durationMinutes: service.durationMinutes,
       slotInterval: business.slotInterval,
-      busy: busyByPro.get(pro.id) ?? [],
+      busy: pro.busy,
+      blocks: pro.blocks,
+      bufferMinutes: business.bufferMinutes,
       earliestStart,
     });
     for (const s of slots) result.set(s, [...(result.get(s) ?? []), pro.id]);
@@ -127,36 +163,17 @@ export async function createAppointment(input: {
     });
     if (!service) throw new BookingError("Serviço não encontrado.");
 
-    const pros = await tx.professional.findMany({
-      where: {
-        businessId: business.id,
-        active: true,
-        ...(input.professionalId ? { id: input.professionalId } : {}),
-        services: { some: { serviceId: service.id } },
-      },
-      orderBy: { name: "asc" },
-    });
+    const pros = await loadDay(tx, business.id, service.id, input.date, { professionalId: input.professionalId });
     if (pros.length === 0) throw new BookingError("Profissional não disponível para este serviço.");
-
-    const hours = await tx.workingHour.findUnique({
-      where: { businessId_weekday: { businessId: business.id, weekday: weekdayOf(input.date) } },
-    });
-    const busy = await tx.appointment.findMany({
-      where: {
-        businessId: business.id,
-        date: input.date,
-        professionalId: { in: pros.map((p) => p.id) },
-        status: { in: ACTIVE_STATUSES },
-      },
-      select: { professionalId: true, startMinutes: true, endMinutes: true },
-    });
 
     // Escolhe o primeiro profissional livre nesse horário
     const chosen = pros.find((p) =>
       isSlotFree({
-        hours,
+        hours: p.hours,
         durationMinutes: service.durationMinutes,
-        busy: busy.filter((b) => b.professionalId === p.id),
+        busy: p.busy,
+        blocks: p.blocks,
+        bufferMinutes: business.bufferMinutes,
         startMinutes: input.startMinutes,
         earliestStart,
       }),
@@ -184,6 +201,60 @@ export async function createAppointment(input: {
         status: "SCHEDULED",
       },
       include: { service: true, professional: true, client: true },
+    });
+  });
+}
+
+/**
+ * Muda dia e horário de um agendamento (mesmo serviço e mesmo profissional).
+ * Zera os lembretes para que o cliente receba os da nova data.
+ */
+export async function rescheduleAppointment(input: {
+  business: BusinessRules;
+  appointmentId: string;
+  date: string;
+  startMinutes: number;
+  enforceWindow: boolean;
+}) {
+  const { business } = input;
+  if (!isValidDate(input.date)) throw new BookingError("Data inválida.");
+  const earliestStart = earliestStartFor(business, input.date, input.enforceWindow);
+  if (earliestStart === null) throw new BookingError("Data fora do período permitido para agendamento.");
+
+  return db.$transaction(async (tx) => {
+    const appt = await tx.appointment.findFirst({
+      where: { id: input.appointmentId, businessId: business.id, status: { in: ["SCHEDULED", "CONFIRMED"] } },
+      include: { service: true },
+    });
+    if (!appt) throw new BookingError("Agendamento não encontrado ou já encerrado.");
+    const duration = appt.endMinutes - appt.startMinutes;
+    const [pro] = await loadDay(tx, business.id, appt.serviceId, input.date, {
+      professionalId: appt.professionalId,
+      excludeAppointmentId: appt.id,
+    });
+    const free =
+      pro &&
+      isSlotFree({
+        hours: pro.hours,
+        durationMinutes: duration,
+        busy: pro.busy,
+        blocks: pro.blocks,
+        bufferMinutes: business.bufferMinutes,
+        startMinutes: input.startMinutes,
+        earliestStart,
+      });
+    if (!free) throw new BookingError("Este horário não está mais livre. Escolha outro.");
+    return tx.appointment.update({
+      where: { id: appt.id },
+      data: {
+        date: input.date,
+        startMinutes: input.startMinutes,
+        endMinutes: input.startMinutes + duration,
+        status: "SCHEDULED",
+        confirmationSentAt: null,
+        reminderDaySentAt: null,
+        reminderShortSentAt: null,
+      },
     });
   });
 }

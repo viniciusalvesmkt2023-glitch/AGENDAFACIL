@@ -35,6 +35,13 @@ model Business {
   minAdvanceMinutes Int      @default(60)
   // Até quantos dias no futuro o cliente pode agendar
   maxAdvanceDays    Int      @default(30)
+  // Intervalo livre depois de cada atendimento (limpeza, descanso), em minutos
+  bufferMinutes     Int      @default(0)
+  // Cliente pelo link: FREE (até a hora) | DEADLINE (até cancelDeadlineMinutes antes) | NEVER (só falando com o salão)
+  clientCancelPolicy    String  @default("FREE")
+  cancelDeadlineMinutes Int     @default(120)
+  // Cliente pode trocar dia/horário pelo link (respeitando o mesmo prazo do cancelamento)
+  clientCanReschedule   Boolean @default(true)
   createdAt         DateTime @default(now())
 
   // ----- Assinatura do estabelecimento -----
@@ -78,6 +85,7 @@ model Business {
   appointments  Appointment[]
   payments      Payment[]
   messageLogs   MessageLog[]
+  timeBlocks    TimeBlock[]
 }
 
 model User {
@@ -173,10 +181,14 @@ model Professional {
   name       String
   phone      String?
   active     Boolean  @default(true)
+  // false = segue o horário do estabelecimento; true = usa ProfessionalHour
+  customHours Boolean @default(false)
   createdAt  DateTime @default(now())
 
   services     ProfessionalService[]
   appointments Appointment[]
+  hours        ProfessionalHour[]
+  timeBlocks   TimeBlock[]
 
   @@index([businessId])
 }
@@ -204,6 +216,42 @@ model WorkingHour {
   breakEnd     Int?
 
   @@unique([businessId, weekday])
+}
+
+// Horário próprio de um profissional (quando customHours = true). Mesmo formato de WorkingHour.
+model ProfessionalHour {
+  id             String       @id @default(cuid())
+  professionalId String
+  professional   Professional @relation(fields: [professionalId], references: [id], onDelete: Cascade)
+  weekday        Int
+  isOpen         Boolean      @default(true)
+  startMinutes   Int
+  endMinutes     Int
+  breakStart     Int?
+  breakEnd       Int?
+
+  @@unique([professionalId, weekday])
+}
+
+// Bloqueio de agenda: folga, férias, compromisso. professionalId null = vale para todos.
+model TimeBlock {
+  id             String        @id @default(cuid())
+  businessId     String
+  business       Business      @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  professionalId String?
+  professional   Professional? @relation(fields: [professionalId], references: [id], onDelete: Cascade)
+  // ONCE: de date até endDate (ou só date) | WEEKLY: todo weekday, a partir de date (e até endDate, se tiver)
+  kind           String        @default("ONCE")
+  date           String
+  endDate        String?
+  weekday        Int?
+  // Horário bloqueado; ambos null = dia inteiro
+  startMinutes   Int?
+  endMinutes     Int?
+  reason         String?
+  createdAt      DateTime      @default(now())
+
+  @@index([businessId, date])
 }
 
 model Client {

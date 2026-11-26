@@ -7,9 +7,10 @@ import { sendAppointmentMessage } from "@/lib/notifications";
 import { z } from "zod";
 import { db } from "@/lib/db";
 import { requireActiveUser } from "@/lib/auth";
-import { BookingError, createAppointment } from "@/lib/booking";
+import { BookingError, createAppointment, rescheduleAppointment } from "@/lib/booking";
 import { parseMoneyToCents } from "@/lib/format";
 import { checkSlug } from "@/lib/slug-check";
+import { CANCEL_POLICIES } from "@/lib/policy";
 import { timeToMinutes } from "@/lib/time";
 
 export type ActionState = { error?: string | null; success?: string | null; values?: Record<string, string> } | undefined;
@@ -82,6 +83,24 @@ export async function createManualAppointment(_: ActionState, formData: FormData
   }
   revalidatePath("/painel");
   redirect(`/painel?data=${d.date}`);
+}
+
+export async function rescheduleByOwner(_: ActionState, formData: FormData): Promise<ActionState> {
+  const user = await requireActiveUser();
+  const id = String(formData.get("id"));
+  const date = String(formData.get("date") ?? "");
+  const time = Number(formData.get("time"));
+  if (!date || formData.get("time") === "" || !Number.isFinite(time)) return { error: "Escolha o novo dia e horário." };
+  try {
+    // O dono pode remarcar fora da janela do link (antecedência/limite de dias)
+    await rescheduleAppointment({ business: user.business, appointmentId: id, date, startMinutes: time, enforceWindow: false });
+  } catch (e) {
+    if (e instanceof BookingError) return { error: e.message };
+    throw e;
+  }
+  if (formData.get("notify") === "on") after(() => sendAppointmentMessage(id, "CONFIRMATION"));
+  revalidatePath("/painel");
+  redirect(`/painel?data=${date}`);
 }
 
 // ---------- Serviços ----------
@@ -186,9 +205,11 @@ export async function toggleProfessional(formData: FormData) {
 
 // ---------- Horários de funcionamento ----------
 
-export async function saveWorkingHours(_: ActionState, formData: FormData): Promise<ActionState> {
-  const user = await requireActiveUser();
-  const updates = [];
+type WeekRow = { weekday: number; isOpen: boolean; startMinutes: number; endMinutes: number; breakStart: number | null; breakEnd: number | null };
+
+/** Lê os 7 dias do formulário de horários (open_N, start_N, end_N, breakStart_N, breakEnd_N). */
+function parseWeek(formData: FormData): { rows: WeekRow[] } | { error: string } {
+  const rows: WeekRow[] = [];
   for (let weekday = 0; weekday < 7; weekday++) {
     const isOpen = formData.get(`open_${weekday}`) === "on";
     const start = timeToMinutes(String(formData.get(`start_${weekday}`) ?? ""));
@@ -209,24 +230,62 @@ export async function saveWorkingHours(_: ActionState, formData: FormData): Prom
         return { error: "O intervalo precisa estar dentro do horário de funcionamento." };
       }
     }
-    const data = {
+    rows.push({
+      weekday,
       isOpen,
       startMinutes: Number.isFinite(start) ? start : 540,
       endMinutes: Number.isFinite(end) ? end : 1080,
       breakStart: isOpen ? breakStart : null,
       breakEnd: isOpen ? breakEnd : null,
-    };
-    updates.push(
+    });
+  }
+  return { rows };
+}
+
+export async function saveWorkingHours(_: ActionState, formData: FormData): Promise<ActionState> {
+  const user = await requireActiveUser();
+  const week = parseWeek(formData);
+  if ("error" in week) return { error: week.error };
+  await db.$transaction(
+    week.rows.map(({ weekday, ...data }) =>
       db.workingHour.upsert({
         where: { businessId_weekday: { businessId: user.businessId, weekday } },
         update: data,
         create: { businessId: user.businessId, weekday, ...data },
       }),
-    );
-  }
-  await db.$transaction(updates);
+    ),
+  );
   revalidatePath("/painel/horarios");
   return { success: "Horários salvos." };
+}
+
+/** Horário próprio de um profissional (ou volta a seguir o do estabelecimento). */
+export async function saveProfessionalHours(_: ActionState, formData: FormData): Promise<ActionState> {
+  const user = await requireActiveUser();
+  const id = String(formData.get("professionalId") ?? "");
+  const pro = await db.professional.findFirst({ where: { id, businessId: user.businessId } });
+  if (!pro) return { error: "Profissional não encontrado." };
+  const custom = formData.get("customHours") === "on";
+  if (!custom) {
+    await db.professional.update({ where: { id }, data: { customHours: false } });
+    revalidatePath("/painel/profissionais");
+    return { success: `${pro.name} segue o horário do estabelecimento.` };
+  }
+  const week = parseWeek(formData);
+  if ("error" in week) return { error: week.error };
+  if (!week.rows.some((r) => r.isOpen)) return { error: "Marque pelo menos um dia de trabalho." };
+  await db.$transaction([
+    db.professional.update({ where: { id }, data: { customHours: true } }),
+    ...week.rows.map(({ weekday, ...data }) =>
+      db.professionalHour.upsert({
+        where: { professionalId_weekday: { professionalId: id, weekday } },
+        update: data,
+        create: { professionalId: id, weekday, ...data },
+      }),
+    ),
+  ]);
+  revalidatePath("/painel/profissionais");
+  return { success: `Horário de ${pro.name} salvo.` };
 }
 
 // ---------- Configurações ----------
@@ -242,6 +301,9 @@ export async function saveSettings(_: ActionState, formData: FormData): Promise<
     slotInterval: z.coerce.number().int().min(5).max(240),
     minAdvanceMinutes: z.coerce.number().int().min(0).max(10080),
     maxAdvanceDays: z.coerce.number().int().min(1).max(365),
+    bufferMinutes: z.coerce.number().int().min(0).max(120).default(0),
+    clientCancelPolicy: z.enum(CANCEL_POLICIES).default("FREE"),
+    cancelDeadlineMinutes: z.coerce.number().int().min(15).max(10080).default(120),
   });
   const parsed = schema.safeParse(Object.fromEntries(formData));
   if (!parsed.success) return { error: parsed.error.issues[0].message };
@@ -262,6 +324,10 @@ export async function saveSettings(_: ActionState, formData: FormData): Promise<
       slotInterval: d.slotInterval,
       minAdvanceMinutes: d.minAdvanceMinutes,
       maxAdvanceDays: d.maxAdvanceDays,
+      bufferMinutes: d.bufferMinutes,
+      clientCancelPolicy: d.clientCancelPolicy,
+      cancelDeadlineMinutes: d.cancelDeadlineMinutes,
+      clientCanReschedule: formData.get("clientCanReschedule") === "on",
     },
   });
   revalidatePath("/painel", "layout");

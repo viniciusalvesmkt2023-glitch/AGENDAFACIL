@@ -1,10 +1,12 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
 import { saveSettings } from "@/app/painel/actions";
 import { FormMessage } from "@/components/ui";
 import { SubmitButton } from "@/components/submit-button";
 import { SlugField } from "@/components/slug-field";
+import { Switch } from "@/components/switch";
+import { DEADLINE_OPTIONS, deadlineLabel } from "@/lib/policy";
 
 type Business = {
   name: string;
@@ -15,10 +17,21 @@ type Business = {
   slotInterval: number;
   minAdvanceMinutes: number;
   maxAdvanceDays: number;
+  bufferMinutes: number;
+  clientCancelPolicy: string;
+  cancelDeadlineMinutes: number;
+  clientCanReschedule: boolean;
 };
+
+const POLICIES = [
+  { id: "FREE", title: "Liberado", text: "Até a hora do horário" },
+  { id: "DEADLINE", title: "Com prazo", text: "Até um tempo antes" },
+  { id: "NEVER", title: "Não permitir", text: "Só falando com você" },
+];
 
 export function SettingsForm({ business }: { business: Business }) {
   const [state, action] = useActionState(saveSettings, undefined);
+  const [policy, setPolicy] = useState(business.clientCancelPolicy);
   return (
     <form action={action} className="space-y-6">
       <section className="card space-y-4 p-4 md:p-5">
@@ -77,6 +90,53 @@ export function SettingsForm({ business }: { business: Business }) {
                 <option key={v} value={v}>{v} dias de antecedência</option>
               ))}
             </select>
+          </div>
+        </div>
+        <div className="sm:max-w-xs">
+          <label className="label" htmlFor="bufferMinutes">Intervalo entre atendimentos</label>
+          <select className="input" id="bufferMinutes" name="bufferMinutes" defaultValue={business.bufferMinutes}>
+            <option value={0}>Sem intervalo</option>
+            {[5, 10, 15, 20, 30].map((v) => (
+              <option key={v} value={v}>{v} minutos livres depois de cada cliente</option>
+            ))}
+          </select>
+          <p className="mt-1 text-xs text-zinc-500">Tempo para limpar, organizar ou descansar entre um cliente e outro.</p>
+        </div>
+      </section>
+
+      <section className="card space-y-4 p-4 md:p-5">
+        <div>
+          <h2 className="text-lg font-bold">Cancelar e trocar horário pelo link</h2>
+          <p className="text-sm text-zinc-500">Até quando o cliente pode cancelar ou trocar o horário sozinho. Você sempre pode mexer pela agenda.</p>
+        </div>
+        <input type="hidden" name="clientCancelPolicy" value={policy} />
+        <div className="grid gap-2 sm:grid-cols-3">
+          {POLICIES.map((p) => (
+            <button
+              key={p.id}
+              type="button"
+              onClick={() => setPolicy(p.id)}
+              aria-pressed={policy === p.id}
+              className={`rounded-xl border p-3 text-left transition ${policy === p.id ? "border-brand-500 bg-brand-50 ring-2 ring-brand-100" : "border-zinc-200 bg-white"}`}
+            >
+              <span className="block font-semibold text-navy-900">{p.title}</span>
+              <span className="block text-sm text-zinc-500">{p.text}</span>
+            </button>
+          ))}
+        </div>
+        <div className={policy === "DEADLINE" ? "sm:max-w-xs" : "hidden"}>
+          <label className="label" htmlFor="cancelDeadlineMinutes">Até quanto tempo antes</label>
+          <select className="input" id="cancelDeadlineMinutes" name="cancelDeadlineMinutes" defaultValue={business.cancelDeadlineMinutes}>
+            {DEADLINE_OPTIONS.map((v) => (
+              <option key={v} value={v}>{deadlineLabel(v)} antes</option>
+            ))}
+          </select>
+        </div>
+        <div className={policy === "NEVER" ? "hidden" : "flex items-center gap-3 rounded-xl bg-zinc-50 p-3"}>
+          <Switch name="clientCanReschedule" label="Cliente pode trocar o horário pelo link" defaultChecked={business.clientCanReschedule} />
+          <div className="min-w-0">
+            <p className="font-medium text-navy-900">Cliente pode trocar o horário pelo link</p>
+            <p className="text-sm text-zinc-500">Mesmo serviço e mesmo profissional, só muda dia e hora.</p>
           </div>
         </div>
       </section>

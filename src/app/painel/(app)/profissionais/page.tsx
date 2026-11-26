@@ -4,7 +4,7 @@ import { requireActiveUser } from "@/lib/auth";
 import { formatPhone } from "@/lib/format";
 import { EmptyState, PageHeader } from "@/components/ui";
 import { FormPanel } from "@/components/form-panel";
-import { Pencil, Power, UserRound } from "lucide-react";
+import { Clock, Pencil, Power, UserRound } from "lucide-react";
 import { toggleProfessional } from "@/app/painel/actions";
 import { ProfessionalForm } from "./professional-form";
 
@@ -65,8 +65,14 @@ export default async function ProfessionalsPage({ searchParams }: Props) {
                     <p className="truncate text-sm text-zinc-500">
                       {p.services.length ? `${p.services.length} serviço${p.services.length === 1 ? "" : "s"}: ${p.services.map((s) => s.service.name).join(", ")}` : "Nenhum serviço"}
                     </p>
-                    {p.phone && <p className="truncate text-xs text-zinc-400">{formatPhone(p.phone)}</p>}
+                    <p className="truncate text-xs text-zinc-400">
+                      {p.customHours ? "Horário próprio" : "Horário do estabelecimento"}
+                      {p.phone && ` · ${formatPhone(p.phone)}`}
+                    </p>
                   </div>
+                  <Link href={`/painel/profissionais/${p.id}/horarios`} className="btn-icon" aria-label={`Horário de ${p.name}`} title="Horário">
+                    <Clock className="h-4 w-4" />
+                  </Link>
                   <Link href={`/painel/profissionais?editar=${p.id}`} className="btn-icon" aria-label={`Editar ${p.name}`}>
                     <Pencil className="h-4 w-4" />
                   </Link>

@@ -5,6 +5,7 @@ import { todayInTimezone } from "@/lib/time";
 import { formatPhone, whatsappLink } from "@/lib/format";
 import { BookingWizard } from "./booking-wizard";
 import { hasAccess } from "@/lib/subscription";
+import { openWeekdays } from "@/lib/schedule";
 
 type Props = { params: Promise<{ slug: string }> };
 
@@ -19,7 +20,7 @@ async function getBusiness(slug: string) {
       },
       professionals: {
         where: { active: true },
-        include: { services: { select: { serviceId: true } } },
+        include: { services: { select: { serviceId: true } }, hours: true },
         orderBy: { name: "asc" },
       },
     },
@@ -37,7 +38,6 @@ export default async function PublicBookingPage({ params }: Props) {
   const business = await getBusiness(slug);
   if (!business) notFound();
 
-  const openWeekdays = business.workingHours.filter((h) => h.isOpen).map((h) => h.weekday);
 
   return (
     <div className="min-h-screen bg-zinc-50">
@@ -72,7 +72,6 @@ export default async function PublicBookingPage({ params }: Props) {
             slug={business.slug}
             today={todayInTimezone()}
             maxAdvanceDays={business.maxAdvanceDays}
-            openWeekdays={openWeekdays}
             services={business.services.map((s) => ({
               id: s.id,
               name: s.name,
@@ -84,6 +83,7 @@ export default async function PublicBookingPage({ params }: Props) {
               id: p.id,
               name: p.name,
               serviceIds: p.services.map((s) => s.serviceId),
+              openWeekdays: openWeekdays(p, business.workingHours),
             }))}
           />
         )}

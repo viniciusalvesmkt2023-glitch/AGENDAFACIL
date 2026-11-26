@@ -9,20 +9,19 @@ import { addDays, formatDateLong, WEEKDAYS_SHORT, weekdayOf } from "@/lib/time";
 import { formatDuration, formatMoney } from "@/lib/format";
 
 type Service = { id: string; name: string; description: string | null; durationMinutes: number; priceCents: number };
-type Professional = { id: string; name: string; serviceIds: string[] };
+type Professional = { id: string; name: string; serviceIds: string[]; openWeekdays: number[] };
 
 type Props = {
   slug: string;
   today: string;
   maxAdvanceDays: number;
-  openWeekdays: number[];
   services: Service[];
   professionals: Professional[];
 };
 
 const ANY = "__any__";
 
-export function BookingWizard({ slug, today, maxAdvanceDays, openWeekdays, services, professionals }: Props) {
+export function BookingWizard({ slug, today, maxAdvanceDays, services, professionals }: Props) {
   const [state, action] = useActionState(bookOnline, undefined);
   const [serviceId, setServiceId] = useState<string>();
   const [professionalId, setProfessionalId] = useState<string>();
@@ -32,6 +31,11 @@ export function BookingWizard({ slug, today, maxAdvanceDays, openWeekdays, servi
   const service = services.find((s) => s.id === serviceId);
   const pros = useMemo(() => professionals.filter((p) => serviceId && p.serviceIds.includes(serviceId)), [professionals, serviceId]);
   const pro = pros.find((p) => p.id === professionalId);
+  // Dias em que dá para marcar: os do profissional escolhido, ou de qualquer um ("sem preferência")
+  const openWeekdays = useMemo(
+    () => (pro ? pro.openWeekdays : [...new Set(pros.flatMap((p) => p.openWeekdays))]),
+    [pro, pros],
+  );
 
   const { slots, loading } = useSlots({
     slug,
