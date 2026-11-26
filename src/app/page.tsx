@@ -268,7 +268,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ c
                   {best ? (
                     <Cta href="/cadastro">Começar grátis</Cta>
                   ) : (
-                    <Link className="lp-btn ghost" href="/cadastro">Começar grátis</Link>
+                    <Link className="lp-btn ghost lp-shape" href="/cadastro">Começar grátis</Link>
                   )}
                 </div>
               );
