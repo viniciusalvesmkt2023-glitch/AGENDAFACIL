@@ -68,7 +68,7 @@ export function PublicHero(p: PublicHeroProps) {
       )}
       <div className="hb-actions">
         {p.whatsappHref && (
-          <a className="hb-pill hb-glass hb-wa" href={p.whatsappHref} target="_blank" rel="noopener noreferrer">
+          <a className="hb-pill hb-wa" href={p.whatsappHref} target="_blank" rel="noopener noreferrer">
             <MessageCircle /> WhatsApp
           </a>
         )}
