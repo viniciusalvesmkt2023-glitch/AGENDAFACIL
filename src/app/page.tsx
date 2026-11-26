@@ -1,7 +1,6 @@
 import "./vendas.css";
 import Link from "next/link";
 import {
-  ArrowRight,
   Bell,
   CalendarDays,
   ChartLine,
@@ -23,8 +22,9 @@ import {
   ShieldCheck,
   Users,
 } from "lucide-react";
-import { BrandIcon } from "@/components/ui";
 import { RevealOnScroll } from "@/components/landing/reveal";
+import { LandingHeader } from "@/components/landing/header";
+import { Cta } from "@/components/landing/cta";
 import { formatMoney } from "@/lib/format";
 import { discountPercent, monthlyEquivalentCents, PLANS, TRIAL_DAYS, type Plan } from "@/lib/plans";
 
@@ -70,23 +70,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ c
         <p className="bg-navy-900 px-4 py-2.5 text-center text-sm text-white">Sua conta foi excluída. Obrigado por ter usado o HoraBoa.</p>
       )}
 
-      <header>
-        <div className="bar lp-glass">
-          <Link className="logo lp-disp" href="/" aria-label="HoraBoa — início">
-            <BrandIcon className="h-8 w-8" />
-            <span>
-              <b>Hora</b>
-              <span>Boa</span>
-            </span>
-          </Link>
-          <nav>
-            <a className="lk lp-hide-m" href="#como">Como funciona</a>
-            <a className="lk lp-hide-m" href="#precos">Preços</a>
-            <Link className="lk" href="/entrar">Entrar</Link>
-            <Link className="lp-btn sm g-brand" href="/cadastro">Testar grátis</Link>
-          </nav>
-        </div>
-      </header>
+      <LandingHeader />
 
       {/* Abertura */}
       <section className="hero">
@@ -104,9 +88,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ c
             salões, manicures, estética e mais.
           </p>
           <div className="ctas">
-            <Link className="lp-btn g-brand pulse" href="/cadastro">
-              Começar meus {TRIAL_DAYS} dias grátis <ArrowRight className="i" />
-            </Link>
+            <Cta href="/cadastro">Começar meus {TRIAL_DAYS} dias grátis</Cta>
             <a className="lp-btn ghost" href="#como">
               <CirclePlay className="i" /> Ver como funciona
             </a>
@@ -279,7 +261,11 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ c
                       <li key={f}><Check className="i" />{f}</li>
                     ))}
                   </ul>
-                  <Link className={`lp-btn ${best ? "g-brand pulse" : "ghost"}`} href="/cadastro">Começar grátis</Link>
+                  {best ? (
+                    <Cta href="/cadastro">Começar grátis</Cta>
+                  ) : (
+                    <Link className="lp-btn ghost" href="/cadastro">Começar grátis</Link>
+                  )}
                 </div>
               );
             })}
@@ -315,9 +301,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ c
         <section className="final lp-rv">
           <h2 className="lp-disp">Pronto para encher sua agenda?</h2>
           <p>Crie sua conta em 2 minutos e comece a receber agendamentos hoje mesmo.</p>
-          <Link className="lp-btn g-brand pulse" href="/cadastro">
-            Testar grátis por {TRIAL_DAYS} dias <ArrowRight className="i" />
-          </Link>
+          <Cta href="/cadastro">Testar grátis por {TRIAL_DAYS} dias</Cta>
           <div className="trust" style={{ color: "rgba(255,255,255,.65)" }}>
             <span><Check className="i" /> Sem cartão</span>
             <span><Check className="i" /> Sem fidelidade</span>
