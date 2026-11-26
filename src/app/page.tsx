@@ -89,7 +89,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ c
           </p>
           <div className="ctas">
             <Cta href="/cadastro">Começar meus {TRIAL_DAYS} dias grátis</Cta>
-            <a className="lp-btn ghost" href="#como">
+            <a className="lp-btn ghost lp-shape" href="#como">
               <CirclePlay className="i" /> Ver como funciona
             </a>
           </div>
