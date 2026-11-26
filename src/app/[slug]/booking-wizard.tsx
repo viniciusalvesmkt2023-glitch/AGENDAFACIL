@@ -146,6 +146,8 @@ export function BookingWizard({ slug, today, maxAdvanceDays, services, professio
               ) : slots.length === 0 ? (
                 <NoSlots message={message} />
               ) : (
+                <>
+                <ClosedPeriods closed={closedPeriods} />
                 <div className="grid grid-cols-4 gap-2 sm:grid-cols-6">
                   {slots.map((s) => (
                     <button
@@ -158,8 +160,9 @@ export function BookingWizard({ slug, today, maxAdvanceDays, services, professio
                     </button>
                   ))}
                 </div>
+                </>
               )}
-              {!loading && slots.length > 0 && <ClosedPeriods closed={closedPeriods} />}
+              
             </div>
           )}
         </Step>

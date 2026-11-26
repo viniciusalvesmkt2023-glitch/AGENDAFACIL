@@ -92,6 +92,8 @@ export function ReschedulePicker({
           ) : slots.length === 0 ? (
             <NoSlots message={message} />
           ) : (
+            <>
+            <ClosedPeriods closed={closed} />
             <div className="grid grid-cols-4 gap-2 sm:grid-cols-6">
               {slots.map((s) => (
                 <button
@@ -106,8 +108,9 @@ export function ReschedulePicker({
                 </button>
               ))}
             </div>
+            </>
           )}
-          {!loading && slots.length > 0 && <ClosedPeriods closed={closed} />}
+          
         </div>
       )}
 

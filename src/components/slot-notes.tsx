@@ -14,9 +14,20 @@ export function NoSlots({ message }: { message: string | null }) {
 export function ClosedPeriods({ closed }: { closed: string[] }) {
   if (!closed.length) return null;
   return (
-    <p className="mt-3 flex items-start gap-2 text-sm text-zinc-500">
-      <Clock className="mt-0.5 h-4 w-4 shrink-0" />
-      <span>Sem atendimento {closed.map((c) => `das ${c}`).join(" e ")}.</span>
-    </p>
+    <div className="mb-3 flex items-center gap-3 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-amber-900">
+      <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-amber-100 text-amber-700">
+        <Clock className="h-5 w-5" />
+      </span>
+      <p className="text-sm">
+        <span className="block font-bold">Fechado neste período</span>
+        Sem atendimento{" "}
+        {closed.map((c, i) => (
+          <span key={c}>
+            {i > 0 && " e "}das <strong className="font-bold">{c}</strong>
+          </span>
+        ))}
+        .
+      </p>
+    </div>
   );
 }
