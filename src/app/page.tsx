@@ -1,144 +1,251 @@
+import "./vendas.css";
 import Link from "next/link";
 import {
-  BellRing,
-  CalendarCheck2,
+  ArrowRight,
+  Bell,
+  CalendarDays,
+  ChartLine,
   Check,
+  CirclePlay,
+  Clock,
   CreditCard,
-  Link2,
+  Heart,
+  Image as ImageIcon,
+  Lock,
   MessageCircle,
+  Moon,
+  Navigation,
+  Palette,
+  Pencil,
+  Phone,
+  Plus,
+  RefreshCw,
   ShieldCheck,
-  Smartphone,
   Users,
 } from "lucide-react";
-import { Logo, Wordmark } from "@/components/ui";
+import { BrandIcon } from "@/components/ui";
+import { RevealOnScroll } from "@/components/landing/reveal";
 import { formatMoney } from "@/lib/format";
-import { monthlyEquivalentCents, PLAN_LIST, TRIAL_DAYS } from "@/lib/plans";
+import { discountPercent, monthlyEquivalentCents, PLANS, TRIAL_DAYS, type Plan } from "@/lib/plans";
 
-const features = [
-  { icon: Link2, title: "Seu link de agendamento", text: "Clientes escolhem serviço, profissional e horário 24h por dia, sem precisar te chamar." },
-  { icon: BellRing, title: "Lembretes no WhatsApp", text: "Confirmação e lembrete automáticos, enviados do seu próprio número. Menos faltas." },
-  { icon: CalendarCheck2, title: "Sem conflito de horários", text: "Considera a duração de cada serviço, o almoço e a agenda de cada profissional." },
-  { icon: Smartphone, title: "Feito para o celular", text: "Veja o dia, confirme, conclua e marque faltas com um toque, entre um cliente e outro." },
-  { icon: Users, title: "Equipe e clientes", text: "Cadastre a equipe e tenha o histórico de cada cliente montado automaticamente." },
-  { icon: CreditCard, title: "Pix ou cartão", text: "Assine no cartão ou no Pix com renovação automática. Cancele quando quiser." },
+const TYPES = [
+  ["💈", "Barbearias"],
+  ["💇‍♀️", "Salões de beleza"],
+  ["💅", "Manicure e pedicure"],
+  ["👁️", "Sobrancelhas e cílios"],
+  ["🧖‍♀️", "Estética e spa"],
+  ["🩺", "Clínicas"],
 ];
 
-const steps = [
-  { n: "1", title: "Cadastre seus serviços", text: "Preço, duração e quem faz cada um. Leva 5 minutos." },
-  { n: "2", title: "Compartilhe seu link", text: "Coloque na bio do Instagram e mande no WhatsApp." },
-  { n: "3", title: "Receba os agendamentos", text: "A agenda se organiza sozinha e o cliente recebe o lembrete." },
+const FEATURES = [
+  { icon: CalendarDays, color: "g-brand", title: "Agenda do dia na palma da mão", text: "Próximo cliente em destaque, concluir, marcar falta e remarcar com um toque." },
+  { icon: Users, color: "g-indigo", title: "Equipe com horários próprios", text: "Cada profissional com seus serviços, dias e horários de trabalho." },
+  { icon: Lock, color: "g-amber", title: "Folgas e bloqueios", text: "Feriado, férias ou um compromisso: bloqueie e o horário some do link." },
+  { icon: Heart, color: "g-blue", title: "Clientes organizados", text: "Histórico de visitas e quanto cada cliente já gastou, montado sozinho." },
+  { icon: ChartLine, color: "g-teal", title: "Resumo do dia", text: "Quantos atendimentos, quanto vai entrar e quantas faltas — sem planilha." },
+  { icon: Moon, color: "g-purple", title: "Modo claro e escuro", text: "No painel e na sua página. Escolha o que combina com você." },
 ];
 
-const preview = [
-  { time: "09:00", name: "João Silva", service: "Corte + barba", status: "Confirmado", tone: "bg-emerald-50 text-emerald-700" },
-  { time: "10:00", name: "Pedro Santos", service: "Corte masculino", status: "Agendado", tone: "bg-blue-50 text-blue-700" },
-  { time: "11:30", name: "Lucas Oliveira", service: "Barba", status: "Agendado", tone: "bg-blue-50 text-blue-700" },
+const FAQ = [
+  ["Preciso de cartão para testar?", `Não. Você usa tudo por ${TRIAL_DAYS} dias grátis e só assina se gostar. Sem cartão e sem compromisso.`],
+  ["As mensagens saem de qual WhatsApp?", "Do seu próprio número. Você conecta o WhatsApp do negócio em poucos passos e o cliente responde direto para você."],
+  ["Meu cliente precisa baixar algum aplicativo?", "Não. Ele abre o seu link, escolhe o horário e pronto. Funciona em qualquer celular."],
+  ["Funciona para quem trabalha sozinho?", "Sim! Funciona para quem atende sozinho e para equipes, com horários próprios para cada profissional."],
+  ["Posso cancelar quando quiser?", "Pode. Não tem fidelidade nem multa: é só cancelar no painel."],
 ];
+
+// Anual no meio, em destaque
+const PLAN_ORDER: Plan[] = [PLANS.MONTHLY, PLANS.ANNUAL, PLANS.SEMIANNUAL];
 
 export default async function Home({ searchParams }: { searchParams: Promise<{ conta?: string }> }) {
   const deleted = (await searchParams).conta === "excluida";
   return (
-    <div className="bg-white">
+    <div className="lp">
+      <RevealOnScroll />
+      <div className="lp-bg" aria-hidden="true">
+        <i />
+        <i />
+      </div>
       {deleted && (
         <p className="bg-navy-900 px-4 py-2.5 text-center text-sm text-white">Sua conta foi excluída. Obrigado por ter usado o HoraBoa.</p>
       )}
-      <header className="sticky top-0 z-30 border-b border-zinc-100 bg-white/90 backdrop-blur">
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3 sm:px-6">
-          <Logo />
-          <nav className="flex items-center gap-1 sm:gap-2">
-            <Link href="/entrar" className="rounded-xl px-3 py-2 text-sm font-semibold text-navy-900 hover:bg-zinc-50">
-              Entrar
-            </Link>
-            <Link href="/cadastro" className="btn-primary btn-sm sm:min-h-10 sm:px-4 sm:text-sm">
-              Testar grátis
-            </Link>
+
+      <header>
+        <div className="bar lp-glass">
+          <Link className="logo lp-disp" href="/" aria-label="HoraBoa — início">
+            <BrandIcon className="h-8 w-8" />
+            <span>
+              <b>Hora</b>
+              <span>Boa</span>
+            </span>
+          </Link>
+          <nav>
+            <a className="lk lp-hide-m" href="#como">Como funciona</a>
+            <a className="lk lp-hide-m" href="#precos">Preços</a>
+            <Link className="lk" href="/entrar">Entrar</Link>
+            <Link className="lp-btn sm g-brand" href="/cadastro">Testar grátis</Link>
           </nav>
         </div>
       </header>
 
-      {/* Hero */}
-      <section className="overflow-hidden bg-gradient-to-b from-navy-50/60 to-white">
-        <div className="mx-auto grid max-w-6xl items-center gap-10 px-4 pb-16 pt-10 sm:px-6 md:grid-cols-2 md:pt-20">
-          <div className="text-center md:text-left">
-            <span className="inline-flex items-center gap-1.5 rounded-full bg-brand-50 px-3 py-1 text-sm font-semibold text-brand-700">
-              <ShieldCheck className="h-4 w-4" /> {TRIAL_DAYS} dias grátis · sem cartão
-            </span>
-            <h1 className="mt-5 text-4xl font-extrabold leading-[1.1] sm:text-5xl lg:text-6xl">
-              Sua agenda cheia, <span className="text-brand-500">sem esforço</span>.
-            </h1>
-            <p className="mx-auto mt-5 max-w-lg text-lg text-zinc-600 md:mx-0">
-              Agendamento online para barbearias e salões. Seus clientes marcam sozinhos e recebem lembrete no WhatsApp.
-              Você só atende.
-            </p>
-            <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:justify-center md:justify-start">
-              <Link href="/cadastro" className="btn-primary min-h-12 px-6 text-base">
-                Começar meus {TRIAL_DAYS} dias grátis
-              </Link>
-              <a href="#como-funciona" className="btn-secondary min-h-12 px-6 text-base">
-                Como funciona
-              </a>
-            </div>
+      {/* Abertura */}
+      <section className="hero">
+        <div className="lp-wrap">
+          <span className="badge lp-glass">
+            <span className="dot g-green"><Check className="i" /></span> {TRIAL_DAYS} dias grátis · sem cartão de crédito
+          </span>
+          <h1 className="lp-disp">
+            Sua agenda cheia,
+            <br />
+            <em>sem esforço.</em>
+          </h1>
+          <p className="sub">
+            O cliente agenda sozinho pelo seu link, recebe confirmação e lembrete no seu WhatsApp, e você só atende. Para barbearias,
+            salões, manicures, estética e mais.
+          </p>
+          <div className="ctas">
+            <Link className="lp-btn g-brand pulse" href="/cadastro">
+              Começar meus {TRIAL_DAYS} dias grátis <ArrowRight className="i" />
+            </Link>
+            <a className="lp-btn ghost" href="#como">
+              <CirclePlay className="i" /> Ver como funciona
+            </a>
+          </div>
+          <div className="trust">
+            <span><Check className="i" /> Pronto em 5 minutos</span>
+            <span><Check className="i" /> Sem fidelidade</span>
+            <span><Check className="i" /> Feito para o celular</span>
           </div>
 
-          {/* Prévia do app no celular */}
-          <div className="relative mx-auto w-full max-w-[320px]">
-            <div className="absolute -inset-6 -z-10 rounded-[3rem] bg-brand-500/10 blur-2xl" />
-            <div className="rounded-[2.5rem] border-[10px] border-navy-900 bg-[#f6f7fb] p-3 shadow-2xl">
-              <div className="mb-3 flex items-center justify-between px-1">
-                <div>
-                  <p className="font-display text-lg font-extrabold text-navy-900">Agenda</p>
-                  <p className="text-xs text-zinc-500">Hoje · 3 agendamentos</p>
-                </div>
-                <span className="rounded-lg bg-brand-600 px-2 py-1 text-xs font-bold text-white">+ Novo</span>
-              </div>
-              <div className="space-y-2">
-                {preview.map((p) => (
-                  <div key={p.time} className="flex gap-2 rounded-2xl border border-zinc-200 bg-white p-2.5">
-                    <p className="w-11 font-display font-extrabold text-navy-900">{p.time}</p>
-                    <div className="min-w-0 flex-1 border-l border-zinc-100 pl-2">
-                      <div className="flex items-center justify-between gap-1">
-                        <p className="truncate text-sm font-semibold text-navy-900">{p.name}</p>
-                        <span className={`rounded-full px-1.5 py-0.5 text-[10px] font-semibold ${p.tone}`}>{p.status}</span>
-                      </div>
-                      <p className="text-xs text-zinc-500">{p.service}</p>
-                    </div>
-                  </div>
-                ))}
-                <div className="flex items-center gap-2 rounded-2xl bg-emerald-50 p-2.5 text-xs text-emerald-800">
-                  <MessageCircle className="h-4 w-4 shrink-0" /> Lembrete enviado para Pedro (WhatsApp)
-                </div>
-              </div>
+          <div className="stage" aria-hidden="true">
+            <div className="phone ph-a"><div className="scr"><ClientMock /></div></div>
+            <div className="phone ph-b"><div className="scr"><PanelMock /></div></div>
+            <div className="lp-float f1 lp-glass">
+              <span className="ic g-green"><Check className="i" /></span>
+              <div>Novo agendamento<small>Lia · hoje às 14:30</small></div>
             </div>
+            <div className="lp-float f2 lp-glass">
+              <span className="ic g-wa"><MessageCircle className="i" /></span>
+              <div>Lembrete enviado<small>pelo seu WhatsApp</small></div>
+            </div>
+            <div className="lp-float f3 lp-glass">
+              <span className="ic g-brand"><Moon className="i" /></span>
+              <div>Funciona 24 horas<small>até enquanto você dorme</small></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Para quem é */}
+      <section className="types">
+        <div className="lp-wrap">
+          <p>Feito para quem trabalha com horário marcado</p>
+          <div className="marq">
+            {TYPES.map(([emoji, label]) => (
+              <span key={label} className="lp-glass"><i>{emoji}</i>{label}</span>
+            ))}
           </div>
         </div>
       </section>
 
       {/* Como funciona */}
-      <section id="como-funciona" className="mx-auto max-w-6xl scroll-mt-20 px-4 py-16 sm:px-6">
-        <h2 className="text-center text-3xl font-extrabold">Como funciona</h2>
-        <div className="mt-10 grid gap-4 md:grid-cols-3">
-          {steps.map((s) => (
-            <div key={s.n} className="card p-6">
-              <span className="grid h-10 w-10 place-items-center rounded-xl bg-navy-900 font-display text-lg font-extrabold text-white">{s.n}</span>
-              <h3 className="mt-4 font-display text-lg font-bold text-navy-900">{s.title}</h3>
-              <p className="mt-1 text-zinc-600">{s.text}</p>
-            </div>
-          ))}
+      <section className="blk lp-center" id="como">
+        <div className="lp-wrap">
+          <span className="eyebrow">Como funciona</span>
+          <h2 className="lp-disp">Comece a receber agendamentos <em>hoje</em></h2>
+          <p className="lead">Sem instalar nada. Você configura pelo celular e já sai com o seu link pronto para divulgar.</p>
+          <div className="steps">
+            {[
+              ["g-brand", "Cadastre seus serviços", "Preço, duração, foto e quem faz cada um. Leva uns 5 minutos."],
+              ["g-purple", "Compartilhe seu link", "horaboa.com/seunegocio na bio do Instagram, no status e no WhatsApp."],
+              ["g-green", "Receba e atenda", "A agenda se organiza sozinha e o cliente recebe confirmação e lembrete."],
+            ].map(([color, title, text], i) => (
+              <div key={title} className="step lp-glass lp-rv">
+                <span className="big lp-disp">{i + 1}</span>
+                <span className={`n ${color} lp-disp`}>{i + 1}</span>
+                <h3 className="lp-disp">{title}</h3>
+                <p>{text}</p>
+              </div>
+            ))}
+          </div>
         </div>
       </section>
 
-      {/* Funcionalidades */}
-      <section className="bg-[#f6f7fb] py-16">
-        <div className="mx-auto max-w-6xl px-4 sm:px-6">
-          <h2 className="text-center text-3xl font-extrabold">Tudo o que seu salão precisa</h2>
-          <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {features.map(({ icon: Icon, title, text }) => (
-              <div key={title} className="card p-6">
-                <span className="grid h-11 w-11 place-items-center rounded-xl bg-brand-50 text-brand-600">
-                  <Icon className="h-6 w-6" />
-                </span>
-                <h3 className="mt-4 font-display text-lg font-bold text-navy-900">{title}</h3>
-                <p className="mt-1 text-zinc-600">{text}</p>
+      {/* Sua página */}
+      <section className="blk">
+        <div className="lp-wrap split">
+          <div className="lp-rv">
+            <span className="eyebrow">Sua página de agendamento</span>
+            <h2 className="lp-disp">Um link com a <em>cara do seu negócio</em></h2>
+            <p className="lead">O cliente escolhe o serviço, o profissional e o horário em poucos toques — e só vê horários realmente livres.</p>
+            <ul className="checks">
+              <CheckItem icon={<Palette className="i" />} color="g-purple" title="Sua marca:" text="logo, capa, cores, desenhos de fundo e modo claro ou escuro." />
+              <CheckItem icon={<ImageIcon className="i" />} color="g-pink" title="Fotos dos serviços" text="para o cliente ver o que está agendando." />
+              <CheckItem icon={<Clock className="i" />} color="g-blue" title="Sem conflito:" text="respeita a duração de cada serviço, almoço, folgas e a agenda de cada profissional." />
+              <CheckItem icon={<RefreshCw className="i" />} color="g-green" title="O cliente troca ou cancela sozinho," text="dentro das regras que você definir." />
+            </ul>
+          </div>
+          <div className="showcase lp-glass lp-rv" aria-hidden="true">
+            <div className="bgd" />
+            <div className="phone" style={{ position: "relative", transform: "none", left: "auto", top: "auto" }}>
+              <div className="scr"><TimeMock /></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* WhatsApp */}
+      <section className="blk">
+        <div className="lp-wrap split rev">
+          <div className="lp-rv">
+            <span className="eyebrow">WhatsApp automático</span>
+            <h2 className="lp-disp">Menos faltas, <em>sem você digitar nada</em></h2>
+            <p className="lead">
+              As mensagens saem do <b>seu próprio número</b>. O cliente responde direto para você, como sempre.
+            </p>
+            <ul className="checks">
+              <CheckItem icon={<Check className="i" />} color="g-wa" title="Confirmação na hora" text="com o dia, o horário, o serviço e o link para trocar ou cancelar." />
+              <CheckItem icon={<Bell className="i" />} color="g-amber" title="Lembretes no momento certo:" text="na véspera ou 24h antes, e de novo perto do horário." />
+              <CheckItem icon={<Pencil className="i" />} color="g-indigo" title="Mensagens do seu jeito:" text="você edita o texto, escolhe quando enviar e pode pausar quando quiser." />
+            </ul>
+          </div>
+          <div className="showcase dark lp-rv" aria-hidden="true">
+            <div className="bgd" />
+            <div className="chat">
+              <div className="ctop">
+                <span className="av">B</span>
+                <div><b>Barbearia do João</b><small>online</small></div>
+              </div>
+              <div className="msgs">
+                <span className="dday">HOJE</span>
+                <div className="msg">
+                  Olá, Lia! ✅ Seu horário em <b>Barbearia do João</b> está confirmado para sexta, 27/11 às 09:30.
+                  <br />✂️ Corte masculino com João
+                  <br /><span style={{ color: "#027eb5" }}>horaboa.com/agendamento/…</span>
+                  <span className="tm">14:02</span>
+                </div>
+                <div className="msg">
+                  Olá, Lia! ⏰ Passando para lembrar do seu horário em <b>Barbearia do João</b> amanhã às 09:30.
+                  <span className="tm">09:30</span>
+                </div>
+                <div className="msg me">Combinado, estarei aí! 👍<span className="tm">09:41 ✓✓</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Recursos */}
+      <section className="blk lp-center">
+        <div className="lp-wrap">
+          <span className="eyebrow">Tudo em um só lugar</span>
+          <h2 className="lp-disp">Tudo o que seu negócio precisa</h2>
+          <div className="feats" style={{ textAlign: "left" }}>
+            {FEATURES.map(({ icon: Icon, color, title, text }) => (
+              <div key={title} className="feat lp-glass lp-rv">
+                <span className={`ic ${color}`}><Icon className="i" /></span>
+                <h3 className="lp-disp">{title}</h3>
+                <p>{text}</p>
               </div>
             ))}
           </div>
@@ -146,54 +253,247 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ c
       </section>
 
       {/* Preços */}
-      <section id="precos" className="mx-auto max-w-6xl px-4 py-16 sm:px-6">
-        <h2 className="text-center text-3xl font-extrabold">Preço simples</h2>
-        <p className="mt-2 text-center text-zinc-600">Todos os recursos em todos os planos. {TRIAL_DAYS} dias grátis para testar.</p>
-        <div className="mx-auto mt-10 grid max-w-4xl gap-4 pt-2 md:grid-cols-3">
-          {PLAN_LIST.map((p) => {
-            const best = p.id === "ANNUAL";
-            return (
-              <div key={p.id} className={`relative rounded-3xl border-2 bg-white p-6 ${best ? "border-brand-500 shadow-xl shadow-brand-500/10" : "border-zinc-200"}`}>
-                {p.highlight && (
-                  <span className="absolute -top-3 left-6 rounded-full bg-brand-600 px-2.5 py-0.5 text-xs font-bold text-white">{p.highlight}</span>
-                )}
-                <p className="font-display text-lg font-bold text-navy-900">{p.name}</p>
-                <p className="mt-2">
-                  <span className="font-display text-4xl font-extrabold text-navy-900">{formatMoney(monthlyEquivalentCents(p))}</span>
-                  <span className="text-zinc-500">/mês</span>
-                </p>
-                <p className="mt-1 text-sm text-zinc-500">{p.months === 1 ? "cobrado mensalmente" : `${formatMoney(p.priceCents)} a cada ${p.months} meses`}</p>
-                <ul className="mt-5 space-y-2 text-sm text-zinc-700">
-                  {["Agendamentos ilimitados", "Lembretes no WhatsApp", "Pix ou cartão"].map((f) => (
-                    <li key={f} className="flex items-center gap-2"><Check className="h-4 w-4 text-emerald-600" /> {f}</li>
-                  ))}
-                </ul>
-                <Link href="/cadastro" className={`${best ? "btn-primary" : "btn-secondary"} mt-6 w-full`}>Começar grátis</Link>
-              </div>
-            );
-          })}
+      <section className="blk lp-center" id="precos">
+        <div className="lp-wrap">
+          <span className="eyebrow">Preços</span>
+          <h2 className="lp-disp">Preço simples, <em>sem surpresa</em></h2>
+          <p className="lead">Todos os recursos em todos os planos. Teste {TRIAL_DAYS} dias grátis, sem cartão.</p>
+          <div className="plans" style={{ textAlign: "left" }}>
+            {PLAN_ORDER.map((p) => {
+              const best = p.id === "ANNUAL";
+              const off = discountPercent(p);
+              const saved = PLANS.MONTHLY.priceCents * p.months - p.priceCents;
+              return (
+                <div key={p.id} className={`plan lp-rv ${best ? "best" : "lp-glass"}`}>
+                  <p className="nm lp-disp">
+                    {p.name}
+                    {off > 0 && <span className="tag">{best ? `Melhor preço · −${off}%` : `−${off}%`}</span>}
+                  </p>
+                  <p className="pr">
+                    <b className="lp-disp">{formatMoney(monthlyEquivalentCents(p))}</b>
+                    <small>/mês</small>
+                  </p>
+                  <p className="bill">{p.months === 1 ? "cobrado todo mês" : `${formatMoney(p.priceCents)} a cada ${p.months} meses`}</p>
+                  <ul>
+                    {["Agendamentos ilimitados", "Lembretes no WhatsApp", "Profissionais ilimitados", saved > 0 ? `Economize ${formatMoney(saved)}` : "Cancele quando quiser"].map((f) => (
+                      <li key={f}><Check className="i" />{f}</li>
+                    ))}
+                  </ul>
+                  <Link className={`lp-btn ${best ? "g-brand pulse" : "ghost"}`} href="/cadastro">Começar grátis</Link>
+                </div>
+              );
+            })}
+          </div>
+          <div className="pay">
+            <span><PixIcon /> Pix com renovação automática</span>
+            <span><CreditCard className="i" /> Cartão de crédito</span>
+            <span><ShieldCheck className="i" /> Pagamento seguro</span>
+          </div>
+        </div>
+      </section>
+
+      {/* Perguntas */}
+      <section className="blk lp-center">
+        <div className="lp-wrap">
+          <span className="eyebrow">Dúvidas</span>
+          <h2 className="lp-disp">Perguntas frequentes</h2>
+          <div className="faq" style={{ textAlign: "left" }}>
+            {FAQ.map(([q, a], i) => (
+              <details key={q} className="lp-glass" open={i === 0}>
+                <summary>
+                  {q} <span className="pl"><Plus className="i" /></span>
+                </summary>
+                <p>{a}</p>
+              </details>
+            ))}
+          </div>
         </div>
       </section>
 
       {/* Chamada final */}
-      <section className="px-4 pb-16 sm:px-6">
-        <div className="mx-auto max-w-6xl rounded-3xl bg-navy-900 px-6 py-12 text-center text-white sm:px-12">
-          <p className="font-display text-3xl font-extrabold sm:text-4xl">Pronto para encher sua agenda?</p>
-          <p className="mx-auto mt-3 max-w-xl text-white/70">Crie sua conta em 2 minutos e comece a receber agendamentos hoje mesmo.</p>
-          <Link href="/cadastro" className="btn-primary mt-8 min-h-12 px-8 text-base">Testar grátis por {TRIAL_DAYS} dias</Link>
-        </div>
-      </section>
+      <div className="lp-wrap">
+        <section className="final lp-rv">
+          <h2 className="lp-disp">Pronto para encher sua agenda?</h2>
+          <p>Crie sua conta em 2 minutos e comece a receber agendamentos hoje mesmo.</p>
+          <Link className="lp-btn g-brand pulse" href="/cadastro">
+            Testar grátis por {TRIAL_DAYS} dias <ArrowRight className="i" />
+          </Link>
+          <div className="trust" style={{ color: "rgba(255,255,255,.65)" }}>
+            <span><Check className="i" /> Sem cartão</span>
+            <span><Check className="i" /> Sem fidelidade</span>
+          </div>
+        </section>
+      </div>
 
-      <footer className="border-t border-zinc-100 py-8">
-        <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-3 px-4 text-sm text-zinc-500 sm:flex-row sm:px-6">
-          <Wordmark className="text-lg" />
-          <p>
-            © {new Date().getFullYear()} HoraBoa ·{" "}
-            <Link href="/termos" className="hover:underline">Termos</Link> ·{" "}
-            <Link href="/privacidade" className="hover:underline">Privacidade</Link>
-          </p>
+      <footer>
+        <div className="lp-wrap">
+          <span className="logo lp-disp" style={{ fontSize: 18 }}>
+            <b>Hora</b>
+            <span>Boa</span>
+          </span>
+          <span>
+            © {new Date().getFullYear()} HoraBoa · <Link href="/termos">Termos</Link> · <Link href="/privacidade">Privacidade</Link>
+          </span>
         </div>
       </footer>
+    </div>
+  );
+}
+
+function CheckItem({ icon, color, title, text }: { icon: React.ReactNode; color: string; title: string; text: string }) {
+  return (
+    <li>
+      <span className={`ic ${color}`}>{icon}</span>
+      <div>
+        <b>{title}</b> <span>{text}</span>
+      </div>
+    </li>
+  );
+}
+
+function PixIcon() {
+  return (
+    <svg className="i" viewBox="0 0 24 24" aria-hidden="true">
+      <path d="m12 2 4.5 4.5L12 11 7.5 6.5zM12 13l4.5 4.5L12 22l-4.5-4.5zM2 12l4.5-4.5L11 12l-4.5 4.5zM13 12l4.5-4.5L22 12l-4.5 4.5z" />
+    </svg>
+  );
+}
+
+function InstagramIcon() {
+  return (
+    <svg className="i" viewBox="0 0 24 24" aria-hidden="true">
+      <rect x="2.5" y="2.5" width="19" height="19" rx="5.5" />
+      <circle cx="12" cy="12" r="4.2" />
+    </svg>
+  );
+}
+
+/* ---------- Telas de exemplo dentro dos celulares (só ilustração) ---------- */
+
+const SERVICES = [
+  { name: "Corte masculino", price: "R$ 40", bg: "linear-gradient(135deg,#3f3f46,#18181b)", mark: "✂", sel: true },
+  { name: "Barba", price: "R$ 30", bg: "linear-gradient(135deg,#92400e,#451a03)", mark: "B" },
+  { name: "Corte + barba", price: "R$ 60", bg: "linear-gradient(135deg,#1e3a8a,#0f172a)", mark: "C" },
+  { name: "Sobrancelha", price: "R$ 15", bg: "linear-gradient(135deg,#065f46,#022c22)", mark: "S" },
+];
+
+function ClientMock() {
+  return (
+    <div className="cli">
+      <div className="cover" />
+      <div className="head">
+        <div className="lg"><span>B</span></div>
+        <h4>Barbearia do João</h4>
+        <span className="open"><i /> Aberto agora · até 19h</span>
+        <div className="pills">
+          <span className="g-wa"><MessageCircle className="i" />WhatsApp</span>
+          <span className="ig"><InstagramIcon />Instagram</span>
+          <span className="g-blue"><Navigation className="i" />Como chegar</span>
+        </div>
+      </div>
+      <div className="mcard">
+        <div className="prog"><i className="on" /><i /><i /><i /></div>
+        <h5>Escolha o serviço</h5>
+        <div className="svcs">
+          {SERVICES.map((s) => (
+            <div key={s.name} className={`svc ${s.sel ? "sel" : ""}`}>
+              <div className="im" style={{ background: s.bg }}>{s.mark}</div>
+              <div className="bd"><b>{s.name}</b><small>{s.price}</small></div>
+            </div>
+          ))}
+        </div>
+      </div>
+      <div className="cbar lp-glass">
+        <div className="t"><b>Corte masculino</b><span>R$ 40 · 30 min</span></div>
+        <span className="go g-brand">Continuar</span>
+      </div>
+    </div>
+  );
+}
+
+function PanelMock() {
+  const rows = [
+    ["15:00", "Rafael", "Barba · R$ 30"],
+    ["16:00", "Bruno", "Corte + barba · R$ 60"],
+    ["17:00", "Diego", "Corte · R$ 40"],
+  ];
+  return (
+    <div className="pnl">
+      <p className="hi">Boa tarde, João 👋</p>
+      <h6>Hoje, <em>26 de nov.</em></h6>
+      <div className="pdays">
+        <span className="dk">QUA<b>25</b></span>
+        <span className="sel">HOJE<b>26</b></span>
+        <span className="dk">SEX<b>27</b></span>
+        <span className="dk">SÁB<b>28</b></span>
+        <span className="dk">DOM<b>29</b></span>
+      </div>
+      <div className="pstats">
+        <div className="dk"><i className="g-green" /><b>8</b><small>Agendados</small></div>
+        <div className="dk"><i className="g-blue" /><b>R$ 420</b><small>Previsto</small></div>
+        <div className="dk"><i className="g-amber" /><b>0</b><small>Faltas</small></div>
+      </div>
+      <div className="pnext">
+        <span className="pl">● Às 14:30</span>
+        <div className="r">
+          <div className="av">L</div>
+          <div><b>Lia Souza</b><small>Corte masculino · João</small></div>
+        </div>
+        <div className="acts">
+          <span className="g-green">Concluir</span>
+          <span className="g-wa"><MessageCircle className="i" /></span>
+          <span className="g-blue"><Phone className="i" /></span>
+        </div>
+      </div>
+      {rows.map(([tm, name, sub]) => (
+        <div key={tm} className="prow">
+          <div className="tm">{tm}</div>
+          <div className="c dk" style={{ ["--c" as string]: "#22c55e" }}>
+            <b>{name} <em>Confirmado</em></b>
+            <small>{sub}</small>
+          </div>
+        </div>
+      ))}
+      <div className="ptabs"><i /><i /><span className="fab">+</span><i /><i /></div>
+    </div>
+  );
+}
+
+function TimeMock() {
+  const slot = { border: "1px solid rgba(0,0,0,.08)", borderRadius: 8, padding: "6px 0" };
+  const day = { background: "#f4f4f5", color: "#71717a" };
+  return (
+    <div className="cli">
+      <div className="head" style={{ marginTop: 0, paddingTop: 34, textAlign: "center" }}>
+        <div className="lg" style={{ margin: "0 auto", boxShadow: "0 10px 30px rgba(254,110,2,.35)" }}><span>B</span></div>
+        <h4>Barbearia do João</h4>
+        <span className="open"><i /> Aberto agora · até 19h</span>
+      </div>
+      <div className="mcard">
+        <div className="prog"><i className="on" /><i className="on" /><i className="on" /><i /></div>
+        <h5>Escolha o dia e o horário</h5>
+        <div className="pdays" style={{ marginTop: 0 }}>
+          <span style={day}>HOJE<b style={{ color: "#111" }}>26</b></span>
+          <span className="sel">SEX<b>27</b></span>
+          <span style={day}>SÁB<b style={{ color: "#111" }}>28</b></span>
+          <span style={{ ...day, color: "#a1a1aa" }}>DOM<b style={{ color: "#a1a1aa" }}>29</b></span>
+        </div>
+        <div style={{ marginTop: 10, borderRadius: 14, border: "1px solid rgba(0,0,0,.07)", padding: 8 }}>
+          <b style={{ fontSize: 11, display: "flex", alignItems: "center", gap: 6 }}>
+            <span style={{ width: 20, height: 20, borderRadius: 6, background: "#fef3c7", display: "grid", placeItems: "center" }}>☀️</span>Manhã
+          </b>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 5, marginTop: 7, fontSize: 10.5, fontWeight: 700, textAlign: "center" }}>
+            <span style={slot}>09:00</span>
+            <span className="g-brand" style={{ borderRadius: 8, padding: "6px 0" }}>09:30</span>
+            <span style={slot}>10:00</span>
+            <span style={slot}>11:00</span>
+          </div>
+        </div>
+      </div>
+      <div className="cbar lp-glass">
+        <div className="t"><b>Sex, 27/11 · 09:30</b><span>Corte masculino · João</span></div>
+        <span className="go g-brand">Continuar</span>
+      </div>
     </div>
   );
 }
