@@ -14,7 +14,7 @@ export function NoSlots({ message }: { message: string | null }) {
 export function ClosedPeriods({ closed }: { closed: string[] }) {
   if (!closed.length) return null;
   return (
-    <div className="mb-3 flex items-center gap-3 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-amber-900">
+    <div className="mt-3 flex items-center gap-3 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-amber-900">
       <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-amber-100 text-amber-700">
         <Clock className="h-5 w-5" />
       </span>

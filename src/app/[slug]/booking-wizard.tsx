@@ -147,7 +147,6 @@ export function BookingWizard({ slug, today, maxAdvanceDays, services, professio
                 <NoSlots message={message} />
               ) : (
                 <>
-                <ClosedPeriods closed={closedPeriods} />
                 <div className="grid grid-cols-4 gap-2 sm:grid-cols-6">
                   {slots.map((s) => (
                     <button
@@ -160,6 +159,7 @@ export function BookingWizard({ slug, today, maxAdvanceDays, services, professio
                     </button>
                   ))}
                 </div>
+                <ClosedPeriods closed={closedPeriods} />
                 </>
               )}
               
