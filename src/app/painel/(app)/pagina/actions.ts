@@ -6,6 +6,7 @@ import { requireActiveUser } from "@/lib/auth";
 import { isHexColor } from "@/lib/brand-colors";
 import { instagramHandle, safeHttpsUrl } from "@/lib/links";
 import { isPattern } from "@/components/patterns";
+import { isGlow } from "@/lib/glows";
 
 export type BrandingState = { error?: string | null; success?: string | null } | undefined;
 
@@ -19,6 +20,8 @@ export async function saveBranding(_: BrandingState, formData: FormData): Promis
   const pageTheme = formData.get("pageTheme") === "DARK" ? "DARK" : "LIGHT";
   const bgPattern = String(formData.get("bgPattern") ?? "NONE");
   if (!isPattern(bgPattern)) return { error: "Desenho de fundo inválido." };
+  const bgGlow = String(formData.get("bgGlow") ?? "BRAND");
+  if (!isGlow(bgGlow)) return { error: "Luz do fundo inválida." };
 
   const igRaw = text("instagram", 120);
   const instagram = instagramHandle(igRaw);
@@ -38,6 +41,7 @@ export async function saveBranding(_: BrandingState, formData: FormData): Promis
       brandColor: color ? color.toUpperCase() : null,
       pageTheme,
       bgPattern,
+      bgGlow,
       tagline: text("tagline", 80),
       description: text("description", 300),
       instagram,

@@ -1,11 +1,10 @@
 "use client";
 
-import { useActionState, useMemo, useState } from "react";
+import { useActionState, useEffect, useMemo, useRef, useState } from "react";
+import { useFormStatus } from "react-dom";
+import { Check, ChevronLeft, Clock } from "lucide-react";
 import { bookOnline } from "./actions";
-import { FormMessage } from "@/components/ui";
-import { SubmitButton } from "@/components/submit-button";
 import { useSlots } from "@/components/use-slots";
-import { ClosedPeriods, NoSlots } from "@/components/slot-notes";
 import { addDays, formatDateLong, WEEKDAYS_SHORT, weekdayOf } from "@/lib/time";
 import { formatDuration, formatMoney } from "@/lib/format";
 
@@ -21,239 +20,290 @@ type Props = {
 };
 
 const ANY = "__any__";
+const TITLES = ["Escolha o serviço", "Com quem você quer ser atendido?", "Escolha o dia e o horário", "Seus dados"];
+const PERIODS: [string, number, number][] = [
+  ["Manhã", 0, 12 * 60],
+  ["Tarde", 12 * 60, 18 * 60],
+  ["Noite", 18 * 60, 24 * 60],
+];
 
+/** Agendamento em etapas: serviço → profissional → dia e horário → dados. Uma etapa por vez. */
 export function BookingWizard({ slug, today, maxAdvanceDays, services, professionals }: Props) {
   const [state, action] = useActionState(bookOnline, undefined);
+  const [step, setStep] = useState(0);
+  const [dir, setDir] = useState(1);
   const [serviceId, setServiceId] = useState<string>();
   const [professionalId, setProfessionalId] = useState<string>();
   const [date, setDate] = useState<string>();
   const [time, setTime] = useState<number>();
+  const cardRef = useRef<HTMLElement>(null);
 
   const service = services.find((s) => s.id === serviceId);
   const pros = useMemo(() => professionals.filter((p) => serviceId && p.serviceIds.includes(serviceId)), [professionals, serviceId]);
   const pro = pros.find((p) => p.id === professionalId);
-  // Dia fechado: o profissional escolhido não atende (ou, sem preferência, nenhum atende)
-  const isClosed = useMemo(() => {
-    const list = pro ? [pro] : pros;
-    return (d: string) => list.every((p) => !p.openWeekdays.includes(weekdayOf(d)) || p.closedDates.includes(d));
-  }, [pro, pros]);
+  const onlyOnePro = pros.length === 1;
 
-  const { slots, loading, message, closed: closedPeriods } = useSlots({
+  const { slots, loading, message, closed } = useSlots({
     slug,
     serviceId: professionalId ? serviceId : undefined,
     professionalId: professionalId === ANY ? undefined : professionalId,
     date,
   });
 
-  const days = useMemo(
-    () => Array.from({ length: maxAdvanceDays + 1 }, (_, i) => addDays(today, i)),
-    [today, maxAdvanceDays],
-  );
+  // Dia fechado: o profissional escolhido não atende (ou, sem preferência, nenhum atende)
+  const isClosed = useMemo(() => {
+    const list = pro ? [pro] : pros;
+    return (d: string) => list.every((p) => !p.openWeekdays.includes(weekdayOf(d)) || p.closedDates.includes(d));
+  }, [pro, pros]);
+  const days = useMemo(() => Array.from({ length: maxAdvanceDays + 1 }, (_, i) => addDays(today, i)), [today, maxAdvanceDays]);
 
-  const step = !serviceId ? 1 : !professionalId ? 2 : time === undefined ? 3 : 4;
+  // Ao chegar na etapa de horários, já escolhe o primeiro dia aberto
+  useEffect(() => {
+    if (step === 2 && (!date || isClosed(date))) setDate(days.find((d) => !isClosed(d)));
+  }, [step, date, days, isClosed]);
+
+  function go(next: number) {
+    setDir(next >= step ? 1 : -1);
+    setStep(next);
+    // Mantém o cartão à vista ao trocar de etapa (no celular a página é longa)
+    requestAnimationFrame(() => {
+      const top = cardRef.current?.getBoundingClientRect().top ?? 0;
+      if (top < 0 || top > window.innerHeight * 0.6) cardRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+  }
+  const later = (fn: () => void) => setTimeout(fn, 220);
+
+  function pickService(id: string) {
+    setServiceId(id);
+    setTime(undefined);
+    const available = professionals.filter((p) => p.serviceIds.includes(id));
+    if (available.length === 1) {
+      // Só um profissional faz o serviço: escolhe sozinho e pula a etapa
+      setProfessionalId(available[0].id);
+      later(() => go(2));
+    } else {
+      setProfessionalId(undefined);
+      later(() => go(1));
+    }
+  }
+
+  const slotLabel = slots.find((s) => s.time === time)?.label;
+  const proLabel = professionalId === ANY ? "Primeiro disponível" : pro?.name;
+  const chips = [
+    step > 0 && service && { label: service.name, to: 0 },
+    step > 1 && proLabel && { label: professionalId === ANY ? "Qualquer profissional" : proLabel, to: onlyOnePro ? 0 : 1 },
+    step > 2 && date && slotLabel && { label: `${WEEKDAYS_SHORT[weekdayOf(date)]} ${Number(date.slice(8))} · ${slotLabel}`, to: 2 },
+  ].filter(Boolean) as { label: string; to: number }[];
+  const backTo = step === 2 && onlyOnePro ? 0 : step - 1;
 
   return (
-    <div className="space-y-4">
-      {/* 1. Serviço */}
-      <Step n={1} title="Escolha o serviço" active={step === 1} done={!!service} summary={service?.name} onEdit={() => {
-        setServiceId(undefined); setProfessionalId(undefined); setTime(undefined);
-      }}>
-        <div className="grid gap-3 sm:grid-cols-2">
-          {services.map((s) => (
-            <button
-              key={s.id}
-              type="button"
-              onClick={() => {
-                setServiceId(s.id);
-                const available = professionals.filter((p) => p.serviceIds.includes(s.id));
-                setProfessionalId(available.length === 1 ? available[0].id : undefined);
-                setTime(undefined);
-              }}
-              className="flex items-center gap-3 rounded-xl border border-zinc-200 bg-white p-3 text-left transition hover:border-brand-500 hover:shadow-sm dark:border-zinc-700 dark:bg-zinc-800/60"
-            >
-              {s.imageUrl && (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img src={s.imageUrl} alt="" loading="lazy" className="h-16 w-16 shrink-0 rounded-xl object-cover" />
-              )}
-              <span className="min-w-0 flex-1 px-1">
-                <span className="block font-semibold text-navy-900 dark:text-white">{s.name}</span>
-                {s.description && <span className="mt-0.5 block text-sm text-zinc-500 dark:text-zinc-400">{s.description}</span>}
-                <span className="mt-1 block text-sm">
-                  <span className="font-semibold text-brand-700 dark:text-brand-300">{formatMoney(s.priceCents)}</span>
-                  <span className="text-zinc-400"> · {formatDuration(s.durationMinutes)}</span>
-                </span>
-              </span>
+    <section ref={cardRef} className="hb-card hb-glass" style={{ scrollMarginTop: 12 }}>
+      <div className="hb-progress" aria-hidden="true">
+        {[0, 1, 2, 3].map((i) => (
+          <i key={i} className={i <= step ? "on" : ""} />
+        ))}
+      </div>
+      <div className="hb-shead">
+        {step > 0 && (
+          <button type="button" className="hb-back" onClick={() => go(backTo)} aria-label="Voltar">
+            <ChevronLeft className="h-[18px] w-[18px]" />
+          </button>
+        )}
+        <div>
+          <p className="hb-eyebrow">Etapa {step + 1} de 4</p>
+          <h2 className="hb-title">{TITLES[step]}</h2>
+        </div>
+      </div>
+      {chips.length > 0 && (
+        <div className="hb-chips">
+          {chips.map((c) => (
+            <button key={c.label} type="button" className="hb-chip" onClick={() => go(c.to)}>
+              <Check strokeWidth={3} /> {c.label}
             </button>
           ))}
         </div>
-      </Step>
-
-      {/* 2. Profissional */}
-      {serviceId && (
-        <Step
-          n={2}
-          title="Escolha o profissional"
-          active={step === 2}
-          done={!!professionalId}
-          summary={professionalId === ANY ? "Sem preferência" : pro?.name}
-          onEdit={() => { setProfessionalId(undefined); setTime(undefined); }}
-        >
-          <div className="grid gap-3 sm:grid-cols-3">
-            {pros.length > 1 && (
-              <ProCard name="Sem preferência" hint="Primeiro disponível" onClick={() => { setProfessionalId(ANY); setTime(undefined); }} />
-            )}
-            {pros.map((p) => (
-              <ProCard key={p.id} name={p.name} onClick={() => { setProfessionalId(p.id); setTime(undefined); }} />
-            ))}
-          </div>
-        </Step>
       )}
 
-      {/* 3. Data e horário */}
-      {professionalId && (
-        <Step
-          n={3}
-          title="Escolha data e horário"
-          active={step === 3}
-          done={time !== undefined}
-          summary={date && time !== undefined ? `${formatDateLong(date)} às ${slots.find((s) => s.time === time)?.label ?? ""}` : undefined}
-          onEdit={() => setTime(undefined)}
-        >
-          <div className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-2">
-            {days.map((d) => {
-              const wd = weekdayOf(d);
-              const closed = isClosed(d);
-              const selected = d === date;
+      <div key={step} className={`hb-stage ${dir < 0 ? "hb-back-anim" : ""}`}>
+        {step === 0 && (
+          <div className="hb-grid2">
+            {services.map((s) => {
+              const sel = s.id === serviceId;
               return (
-                <button
-                  key={d}
-                  type="button"
-                  disabled={closed}
-                  onClick={() => { setDate(d); setTime(undefined); }}
-                  className={`flex w-16 shrink-0 flex-col items-center rounded-xl border py-2 text-sm transition ${
-                    selected
-                      ? "border-brand-600 bg-brand-600 text-white"
-                      : closed
-                        ? "cursor-not-allowed border-zinc-100 bg-zinc-50 text-zinc-300 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-600"
-                        : "border-zinc-200 bg-white hover:border-brand-500 dark:border-zinc-700 dark:bg-zinc-800/60"
-                  }`}
-                >
-                  <span className="text-xs">{d === today ? "Hoje" : WEEKDAYS_SHORT[wd]}</span>
-                  <span className="text-lg font-semibold">{d.slice(8)}</span>
-                  <span className="text-xs">{closed ? "Fechado" : d.slice(5, 7)}</span>
+                <button key={s.id} type="button" className={`hb-svc ${sel ? "sel" : ""}`} onClick={() => pickService(s.id)} aria-pressed={sel}>
+                  <span
+                    className={`hb-svc-ph ${s.imageUrl ? "has-img" : ""}`}
+                    style={s.imageUrl ? { backgroundImage: `url(${s.imageUrl})` } : undefined}
+                  >
+                    {!s.imageUrl && s.name.charAt(0).toUpperCase()}
+                  </span>
+                  <span className="hb-svc-dur">{formatDuration(s.durationMinutes)}</span>
+                  <span className="hb-svc-ck">{sel && <Check className="h-3.5 w-3.5 text-white" strokeWidth={3.5} />}</span>
+                  <span className="hb-svc-bd">
+                    <span className="hb-svc-n">{s.name}</span>
+                    {s.description && <span className="hb-svc-desc">{s.description}</span>}
+                    <span className="hb-svc-pr">{formatMoney(s.priceCents)}</span>
+                  </span>
                 </button>
               );
             })}
           </div>
-          {date && (
-            <div className="mt-4">
-              {loading ? (
-                <p className="text-sm text-zinc-500 dark:text-zinc-400">Buscando horários...</p>
-              ) : slots.length === 0 ? (
-                <NoSlots message={message} />
-              ) : (
-                <>
-                <div className="grid grid-cols-4 gap-2 sm:grid-cols-6">
-                  {slots.map((s) => (
-                    <button
-                      key={s.time}
-                      type="button"
-                      onClick={() => setTime(s.time)}
-                      className="rounded-lg border border-zinc-200 bg-white py-2 text-sm font-medium transition hover:border-brand-500 hover:text-brand-700 dark:border-zinc-700 dark:bg-zinc-800/60 dark:hover:text-brand-300"
-                    >
-                      {s.label}
-                    </button>
-                  ))}
-                </div>
-                <ClosedPeriods closed={closedPeriods} />
-                </>
-              )}
-              
-            </div>
-          )}
-        </Step>
-      )}
+        )}
 
-      {/* 4. Dados do cliente */}
-      {step === 4 && service && date && (
-        <Step n={4} title="Seus dados" active done={false}>
-          <form action={action} className="space-y-4">
+        {step === 1 && (
+          <div className="hb-pros">
+            {pros.length > 1 && (
+              <ProCard
+                name="Sem preferência"
+                hint="Primeiro disponível"
+                initial="✱"
+                selected={professionalId === ANY}
+                onClick={() => {
+                  setProfessionalId(ANY);
+                  setTime(undefined);
+                  later(() => go(2));
+                }}
+              />
+            )}
+            {pros.map((p) => (
+              <ProCard
+                key={p.id}
+                name={p.name}
+                initial={p.name.charAt(0).toUpperCase()}
+                selected={professionalId === p.id}
+                onClick={() => {
+                  setProfessionalId(p.id);
+                  setTime(undefined);
+                  later(() => go(2));
+                }}
+              />
+            ))}
+          </div>
+        )}
+
+        {step === 2 && (
+          <>
+            <div className="hb-days">
+              {days.map((d) => {
+                const off = isClosed(d);
+                return (
+                  <button
+                    key={d}
+                    type="button"
+                    disabled={off}
+                    className={`hb-day ${d === date ? "sel" : ""}`}
+                    onClick={() => {
+                      setDate(d);
+                      setTime(undefined);
+                    }}
+                    aria-label={`${formatDateLong(d)}${off ? " (fechado)" : ""}`}
+                  >
+                    <small>{d === today ? "Hoje" : WEEKDAYS_SHORT[weekdayOf(d)]}</small>
+                    <b>{Number(d.slice(8))}</b>
+                    {off && <em>fechado</em>}
+                  </button>
+                );
+              })}
+            </div>
+            {loading ? (
+              <p className="hb-loading">Buscando horários...</p>
+            ) : slots.length === 0 ? (
+              date && <p className="hb-empty">{message ?? "Nenhum horário livre nesta data. Escolha outro dia."}</p>
+            ) : (
+              PERIODS.map(([label, from, to]) => {
+                const list = slots.filter((s) => s.time >= from && s.time < to);
+                if (!list.length) return null;
+                return (
+                  <div key={label}>
+                    <p className="hb-period">{label}</p>
+                    <div className="hb-slots">
+                      {list.map((s) => (
+                        <button
+                          key={s.time}
+                          type="button"
+                          className={`hb-slot ${s.time === time ? "sel" : ""}`}
+                          onClick={() => {
+                            setTime(s.time);
+                            later(() => go(3));
+                          }}
+                        >
+                          {s.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })
+            )}
+            {!loading && slots.length > 0 && closed.length > 0 && (
+              <p className="hb-note">
+                <Clock />
+                <span>
+                  Sem atendimento{" "}
+                  {closed.map((c, i) => (
+                    <span key={c}>
+                      {i > 0 && " e "}das <b>{c}</b>
+                    </span>
+                  ))}
+                </span>
+              </p>
+            )}
+          </>
+        )}
+
+        {step === 3 && service && date && time !== undefined && (
+          <form action={action}>
             <input type="hidden" name="slug" value={slug} />
             <input type="hidden" name="serviceId" value={service.id} />
-            <input type="hidden" name="professionalId" value={professionalId === ANY ? "" : professionalId} />
+            <input type="hidden" name="professionalId" value={professionalId === ANY ? "" : (professionalId ?? "")} />
             <input type="hidden" name="date" value={date} />
             <input type="hidden" name="time" value={time} />
-            <div className="grid gap-4 sm:grid-cols-2">
-              <div>
-                <label className="label" htmlFor="clientName">Nome</label>
-                <input className="input" id="clientName" name="clientName" required autoComplete="name" defaultValue={state?.values?.clientName} />
-              </div>
-              <div>
-                <label className="label" htmlFor="clientPhone">WhatsApp com DDD</label>
-                <input className="input" id="clientPhone" name="clientPhone" required inputMode="tel" autoComplete="tel" placeholder="(11) 99999-9999" defaultValue={state?.values?.clientPhone} />
-              </div>
+            <label className="hb-field">
+              <span>Seu nome</span>
+              <input id="clientName" name="clientName" required autoComplete="name" placeholder="Como podemos te chamar?" defaultValue={state?.values?.clientName} />
+            </label>
+            <label className="hb-field">
+              <span>WhatsApp</span>
+              <input id="clientPhone" name="clientPhone" required inputMode="tel" autoComplete="tel" placeholder="(11) 99999-9999" defaultValue={state?.values?.clientPhone} />
+            </label>
+            <label className="hb-field">
+              <span>Observação (opcional)</span>
+              <input id="notes" name="notes" maxLength={500} placeholder="Alguma preferência?" defaultValue={state?.values?.notes} />
+            </label>
+            <div className="hb-summary">
+              <div><span>Serviço</span><b>{service.name}</b></div>
+              <div><span>Profissional</span><b>{proLabel}</b></div>
+              <div><span>Quando</span><b className="first-letter:uppercase">{formatDateLong(date)} às {slotLabel}</b></div>
+              <div><span>Valor</span><b>{formatMoney(service.priceCents)}</b></div>
             </div>
-            <div>
-              <label className="label" htmlFor="notes">Observação (opcional)</label>
-              <input className="input" id="notes" name="notes" maxLength={500} defaultValue={state?.values?.notes} />
-            </div>
-            <div className="rounded-lg bg-zinc-50 p-4 text-sm dark:bg-zinc-800/60">
-              <p><strong>{service.name}</strong> · {formatDuration(service.durationMinutes)}</p>
-              <p className="text-zinc-600 dark:text-zinc-300">
-                {formatDateLong(date)} às {slots.find((s) => s.time === time)?.label}
-                {pro ? ` com ${pro.name}` : ""}
-              </p>
-              <p className="mt-1 font-semibold">{formatMoney(service.priceCents)}</p>
-            </div>
-            <p className="text-xs text-zinc-500 dark:text-zinc-400">
-              Seus dados serão usados para gerenciar o agendamento e enviar confirmação e lembretes pelo WhatsApp. Veja a{" "}
-              <a href="/privacidade" target="_blank" className="underline">Política de Privacidade</a>.
+            {state?.error && <p className="hb-error">{state.error}</p>}
+            <SubmitBooking />
+            <p className="hb-legal">
+              Você vai receber a confirmação e um lembrete no WhatsApp. Seus dados são usados só para o agendamento (veja a{" "}
+              <a href="/privacidade" target="_blank">Política de Privacidade</a>).
             </p>
-            <FormMessage error={state?.error} />
-            <SubmitButton className="btn-primary w-full py-3 text-base" pendingText="Confirmando...">
-              Confirmar agendamento
-            </SubmitButton>
           </form>
-        </Step>
-      )}
-    </div>
-  );
-}
-
-function Step({
-  n, title, active, done, summary, onEdit, children,
-}: {
-  n: number; title: string; active: boolean; done: boolean; summary?: string; onEdit?: () => void; children: React.ReactNode;
-}) {
-  return (
-    <section className="card p-5">
-      <div className="flex items-center gap-3">
-        <span className={`grid h-7 w-7 place-items-center rounded-full text-sm font-semibold ${done && !active ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-400" : "bg-brand-100 text-brand-700 dark:bg-brand-900 dark:text-brand-200"}`}>
-          {done && !active ? "✓" : n}
-        </span>
-        <div className="min-w-0 flex-1">
-          <h2 className="font-semibold">{title}</h2>
-          {!active && summary && <p className="truncate text-sm text-zinc-500 dark:text-zinc-400">{summary}</p>}
-        </div>
-        {!active && done && onEdit && (
-          <button type="button" onClick={onEdit} className="text-sm font-medium text-brand-700 hover:underline dark:text-brand-300">Alterar</button>
         )}
       </div>
-      {active && <div className="mt-4">{children}</div>}
     </section>
   );
 }
 
-function ProCard({ name, hint, onClick }: { name: string; hint?: string; onClick: () => void }) {
+function SubmitBooking() {
+  const { pending } = useFormStatus();
   return (
-    <button type="button" onClick={onClick} className="flex items-center gap-3 rounded-xl border border-zinc-200 bg-white p-3 text-left transition hover:border-brand-500 dark:border-zinc-700 dark:bg-zinc-800/60">
-      <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-brand-100 font-semibold text-brand-700 dark:bg-brand-900 dark:text-brand-200">
-        {hint ? "★" : name.charAt(0).toUpperCase()}
-      </span>
-      <span>
-        <span className="block font-medium">{name}</span>
-        {hint && <span className="block text-xs text-zinc-500 dark:text-zinc-400">{hint}</span>}
-      </span>
+    <button type="submit" className="hb-primary" disabled={pending}>
+      {pending ? "Confirmando..." : "Confirmar agendamento"}
+    </button>
+  );
+}
+
+function ProCard({ name, hint, initial, selected, onClick }: { name: string; hint?: string; initial: string; selected: boolean; onClick: () => void }) {
+  return (
+    <button type="button" className={`hb-pro ${selected ? "sel" : ""}`} onClick={onClick} aria-pressed={selected}>
+      <span className="hb-av">{initial}</span>
+      <span className="hb-pro-n">{name}</span>
+      {hint && <span className="hb-pro-d">{hint}</span>}
     </button>
   );
 }

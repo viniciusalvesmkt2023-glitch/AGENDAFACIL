@@ -9,7 +9,7 @@ export default async function BrandingPage() {
   const services = await db.service.findMany({
     where: { businessId: b.id, active: true },
     orderBy: { name: "asc" },
-    take: 3,
+    take: 4,
     select: { id: true, name: true, durationMinutes: true, priceCents: true, imageId: true },
   });
   return (
@@ -27,6 +27,7 @@ export default async function BrandingPage() {
           businessType: b.businessType,
           pageTheme: b.pageTheme,
           bgPattern: b.bgPattern,
+          bgGlow: b.bgGlow,
           tagline: b.tagline,
           description: b.description,
           instagram: b.instagram,

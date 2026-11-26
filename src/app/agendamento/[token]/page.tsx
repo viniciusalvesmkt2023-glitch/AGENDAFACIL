@@ -1,16 +1,16 @@
 import Link from "next/link";
-import { CalendarClock, CalendarDays, Check, Clock, MapPin, MessageCircle, Scissors, UserRound, X } from "lucide-react";
+import { CalendarClock, Check, MessageCircle, Navigation, X } from "lucide-react";
 import { notFound } from "next/navigation";
 import { db } from "@/lib/db";
 import { formatDateLong, minutesToTime, nowInTimezone } from "@/lib/time";
 import { formatMoney, whatsappLink } from "@/lib/format";
 import { clientCanChange, deadlineLabel } from "@/lib/policy";
 import { hasAccess } from "@/lib/subscription";
-import { PublicShell } from "@/components/public-shell";
 import { directionsUrl } from "@/lib/links";
-import { StatusBadge } from "@/components/ui";
-import { SubmitButton } from "@/components/submit-button";
+import { STATUS_LABELS } from "@/components/ui";
+import { PublicFooter, PublicFrame } from "@/components/public/frame";
 import { cancelByClient } from "./actions";
+import { CancelButton } from "./cancel-button";
 
 type Props = { params: Promise<{ token: string }>; searchParams: Promise<{ novo?: string; remarcado?: string }> };
 
@@ -31,66 +31,70 @@ export default async function AppointmentPage({ params, searchParams }: Props) {
   const canReschedule = check.allowed && b.clientCanReschedule && hasAccess(b);
   const when = `${formatDateLong(a.date)} às ${minutesToTime(a.startMinutes)}`;
   const canceled = a.status === "CANCELED";
-  const directions = directionsUrl(b.mapsUrl, b.address);
-  const title = canceled ? "Agendamento cancelado" : remarcado ? "Horário alterado!" : novo === "1" ? "Agendamento realizado!" : "Seu agendamento";
+  const directions = b.homeService ? null : directionsUrl(b.mapsUrl, b.address);
+  const title = canceled
+    ? "Agendamento cancelado"
+    : remarcado
+      ? "Horário alterado!"
+      : novo === "1"
+        ? "Agendamento confirmado!"
+        : "Seu agendamento";
 
   return (
-    <PublicShell theme={b.pageTheme} color={b.brandColor} pattern={b.bgPattern} uid="agendamento" className="min-h-screen px-4 py-8 sm:py-12">
-      <div className="card mx-auto w-full max-w-md overflow-hidden">
-        <div className={`px-6 py-7 text-center ${canceled ? "bg-zinc-100 dark:bg-zinc-800" : "bg-gradient-to-br from-navy-900 to-navy-700 text-white"}`}>
-          {b.logoImageId && !canceled ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img src={`/i/${b.logoImageId}`} alt="" className="mx-auto h-14 w-14 rounded-2xl bg-white object-cover ring-2 ring-white/30" />
-          ) : (
-            <div className={`mx-auto grid h-14 w-14 place-items-center rounded-2xl ${canceled ? "bg-zinc-200 text-zinc-500" : "bg-brand-600 text-white"}`}>
-              {canceled ? <X className="h-7 w-7" /> : <Check className="h-7 w-7" strokeWidth={3} />}
-            </div>
-          )}
-          <h1 className={`mt-3 text-2xl font-extrabold ${canceled ? "" : "text-white"}`}>{title}</h1>
-          <p className={`mt-0.5 text-sm ${canceled ? "text-zinc-500" : "text-white/75"}`}>{b.name}</p>
-        </div>
+    <PublicFrame
+      uid="agendamento"
+      look={{ theme: b.pageTheme, color: b.brandColor, glow: b.bgGlow, pattern: b.bgPattern }}
+    >
+      <div style={{ paddingTop: 28 }}>
+        <Link href={`/${b.slug}`} className="hb-hero" style={{ display: "block", padding: "0 20px", textDecoration: "none" }}>
+          <div className="hb-ring" style={{ width: 64, height: 64, borderRadius: 20 }}>
+            {b.logoImageId ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img className="hb-logo" style={{ borderRadius: 17 }} src={`/i/${b.logoImageId}`} alt={`Logo ${b.name}`} />
+            ) : (
+              <div className="hb-logo" style={{ borderRadius: 17, fontSize: 28 }}>{b.name.charAt(0).toUpperCase()}</div>
+            )}
+          </div>
+          <p className="hb-tag" style={{ marginTop: 10, fontWeight: 600 }}>{b.name}</p>
+        </Link>
 
-        <ul className="divide-y divide-zinc-100 px-5 text-sm dark:divide-zinc-800">
-          <Row icon={<CalendarDays className="h-4 w-4" />} label="Quando">
-            <span className="inline-block first-letter:uppercase">{when}</span>
-          </Row>
-          <Row icon={<Scissors className="h-4 w-4" />} label="Serviço">
-            {a.service.name} · {formatMoney(a.priceCents)}
-          </Row>
-          <Row icon={<UserRound className="h-4 w-4" />} label="Profissional">{a.professional.name}</Row>
-          {b.homeService ? (
-            <Row icon={<MapPin className="h-4 w-4" />} label="Local">Atendimento a domicílio</Row>
-          ) : (
-            b.address && (
-              <Row icon={<MapPin className="h-4 w-4" />} label="Endereço">
-                {b.address}
-                {directions && (
-                  <a href={directions} target="_blank" rel="noopener noreferrer" className="mt-0.5 block text-xs font-semibold text-brand-700 dark:text-brand-300">
-                    Como chegar
-                  </a>
-                )}
-              </Row>
-            )
-          )}
-          <Row icon={<Clock className="h-4 w-4" />} label="Status"><StatusBadge status={a.status} /></Row>
-        </ul>
+        <section className="hb-card hb-glass">
+          <div className="hb-done">
+            <div className={`hb-ok ${canceled ? "off" : ""}`}>{canceled ? <X className="h-8 w-8" /> : <Check className="h-8 w-8" strokeWidth={3} />}</div>
+            <h1 className="hb-title">{title}</h1>
+            <p className="first-letter:uppercase">{when}</p>
+          </div>
 
-        <div className="space-y-2.5 border-t border-zinc-100 p-5 dark:border-zinc-800">
+          <div className="hb-summary">
+            <div><span>Serviço</span><b>{a.service.name}</b></div>
+            <div><span>Profissional</span><b>{a.professional.name}</b></div>
+            <div><span>Valor</span><b>{formatMoney(a.priceCents)}</b></div>
+            {(b.homeService || b.address) && <div><span>Local</span><b>{b.homeService ? "Atendimento a domicílio" : b.address}</b></div>}
+            <div><span>Status</span><b>{STATUS_LABELS[a.status]?.label ?? a.status}</b></div>
+          </div>
+
           {(novo === "1" || remarcado) && !canceled && (
-            <p className="rounded-xl bg-emerald-50 px-3 py-2.5 text-center text-sm text-emerald-800">
-              Guarde este link para consultar{canReschedule ? ", trocar o horário" : ""} ou cancelar.
+            <p className="hb-legal" style={{ textAlign: "center" }}>
+              Você vai receber a confirmação no WhatsApp. Guarde este link para consultar{canReschedule ? ", trocar o horário" : ""} ou cancelar.
             </p>
           )}
+
           {canReschedule && (
-            <Link href={`/agendamento/${token}/remarcar`} className="btn-primary w-full">
-              <CalendarClock className="h-4 w-4" /> Trocar dia ou horário
+            <Link href={`/agendamento/${token}/remarcar`} className="hb-primary">
+              <CalendarClock className="h-5 w-5" /> Trocar dia ou horário
             </Link>
+          )}
+          {directions && !canceled && (
+            <a href={directions} target="_blank" rel="noopener noreferrer" className="hb-ghost">
+              <Navigation className="h-4 w-4" /> Como chegar
+            </a>
           )}
           {b.phone && !canceled && (
             <a
               href={whatsappLink(b.phone, `Olá! Sobre meu horário de ${a.service.name}, ${when}, em nome de ${a.client.name}.`)}
               target="_blank"
-              className="btn border border-emerald-200 bg-emerald-50 text-emerald-700 w-full"
+              rel="noopener noreferrer"
+              className="hb-ghost"
             >
               <MessageCircle className="h-4 w-4" /> Falar no WhatsApp
             </a>
@@ -98,29 +102,22 @@ export default async function AppointmentPage({ params, searchParams }: Props) {
           {check.allowed ? (
             <form action={cancelByClient}>
               <input type="hidden" name="token" value={token} />
-              <SubmitButton className="btn-danger w-full" pendingText="Cancelando...">Cancelar agendamento</SubmitButton>
+              <CancelButton />
             </form>
           ) : (
-            active && <p className="text-center text-sm text-zinc-500">{check.reason}</p>
+            active && <p className="hb-legal" style={{ textAlign: "center" }}>{check.reason}</p>
           )}
           {check.allowed && b.clientCancelPolicy === "DEADLINE" && (
-            <p className="text-center text-xs text-zinc-400">Trocas e cancelamentos pelo link até {deadlineLabel(b.cancelDeadlineMinutes)} antes do horário.</p>
+            <p className="hb-legal" style={{ textAlign: "center" }}>
+              Trocas e cancelamentos pelo link até {deadlineLabel(b.cancelDeadlineMinutes)} antes do horário.
+            </p>
           )}
-          <Link href={`/${b.slug}`} className="btn-secondary w-full">
+          <Link href={`/${b.slug}`} className="hb-ghost">
             {canceled ? "Agendar novo horário" : "Fazer outro agendamento"}
           </Link>
-        </div>
+        </section>
+        <PublicFooter />
       </div>
-    </PublicShell>
-  );
-}
-
-function Row({ icon, label, children }: { icon: React.ReactNode; label: string; children: React.ReactNode }) {
-  return (
-    <li className="flex items-start gap-3 py-3">
-      <span className="mt-0.5 text-zinc-400">{icon}</span>
-      <span className="w-24 shrink-0 text-zinc-500 dark:text-zinc-400">{label}</span>
-      <span className="min-w-0 flex-1 text-right font-medium text-navy-900 dark:text-zinc-100">{children}</span>
-    </li>
+    </PublicFrame>
   );
 }

@@ -6,8 +6,8 @@ import { Check, ChevronDown, Eye, Folder, ImagePlus, Loader2, Moon, Pencil, Sun,
 import { removeImage, saveBranding } from "./actions";
 import { FormMessage } from "@/components/ui";
 import { SubmitButton } from "@/components/submit-button";
-import { PublicHeader } from "@/components/public-header";
-import { PublicShell } from "@/components/public-shell";
+import { PublicFrame, PublicHero } from "@/components/public/frame";
+import { GLOWS, glowColors } from "@/lib/glows";
 import { patternsFor, PatternLayer } from "@/components/patterns";
 import { businessTypeInfo } from "@/lib/business-types";
 import { COLOR_PRESETS, DEFAULT_BRAND } from "@/lib/brand-colors";
@@ -25,6 +25,7 @@ type Business = {
   businessType: string;
   pageTheme: string;
   bgPattern: string;
+  bgGlow: string;
   tagline: string | null;
   description: string | null;
   instagram: string | null;
@@ -46,29 +47,24 @@ export function BrandingForm({ business: b, services }: { business: Business; se
   const [tab, setTab] = useState<"edit" | "preview">("edit");
   const [theme, setTheme] = useState(b.pageTheme);
   const [pattern, setPattern] = useState(b.bgPattern);
+  const [glow, setGlow] = useState(b.bgGlow);
   const [patternsOpen, setPatternsOpen] = useState(false);
   const patterns = patternsFor(b.businessType);
   const suggested = patterns.filter((p) => p.for.includes(b.businessType as never)).length;
 
   const preview = (
     <PhonePreview
-      color={color}
-      theme={theme}
-      pattern={pattern}
-      header={{
+      look={{ theme, color, glow, pattern, coverUrl: b.coverUrl }}
+      hero={{
         name: b.name,
         tagline,
         description,
-        address: b.address,
-        homeService: b.homeService,
+        logoUrl: b.logoUrl,
+        status: { open: true, text: "até 19h" },
         whatsappHref: b.phone ? "#" : null,
         instagram: instagramHandle(instagram),
-        directionsHref: directionsUrl(mapsUrl, b.address) ? "#" : null,
+        directionsHref: !b.homeService && directionsUrl(mapsUrl, b.address) ? "#" : null,
         reviewHref: reviewUrl ? "#" : null,
-        logoUrl: b.logoUrl,
-        coverUrl: b.coverUrl,
-        pattern,
-        uid: "previa",
       }}
       services={services}
     />
@@ -151,6 +147,35 @@ export function BrandingForm({ business: b, services }: { business: Business; se
                   <Icon className="h-5 w-5" /> {label}
                 </button>
               ))}
+            </div>
+          </section>
+
+          <section className="card space-y-3 p-4 md:p-5">
+            <div>
+              <h2 className="text-lg font-bold">Luz do fundo</h2>
+              <p className="text-sm text-zinc-500">Brilho suave atrás da página. &quot;Da cor&quot; usa a cor dos botões.</p>
+            </div>
+            <input type="hidden" name="bgGlow" value={glow} />
+            <div className="grid grid-cols-4 gap-2">
+              {GLOWS.map((g) => {
+                const [c1, c2] = glowColors(g.id, color);
+                return (
+                  <button
+                    key={g.id}
+                    type="button"
+                    onClick={() => setGlow(g.id)}
+                    aria-pressed={glow === g.id}
+                    aria-label={`Luz ${g.label}`}
+                    className={`overflow-hidden rounded-xl border text-center transition ${glow === g.id ? "border-brand-500 ring-2 ring-brand-100" : "border-zinc-200"}`}
+                  >
+                    <span
+                      className="block h-12"
+                      style={{ background: g.id === "NONE" ? "#18181b" : `radial-gradient(circle at 25% 20%, ${c1}, transparent 70%), radial-gradient(circle at 85% 30%, ${c2}, #18181b 75%)` }}
+                    />
+                    <span className={`block truncate px-1 py-1 text-[11px] font-semibold ${glow === g.id ? "text-brand-700" : "text-zinc-600"}`}>{g.label}</span>
+                  </button>
+                );
+              })}
             </div>
           </section>
 
@@ -267,58 +292,36 @@ export function BrandingForm({ business: b, services }: { business: Business; se
 }
 
 /** Celular desenhado com a página do cliente, atualizando enquanto o dono edita. */
-function PhonePreview({
-  color,
-  theme,
-  pattern,
-  header,
-  services,
-}: {
-  color: string;
-  theme: string;
-  pattern: string;
-  header: React.ComponentProps<typeof PublicHeader>;
-  services: Service[];
-}) {
+function PhonePreview({ look, hero, services }: { look: React.ComponentProps<typeof PublicFrame>["look"]; hero: React.ComponentProps<typeof PublicHero>; services: Service[] }) {
+  const list = services.length ? services.slice(0, 4) : [{ id: "x", name: "Seu serviço", durationMinutes: 30, priceCents: 4000, imageUrl: null }];
   return (
     <div className="mx-auto w-full max-w-[320px] rounded-[2.2rem] border-[9px] border-navy-900 bg-navy-900 shadow-2xl">
-      <div className="h-[560px] overflow-y-auto rounded-[1.6rem] no-scrollbar" data-testid="previa">
-        <PublicShell theme={theme} color={color} pattern={pattern} uid="previa" className="min-h-full">
-        <PublicHeader {...header} />
-        <div className="space-y-2 p-3">
-          <div className="card p-3">
-            <p className="font-display font-bold text-navy-900 dark:text-white">Escolha o serviço</p>
-            <div className="mt-2 space-y-2">
-              {(services.length ? services.slice(0, 3) : [{ id: "x", name: "Seu serviço", durationMinutes: 30, priceCents: 4000, imageUrl: null }]).map((s, i) => (
-                <div
-                  key={s.id}
-                  className={`flex items-center gap-2.5 rounded-xl border p-2 text-sm ${i === 0 ? "border-brand-500 bg-brand-50 dark:bg-brand-900/40" : "border-zinc-200 dark:border-zinc-700"}`}
-                >
-                  {s.imageUrl && (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img src={s.imageUrl} alt="" className="h-10 w-10 shrink-0 rounded-lg object-cover" />
-                  )}
-                  <div className="min-w-0">
-                    <p className="truncate font-semibold text-navy-900 dark:text-white">{s.name}</p>
-                    <p className="text-xs text-zinc-500 dark:text-zinc-400">{formatDuration(s.durationMinutes)} · {formatMoney(s.priceCents)}</p>
+      <div className="h-[600px] overflow-y-auto rounded-[1.6rem] no-scrollbar" data-testid="previa">
+        <PublicFrame look={look} uid="previa" className="hb-preview">
+          <PublicHero {...hero} />
+          <section className="hb-card hb-glass">
+            <div className="hb-progress"><i className="on" /><i /><i /><i /></div>
+            <div className="hb-shead"><div><p className="hb-eyebrow">Etapa 1 de 4</p><p className="hb-title">Escolha o serviço</p></div></div>
+            <div className="hb-stage">
+              <div className="hb-grid2">
+                {list.map((s, i) => (
+                  <div key={s.id} className={`hb-svc ${i === 0 ? "sel" : ""}`}>
+                    <span className={`hb-svc-ph ${s.imageUrl ? "has-img" : ""}`} style={s.imageUrl ? { backgroundImage: `url(${s.imageUrl})` } : undefined}>
+                      {!s.imageUrl && s.name.charAt(0).toUpperCase()}
+                    </span>
+                    <span className="hb-svc-dur">{formatDuration(s.durationMinutes)}</span>
+                    <span className="hb-svc-ck">{i === 0 && <Check className="h-3.5 w-3.5 text-white" strokeWidth={3.5} />}</span>
+                    <span className="hb-svc-bd">
+                      <span className="hb-svc-n">{s.name}</span>
+                      <span className="hb-svc-pr">{formatMoney(s.priceCents)}</span>
+                    </span>
                   </div>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
-          </div>
-          <div className="flex gap-1.5">
-            {["09:00", "09:30", "10:00", "10:30"].map((t, i) => (
-              <span
-                key={t}
-                className={`flex-1 rounded-lg border py-1.5 text-center text-xs font-semibold ${i === 1 ? "border-brand-600 bg-brand-600 text-white" : "border-zinc-200 bg-white text-navy-900 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"}`}
-              >
-                {t}
-              </span>
-            ))}
-          </div>
-          <span className="btn-primary w-full">Confirmar agendamento</span>
-        </div>
-        </PublicShell>
+          </section>
+          <div style={{ height: 24 }} />
+        </PublicFrame>
       </div>
     </div>
   );

@@ -53,6 +53,7 @@ model Business {
   coverImageId  String?
   pageTheme     String  @default("LIGHT") // LIGHT | DARK
   bgPattern     String  @default("NONE") // desenho de fundo (ver src/components/patterns.tsx)
+  bgGlow        String  @default("BRAND") // luz do fundo: BRAND (na cor do salão), NONE ou um degradê pronto (ver src/lib/glows.ts)
   createdAt         DateTime @default(now())
 
   // ----- Assinatura do estabelecimento -----
