@@ -2,7 +2,7 @@
 
 import { useActionState, useEffect, useMemo, useRef, useState } from "react";
 import { useFormStatus } from "react-dom";
-import { Check, ChevronLeft, Clock } from "lucide-react";
+import { CalendarDays, Check, ChevronLeft, Clock, Moon, Sun, Sunrise } from "lucide-react";
 import { bookOnline } from "./actions";
 import { useSlots } from "@/components/use-slots";
 import { addDays, formatDateLong, WEEKDAYS_SHORT, weekdayOf } from "@/lib/time";
@@ -21,11 +21,15 @@ type Props = {
 
 const ANY = "__any__";
 const TITLES = ["Escolha o serviço", "Com quem você quer ser atendido?", "Escolha o dia e o horário", "Seus dados"];
-const PERIODS: [string, number, number][] = [
-  ["Manhã", 0, 12 * 60],
-  ["Tarde", 12 * 60, 18 * 60],
-  ["Noite", 18 * 60, 24 * 60],
+const PERIODS = [
+  { key: "manha", label: "Manhã", from: 0, to: 12 * 60, Icon: Sunrise },
+  { key: "tarde", label: "Tarde", from: 12 * 60, to: 18 * 60, Icon: Sun },
+  { key: "noite", label: "Noite", from: 18 * 60, to: 24 * 60, Icon: Moon },
 ];
+const MONTH = new Intl.DateTimeFormat("pt-BR", { month: "long", year: "numeric", timeZone: "UTC" });
+const SHORT = new Intl.DateTimeFormat("pt-BR", { weekday: "short", day: "numeric", month: "short", timeZone: "UTC" });
+const asDate = (d: string) => new Date(`${d}T12:00:00Z`);
+const capitalize = (t: string) => t.charAt(0).toUpperCase() + t.slice(1);
 
 /** Agendamento em etapas: serviço → profissional → dia e horário → dados. Uma etapa por vez. */
 export function BookingWizard({ slug, today, maxAdvanceDays, services, professionals }: Props) {
@@ -71,20 +75,19 @@ export function BookingWizard({ slug, today, maxAdvanceDays, services, professio
       if (top < 0 || top > window.innerHeight * 0.6) cardRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
     });
   }
-  const later = (fn: () => void) => setTimeout(fn, 220);
-
+  // Tocar só seleciona; quem avança é o botão "Continuar" da barra de baixo
   function pickService(id: string) {
-    setServiceId(id);
-    setTime(undefined);
-    const available = professionals.filter((p) => p.serviceIds.includes(id));
-    if (available.length === 1) {
-      // Só um profissional faz o serviço: escolhe sozinho e pula a etapa
-      setProfessionalId(available[0].id);
-      later(() => go(2));
-    } else {
-      setProfessionalId(undefined);
-      later(() => go(1));
+    if (id !== serviceId) {
+      setServiceId(id);
+      setTime(undefined);
+      const available = professionals.filter((p) => p.serviceIds.includes(id));
+      // Só um profissional faz o serviço: já fica escolhido (a etapa é pulada)
+      setProfessionalId(available.length === 1 ? available[0].id : undefined);
     }
+  }
+  function next() {
+    if (step === 0) go(onlyOnePro ? 2 : 1);
+    else go(step + 1);
   }
 
   const slotLabel = slots.find((s) => s.time === time)?.label;
@@ -96,7 +99,22 @@ export function BookingWizard({ slug, today, maxAdvanceDays, services, professio
   ].filter(Boolean) as { label: string; to: number }[];
   const backTo = step === 2 && onlyOnePro ? 0 : step - 1;
 
+  // Barra de baixo: o que foi escolhido na etapa atual + Continuar
+  const bar =
+    step === 0 && service
+      ? {
+          thumb: service.imageUrl ? { img: service.imageUrl } : { text: service.name.charAt(0).toUpperCase() },
+          title: service.name,
+          sub: `${formatMoney(service.priceCents)} · ${formatDuration(service.durationMinutes)}`,
+        }
+      : step === 1 && professionalId
+        ? { thumb: { text: professionalId === ANY ? "✱" : (pro?.name.charAt(0).toUpperCase() ?? ""), round: true }, title: proLabel ?? "", sub: service?.name ?? "" }
+        : step === 2 && date && time !== undefined && slotLabel
+          ? { thumb: { icon: true }, title: `${capitalize(SHORT.format(asDate(date)).replace(/\./g, ""))} · ${slotLabel}`, sub: `${service?.name ?? ""}${proLabel ? ` · ${proLabel}` : ""}` }
+          : null;
+
   return (
+    <>
     <section ref={cardRef} className="hb-card hb-glass" style={{ scrollMarginTop: 12 }}>
       <div className="hb-progress" aria-hidden="true">
         {[0, 1, 2, 3].map((i) => (
@@ -161,7 +179,6 @@ export function BookingWizard({ slug, today, maxAdvanceDays, services, professio
                 onClick={() => {
                   setProfessionalId(ANY);
                   setTime(undefined);
-                  later(() => go(2));
                 }}
               />
             )}
@@ -174,7 +191,6 @@ export function BookingWizard({ slug, today, maxAdvanceDays, services, professio
                 onClick={() => {
                   setProfessionalId(p.id);
                   setTime(undefined);
-                  later(() => go(2));
                 }}
               />
             ))}
@@ -183,6 +199,10 @@ export function BookingWizard({ slug, today, maxAdvanceDays, services, professio
 
         {step === 2 && (
           <>
+            <div className="hb-label-row">
+              <span className="hb-label">Dia</span>
+              {date && <span className="hb-month">{MONTH.format(asDate(date))}</span>}
+            </div>
             <div className="hb-days">
               {days.map((d) => {
                 const off = isClosed(d);
@@ -205,28 +225,30 @@ export function BookingWizard({ slug, today, maxAdvanceDays, services, professio
                 );
               })}
             </div>
+
+            <div className="hb-sep" />
+            <div className="hb-label-row">
+              <span className="hb-label">Horário</span>
+              {!loading && slots.length > 0 && <span className="hb-month">{slots.length} livres</span>}
+            </div>
             {loading ? (
               <p className="hb-loading">Buscando horários...</p>
             ) : slots.length === 0 ? (
-              date && <p className="hb-empty">{message ?? "Nenhum horário livre nesta data. Escolha outro dia."}</p>
+              date && <p className="hb-empty" style={{ marginTop: 0 }}>{message ?? "Nenhum horário livre nesta data. Escolha outro dia."}</p>
             ) : (
-              PERIODS.map(([label, from, to]) => {
+              PERIODS.map(({ key, label, from, to, Icon }) => {
                 const list = slots.filter((s) => s.time >= from && s.time < to);
                 if (!list.length) return null;
                 return (
-                  <div key={label}>
-                    <p className="hb-period">{label}</p>
+                  <div key={key} className="hb-pbox">
+                    <div className="hb-phead">
+                      <span className={`hb-pico ${key}`}><Icon /></span>
+                      <b>{label}</b>
+                      <small>{list.length} {list.length === 1 ? "horário" : "horários"}</small>
+                    </div>
                     <div className="hb-slots">
                       {list.map((s) => (
-                        <button
-                          key={s.time}
-                          type="button"
-                          className={`hb-slot ${s.time === time ? "sel" : ""}`}
-                          onClick={() => {
-                            setTime(s.time);
-                            later(() => go(3));
-                          }}
-                        >
+                        <button key={s.time} type="button" className={`hb-slot ${s.time === time ? "sel" : ""}`} onClick={() => setTime(s.time)} aria-pressed={s.time === time}>
                           {s.label}
                         </button>
                       ))}
@@ -286,6 +308,28 @@ export function BookingWizard({ slug, today, maxAdvanceDays, services, professio
         )}
       </div>
     </section>
+    {bar && (
+      <>
+        <div className="hb-bar-space" />
+        <div className="hb-bar hb-glass" role="region" aria-label="Sua escolha">
+          <span
+            className={`hb-bar-thumb ${"round" in bar.thumb && bar.thumb.round ? "round" : ""} ${"icon" in bar.thumb ? "time" : ""}`}
+            style={"img" in bar.thumb ? { backgroundImage: `url(${bar.thumb.img})` } : undefined}
+          >
+            {"text" in bar.thumb && bar.thumb.text}
+            {"icon" in bar.thumb && <CalendarDays />}
+          </span>
+          <span className="hb-bar-txt">
+            <b>{bar.title}</b>
+            <small>{bar.sub}</small>
+          </span>
+          <button type="button" className="hb-primary" onClick={next}>
+            Continuar
+          </button>
+        </div>
+      </>
+    )}
+    </>
   );
 }
 
