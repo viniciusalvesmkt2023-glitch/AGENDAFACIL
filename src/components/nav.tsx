@@ -70,12 +70,12 @@ export function BottomNav() {
   const tab = (href: string, label: string, Icon: LucideIcon, active: boolean) => (
     <Link
       href={href}
-      className={`flex flex-1 flex-col items-center gap-0.5 pt-2 pb-1.5 text-[11px] font-medium ${
+      className={`flex min-w-0 flex-1 flex-col items-center gap-0.5 pt-2 pb-1.5 text-[11px] font-medium ${
         active ? "text-brand-700" : "text-zinc-500"
       }`}
     >
-      <Icon className={`h-6 w-6 ${active ? "text-brand-600" : ""}`} strokeWidth={active ? 2.25 : 1.75} />
-      {label}
+      <Icon className={`h-6 w-6 shrink-0 ${active ? "text-brand-600" : ""}`} strokeWidth={active ? 2.25 : 1.75} />
+      <span className="max-w-full truncate px-0.5">{label}</span>
     </Link>
   );
   return (
@@ -83,14 +83,14 @@ export function BottomNav() {
       className="fixed inset-x-0 bottom-0 z-40 border-t border-zinc-200 bg-white/95 pb-[env(safe-area-inset-bottom)] backdrop-blur md:hidden"
       aria-label="Navegação principal"
     >
-      <div className="mx-auto flex max-w-md items-end">
+      <div className="mx-auto flex w-full max-w-md items-end">
         {tab("/painel", "Agenda", CalendarDays, pathname === "/painel")}
         {tab("/painel/clientes", "Clientes", Users, pathname.startsWith("/painel/clientes"))}
-        <Link href="/painel/novo" className="flex flex-1 flex-col items-center pb-1.5" aria-label="Novo agendamento">
+        <Link href="/painel/novo" className="flex min-w-0 flex-1 flex-col items-center pb-1.5" aria-label="Novo agendamento">
           <span className="-mt-5 grid h-14 w-14 place-items-center rounded-2xl bg-brand-600 text-white shadow-lg shadow-brand-600/30 ring-4 ring-white">
             <Plus className="h-7 w-7" strokeWidth={2.5} />
           </span>
-          <span className={`mt-0.5 text-[11px] font-medium ${pathname.startsWith("/painel/novo") ? "text-brand-700" : "text-zinc-500"}`}>
+          <span className={`mt-0.5 max-w-full truncate text-[11px] font-medium ${pathname.startsWith("/painel/novo") ? "text-brand-700" : "text-zinc-500"}`}>
             Novo
           </span>
         </Link>

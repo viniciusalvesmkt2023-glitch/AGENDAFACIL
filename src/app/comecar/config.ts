@@ -1,12 +1,14 @@
 // Passos da configuração inicial e opções compartilhadas entre as telas e as ações.
 
 export const STEPS = [
-  { n: 1, title: "Seu negócio" },
-  { n: 2, title: "Serviços" },
-  { n: 3, title: "Horários" },
-  { n: 4, title: "Regras" },
-  { n: 5, title: "WhatsApp" },
+  { n: 1, title: "Tipo" },
+  { n: 2, title: "Seu negócio" },
+  { n: 3, title: "Serviços" },
+  { n: 4, title: "Horários" },
+  { n: 5, title: "Regras" },
+  { n: 6, title: "WhatsApp" },
 ] as const;
+export const LAST_STEP = STEPS.length;
 
 export const SLOT_OPTIONS = [10, 15, 20, 30, 45, 60];
 export const MIN_ADVANCE_OPTIONS = [

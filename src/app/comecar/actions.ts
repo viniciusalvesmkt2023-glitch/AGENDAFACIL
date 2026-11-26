@@ -9,7 +9,7 @@ import { parseMoneyToCents } from "@/lib/format";
 import { checkSlug } from "@/lib/slug-check";
 import { BUSINESS_TYPE_IDS } from "@/lib/business-types";
 import { timeToMinutes } from "@/lib/time";
-import { MAX_DAYS_OPTIONS, MIN_ADVANCE_OPTIONS, SLOT_OPTIONS } from "./config";
+import { LAST_STEP, MAX_DAYS_OPTIONS, MIN_ADVANCE_OPTIONS, SLOT_OPTIONS } from "./config";
 
 export type StepState = { error?: string | null; values?: Record<string, string> } | undefined;
 
@@ -17,13 +17,28 @@ function keep(formData: FormData): Record<string, string> {
   return Object.fromEntries([...formData.entries()].filter(([k, v]) => typeof v === "string" && !k.startsWith("$"))) as Record<string, string>;
 }
 
-// ---------- Passo 1: dados do negócio ----------
+/** Marca o passo como concluído (nunca volta para trás). */
+const done = (current: number, step: number) => Math.max(current, step);
+
+// ---------- Passo 1: tipo de negócio ----------
+
+export async function saveTypeStep(formData: FormData) {
+  const user = await requireActiveUser();
+  const parsed = z.enum(BUSINESS_TYPE_IDS).safeParse(formData.get("businessType"));
+  if (!parsed.success) redirect("/comecar?passo=1");
+  await db.business.update({
+    where: { id: user.businessId },
+    data: { businessType: parsed.data, onboardingStep: done(user.business.onboardingStep, 1) },
+  });
+  redirect("/comecar?passo=2");
+}
+
+// ---------- Passo 2: dados do negócio ----------
 
 export async function saveBusinessStep(_: StepState, formData: FormData): Promise<StepState> {
   const user = await requireActiveUser();
   const schema = z.object({
     name: z.string().trim().min(2, "Informe o nome do estabelecimento.").max(80),
-    businessType: z.enum(BUSINESS_TYPE_IDS),
     slug: z.string().trim().min(1, "Escolha o link da sua agenda."),
     phone: z.string().trim().optional(),
     address: z.string().trim().max(200).optional(),
@@ -38,25 +53,25 @@ export async function saveBusinessStep(_: StepState, formData: FormData): Promis
     return { error: "WhatsApp inválido. Use DDD + número, ex.: (11) 99999-9999.", values: keep(formData) };
   }
 
-  const check = await checkSlug(d.slug, { businessId: user.businessId, businessType: d.businessType });
+  const check = await checkSlug(d.slug, { businessId: user.businessId, businessType: user.business.businessType });
   if (!check.available) return { error: check.message, values: keep(formData) };
 
   await db.business.update({
     where: { id: user.businessId },
     data: {
       name: d.name,
-      businessType: d.businessType,
       slug: check.slug,
       phone: d.phone || null,
       homeService,
       address: homeService ? null : d.address || null,
+      onboardingStep: done(user.business.onboardingStep, 2),
     },
   });
   revalidatePath("/painel", "layout");
-  redirect("/comecar?passo=2");
+  redirect("/comecar?passo=3");
 }
 
-// ---------- Passo 2: serviços ----------
+// ---------- Passo 3: serviços ----------
 
 const serviceItem = z.object({
   name: z.string().trim().min(2, "Todo serviço precisa de um nome.").max(80),
@@ -102,11 +117,12 @@ export async function saveServicesStep(_: StepState, formData: FormData): Promis
       ),
     );
   }
+  await db.business.update({ where: { id: user.businessId }, data: { onboardingStep: done(user.business.onboardingStep, 3) } });
   revalidatePath("/painel/servicos");
-  redirect("/comecar?passo=3");
+  redirect("/comecar?passo=4");
 }
 
-// ---------- Passo 3: horários ----------
+// ---------- Passo 4: horários ----------
 
 export async function saveHoursStep(_: StepState, formData: FormData): Promise<StepState> {
   const user = await requireActiveUser();
@@ -153,11 +169,12 @@ export async function saveHoursStep(_: StepState, formData: FormData): Promise<S
       });
     }),
   );
+  await db.business.update({ where: { id: user.businessId }, data: { onboardingStep: done(user.business.onboardingStep, 4) } });
   revalidatePath("/painel/horarios");
-  redirect("/comecar?passo=4");
+  redirect("/comecar?passo=5");
 }
 
-// ---------- Passo 4: regras ----------
+// ---------- Passo 5: regras ----------
 
 export async function saveRulesStep(_: StepState, formData: FormData): Promise<StepState> {
   const user = await requireActiveUser();
@@ -168,17 +185,21 @@ export async function saveRulesStep(_: StepState, formData: FormData): Promise<S
   if (!MIN_ADVANCE_OPTIONS.some((o) => o.value === minAdvanceMinutes)) return { error: "Escolha a antecedência mínima." };
   if (!MAX_DAYS_OPTIONS.includes(maxAdvanceDays)) return { error: "Escolha até quantos dias o cliente pode agendar." };
 
-  await db.business.update({ where: { id: user.businessId }, data: { slotInterval, minAdvanceMinutes, maxAdvanceDays } });
-  redirect("/comecar?passo=5");
+  await db.business.update({
+    where: { id: user.businessId },
+    data: { slotInterval, minAdvanceMinutes, maxAdvanceDays, onboardingStep: done(user.business.onboardingStep, 5) },
+  });
+  redirect("/comecar?passo=6");
 }
 
 // ---------- Fim ----------
 
 export async function finishOnboarding() {
   const user = await requireActiveUser();
-  if (!user.business.onboardedAt) {
-    await db.business.update({ where: { id: user.businessId }, data: { onboardedAt: new Date() } });
-  }
+  await db.business.update({
+    where: { id: user.businessId },
+    data: { onboardedAt: user.business.onboardedAt ?? new Date(), onboardingStep: LAST_STEP },
+  });
   revalidatePath("/painel", "layout");
   redirect("/comecar/pronto");
 }

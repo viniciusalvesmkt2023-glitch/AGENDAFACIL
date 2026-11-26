@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { db } from "@/lib/db";
 import { requireActiveUser } from "@/lib/auth";
-import { createInstance, deleteInstance, evolutionConfigured, getPairingCode, logoutInstance, sendText } from "@/lib/evolution";
+import { createInstance, deleteInstance, evolutionConfigured, logoutInstance, requestPairingCode as evolutionPairingCode, sendText } from "@/lib/evolution";
 import { DEFAULT_CONFIRMATION, DEFAULT_REMINDER, MAX_MESSAGE_LENGTH, renderMessage } from "@/lib/messages";
 import { appUrl } from "@/lib/brand";
 import { DAY_MODES, SHORT_OPTIONS, type DayMode } from "@/lib/reminders";
@@ -43,10 +43,10 @@ export async function requestPairingCode(_: PairingState, formData: FormData): P
   if (!evolutionConfigured()) return { error: "O servidor de WhatsApp ainda não foi configurado.", phone };
   const name = user.business.whatsappInstance ?? instanceName(user.businessId);
   try {
-    await createInstance(name);
-    const code = await getPairingCode(name, phone);
-    if (!code) return { error: "Não foi possível gerar o código agora. Tente de novo ou use o QR code.", phone };
+    // Marca antes: durante a recriação a instância some por alguns segundos
     await db.business.update({ where: { id: user.businessId }, data: { whatsappInstance: name, whatsappStatus: "CONNECTING" } });
+    const code = await evolutionPairingCode(name, phone);
+    if (!code) return { error: "Não foi possível gerar o código agora. Tente de novo em instantes ou use o QR code.", phone };
     return { code, phone };
   } catch (e) {
     console.error("[whatsapp] erro ao gerar código de pareamento", e);

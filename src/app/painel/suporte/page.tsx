@@ -64,7 +64,7 @@ export default async function SupportPage() {
                 <span className="grid h-10 w-10 place-items-center rounded-xl bg-emerald-50 text-emerald-600">
                   <MessageCircle className="h-5 w-5" />
                 </span>
-                <span className="flex-1">
+                <span className="min-w-0 flex-1">
                   <span className="block font-medium text-navy-900">WhatsApp</span>
                   <span className="block text-sm text-zinc-500">Fale com a gente agora</span>
                 </span>
@@ -100,7 +100,7 @@ export default async function SupportPage() {
             ].map(({ href, label, icon: Icon }) => (
               <Link key={href} href={href} className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-navy-900 active:bg-zinc-50">
                 <Icon className="h-4 w-4 text-zinc-400" />
-                <span className="flex-1">{label}</span>
+                <span className="min-w-0 flex-1">{label}</span>
                 <ChevronRight className="h-4 w-4 text-zinc-300" />
               </Link>
             ))}

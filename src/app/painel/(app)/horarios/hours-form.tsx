@@ -33,8 +33,8 @@ export function HoursForm({ days }: { days: Day[] }) {
                 checked={isOpen}
                 onChange={(v) => setOpen((o) => ({ ...o, [d.weekday]: v }))}
               />
-              <p className="flex-1 font-semibold text-navy-900">{d.label}</p>
-              {!isOpen && <span className="text-sm text-zinc-400">Fechado</span>}
+              <p className="min-w-0 flex-1 truncate font-semibold text-navy-900">{d.label}</p>
+              {!isOpen && <span className="shrink-0 text-sm text-zinc-400">Fechado</span>}
             </div>
             {/* Campos sempre enviados (ficam escondidos quando o dia está fechado) */}
             <div className={isOpen ? "mt-3 space-y-3" : "hidden"}>

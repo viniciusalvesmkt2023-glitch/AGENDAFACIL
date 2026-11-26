@@ -18,7 +18,18 @@ function tidy(v: string) {
 }
 
 /** Campo do link de agendamento, com verificação de disponibilidade e sugestões. */
-export function SlugField({ defaultValue, name = "slug", id = "slug" }: { defaultValue: string; name?: string; id?: string }) {
+export function SlugField({
+  defaultValue,
+  name = "slug",
+  id = "slug",
+  suggestions = [],
+}: {
+  defaultValue: string;
+  name?: string;
+  id?: string;
+  /** Opções livres para o dono só tocar (mostradas enquanto o campo está vazio) */
+  suggestions?: string[];
+}) {
   const [value, setValue] = useState(defaultValue);
   const [result, setResult] = useState<Result | null>(null);
   const [loading, setLoading] = useState(false);
@@ -63,6 +74,7 @@ export function SlugField({ defaultValue, name = "slug", id = "slug" }: { defaul
           value={value}
           onChange={(e) => setValue(tidy(e.target.value))}
           className="w-full min-w-0 bg-transparent py-2 pr-2 text-base text-zinc-900 outline-none md:text-sm"
+          placeholder="nome-do-seu-negocio"
           autoCapitalize="none"
           autoCorrect="off"
           spellCheck={false}
@@ -79,6 +91,21 @@ export function SlugField({ defaultValue, name = "slug", id = "slug" }: { defaul
         </span>
       </div>
       <div aria-live="polite" className="mt-1.5 text-sm">
+        {!value && suggestions.length > 0 && (
+          <div className="mt-2 flex flex-wrap items-center gap-1.5">
+            <span className="text-zinc-500">Sugestões:</span>
+            {suggestions.map((s) => (
+              <button
+                key={s}
+                type="button"
+                onClick={() => setValue(s)}
+                className="max-w-full truncate rounded-full border border-brand-200 bg-brand-50 px-2.5 py-1 text-xs font-semibold text-brand-700 active:scale-95"
+              >
+                {s}
+              </button>
+            ))}
+          </div>
+        )}
         {!loading && result?.available && <p className="font-medium text-emerald-700">Link disponível</p>}
         {!loading && result && !result.available && (
           <>
@@ -91,7 +118,7 @@ export function SlugField({ defaultValue, name = "slug", id = "slug" }: { defaul
                     key={s}
                     type="button"
                     onClick={() => setValue(s)}
-                    className="rounded-full border border-brand-200 bg-brand-50 px-2.5 py-1 text-xs font-semibold text-brand-700 active:scale-95"
+                    className="max-w-full truncate rounded-full border border-brand-200 bg-brand-50 px-2.5 py-1 text-xs font-semibold text-brand-700 active:scale-95"
                   >
                     {s}
                   </button>

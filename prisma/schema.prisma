@@ -27,6 +27,8 @@ model Business {
   homeService       Boolean  @default(false)
   // Quando terminou (ou pulou) a configuração inicial; null = ainda não terminou
   onboardedAt       DateTime?
+  // Último passo concluído da configuração guiada (0 = nenhum)
+  onboardingStep    Int      @default(0)
   // Intervalo entre horários exibidos na página de agendamento (minutos)
   slotInterval      Int      @default(30)
   // Antecedência mínima para o cliente agendar (minutos)

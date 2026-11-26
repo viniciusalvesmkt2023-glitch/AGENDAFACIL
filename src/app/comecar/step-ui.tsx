@@ -41,11 +41,11 @@ export function StepFooter({ back, children }: { back?: string; children: React.
     <div className="fixed inset-x-0 bottom-0 z-30 border-t border-zinc-200 bg-white/95 px-4 pb-[calc(env(safe-area-inset-bottom)+0.75rem)] pt-3 backdrop-blur md:static md:mt-6 md:border-0 md:bg-transparent md:p-0">
       <div className="mx-auto flex max-w-2xl items-center gap-2">
         {back && (
-          <Link href={back} className="btn-secondary">
+          <Link href={back} className="btn-secondary shrink-0">
             Voltar
           </Link>
         )}
-        <div className="flex flex-1 justify-end">{children}</div>
+        <div className="flex min-w-0 flex-1 justify-end">{children}</div>
       </div>
     </div>
   );

@@ -6,9 +6,8 @@ import { StepFooter } from "../step-ui";
 import { FormMessage } from "@/components/ui";
 import { SubmitButton } from "@/components/submit-button";
 import { SlugField } from "@/components/slug-field";
-import { BUSINESS_TYPE_LIST } from "@/lib/business-types";
 
-type Props = { name: string; businessType: string; slug: string; phone: string; address: string; homeService: boolean };
+type Props = { name: string; slug: string; slugSuggestions: string[]; phone: string; address: string; homeService: boolean };
 
 export function BusinessStep(b: Props) {
   const [state, action] = useActionState(saveBusinessStep, undefined);
@@ -22,17 +21,9 @@ export function BusinessStep(b: Props) {
           <input className="input" id="name" name="name" required defaultValue={v?.name ?? b.name} />
         </div>
         <div>
-          <label className="label" htmlFor="businessType">Tipo de negócio</label>
-          <select className="input" id="businessType" name="businessType" defaultValue={v?.businessType ?? b.businessType}>
-            {BUSINESS_TYPE_LIST.map((t) => (
-              <option key={t.id} value={t.id}>{t.label}</option>
-            ))}
-          </select>
-        </div>
-        <div>
           <label className="label" htmlFor="slug">Link da sua agenda</label>
-          <SlugField defaultValue={v?.slug ?? b.slug} />
-          <p className="mt-1 text-xs text-zinc-500">É esse link que você vai mandar para os clientes e colocar no Instagram.</p>
+          <p className="mb-2 text-xs text-zinc-500">Escolha o nome do seu link. É ele que você vai mandar para os clientes e colocar no Instagram.</p>
+          <SlugField defaultValue={v?.slug ?? b.slug} suggestions={b.slugSuggestions} />
         </div>
       </div>
 
@@ -60,7 +51,7 @@ export function BusinessStep(b: Props) {
       </div>
 
       <FormMessage error={state?.error} />
-      <StepFooter>
+      <StepFooter back="/comecar?passo=1">
         <SubmitButton className="btn-primary w-full md:w-auto md:px-8">Continuar</SubmitButton>
       </StepFooter>
     </form>

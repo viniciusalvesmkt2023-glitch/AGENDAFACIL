@@ -55,7 +55,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
         <main className="px-4 pb-28 pt-4 sm:px-6 md:px-8 md:pb-10 md:pt-8">
           <div className="mx-auto max-w-5xl space-y-3">
             {!b.onboardedAt && (
-              <Banner tone="brand" icon={<ListChecks className="h-4 w-4" />} href="/comecar" action="Continuar">
+              <Banner tone="brand" icon={<ListChecks className="h-4 w-4" />} href={`/comecar?passo=${Math.min(6, b.onboardingStep + 1)}`} action="Continuar">
                 <strong>Falta pouco!</strong> Termine de configurar sua agenda.
               </Banner>
             )}

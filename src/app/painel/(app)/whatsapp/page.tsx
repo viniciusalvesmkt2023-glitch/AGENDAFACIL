@@ -9,6 +9,9 @@ import { disconnectWhatsapp } from "./actions";
 
 const TYPES: Record<string, string> = { CONFIRMATION: "Confirmação", REMINDER_DAY: "Lembrete antecipado", REMINDER_SHORT: "Lembrete" };
 
+// Conexão por código pode levar alguns segundos (recria a conexão na Evolution)
+export const maxDuration = 60;
+
 export default async function WhatsappPage() {
   const user = await requireActiveUser();
   const b = user.business;

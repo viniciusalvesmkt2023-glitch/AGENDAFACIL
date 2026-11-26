@@ -31,6 +31,14 @@
 
   body {
     @apply bg-[#f6f7fb] text-zinc-900 antialiased;
+    /* Nada pode deixar a página mais larga que a tela (senão o celular "afasta" a página e a barra de baixo some) */
+    overflow-x: clip;
+  }
+
+  /* Itens de grid e fieldsets podem encolher (por padrão eles crescem com textos longos ou letra grande) */
+  :where(.grid) > *,
+  fieldset {
+    min-width: 0;
   }
 
   /* Títulos na fonte da marca */

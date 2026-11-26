@@ -142,7 +142,7 @@ export function HoursStep({ initial }: { initial: HoursInitial }) {
       </p>
 
       <FormMessage error={state?.error} />
-      <StepFooter back="/comecar?passo=2">
+      <StepFooter back="/comecar?passo=3">
         <SubmitButton className="btn-primary w-full md:w-auto md:px-8">Continuar</SubmitButton>
       </StepFooter>
     </form>

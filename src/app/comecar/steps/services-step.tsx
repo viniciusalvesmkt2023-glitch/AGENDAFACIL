@@ -129,7 +129,7 @@ export function ServicesStep({ suggestions, existing }: { suggestions: Suggestio
       </button>
 
       <FormMessage error={state?.error} />
-      <StepFooter back="/comecar?passo=1">
+      <StepFooter back="/comecar?passo=2">
         <SubmitButton className="btn-primary w-full md:w-auto md:px-8">
           {chosen.length ? `Salvar ${chosen.length} e continuar` : "Continuar"}
         </SubmitButton>

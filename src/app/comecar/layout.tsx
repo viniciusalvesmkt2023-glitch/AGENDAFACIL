@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { requireActiveUser } from "@/lib/auth";
-import { Logo } from "@/components/ui";
+import { BrandIcon, Wordmark } from "@/components/ui";
 
 export const metadata = { title: "Configure sua agenda" };
 
@@ -11,8 +11,11 @@ export default async function OnboardingLayout({ children }: { children: React.R
     <div className="min-h-screen">
       <header className="sticky top-0 z-30 border-b border-zinc-200/80 bg-white/95 backdrop-blur">
         <div className="mx-auto flex max-w-2xl items-center justify-between gap-3 px-4 py-3">
-          <Logo href="/painel" />
-          <Link href="/painel" className="rounded-lg px-2 py-1 text-sm font-semibold text-zinc-500 hover:bg-zinc-100">
+          <Link href="/painel" className="flex min-w-0 items-center gap-2" aria-label="HoraBoa — painel">
+            <BrandIcon className="h-8 w-8 shrink-0" />
+            <Wordmark className="hidden text-xl min-[360px]:inline" />
+          </Link>
+          <Link href="/painel" className="shrink-0 whitespace-nowrap rounded-lg px-2 py-1 text-sm font-semibold text-zinc-500 hover:bg-zinc-100">
             Configurar depois
           </Link>
         </div>

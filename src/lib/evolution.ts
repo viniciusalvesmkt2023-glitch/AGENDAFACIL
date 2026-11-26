@@ -74,13 +74,52 @@ export async function getQrCode(name: string): Promise<{ image: string | null; c
   };
 }
 
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
+type QrPayload = { pairingCode?: string | null; qrcode?: { pairingCode?: string | null } };
+const pairingFrom = (d: QrPayload | null | undefined) => d?.pairingCode ?? d?.qrcode?.pairingCode ?? null;
+
 /**
- * Pede um código de pareamento (8 letras) para conectar pelo próprio celular,
- * sem precisar escanear QR code: WhatsApp → Aparelhos conectados → Conectar com número de telefone.
+ * Gera um código de pareamento (8 letras) para conectar pelo próprio celular, sem QR code:
+ * WhatsApp → Aparelhos conectados → Conectar com número de telefone.
+ *
+ * A Evolution só gera o código quando a conexão começa já com o número. Se antes foi pedido um
+ * QR code, a conexão em andamento é do tipo QR e devolve sem código; por isso recriamos a instância.
  */
-export async function getPairingCode(name: string, phone: string): Promise<string | null> {
-  const data = await call<{ pairingCode?: string | null }>("GET", `/instance/connect/${enc(name)}?number=${enc(normalizePhone(phone))}`);
-  return data.pairingCode ?? null;
+export async function requestPairingCode(name: string, phone: string): Promise<string | null> {
+  const number = normalizePhone(phone);
+  await logoutInstance(name);
+  await deleteInstance(name);
+
+  // Recria já com o número (a exclusão pode demorar um pouco: tenta de novo se o nome ainda estiver em uso)
+  for (let attempt = 0; attempt < 4; attempt++) {
+    try {
+      const created = await call<QrPayload>("POST", "/instance/create", {
+        instanceName: name,
+        qrcode: true,
+        integration: "WHATSAPP-BAILEYS",
+        number,
+      });
+      const code = pairingFrom(created);
+      if (code) return code;
+      break;
+    } catch (e) {
+      if (e instanceof EvolutionError && (e.status === 403 || e.status === 409)) {
+        await sleep(1500);
+        continue;
+      }
+      throw e;
+    }
+  }
+
+  // Algumas versões só devolvem o código ao pedir a conexão
+  for (let attempt = 0; attempt < 3; attempt++) {
+    const data = await call<QrPayload>("GET", `/instance/connect/${enc(name)}?number=${enc(number)}`).catch(() => null);
+    const code = pairingFrom(data);
+    if (code) return code;
+    await sleep(2000);
+  }
+  return null;
 }
 
 export async function getConnectionState(name: string): Promise<ConnectionState> {

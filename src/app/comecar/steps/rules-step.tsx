@@ -96,7 +96,7 @@ export function RulesStep(p: Props) {
       </div>
 
       <FormMessage error={state?.error} />
-      <StepFooter back="/comecar?passo=3">
+      <StepFooter back="/comecar?passo=4">
         <SubmitButton className="btn-primary w-full md:w-auto md:px-8">Continuar</SubmitButton>
       </StepFooter>
     </form>

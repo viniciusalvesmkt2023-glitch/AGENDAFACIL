@@ -8,7 +8,6 @@ import { createSession, destroySession } from "@/lib/auth";
 import { slugify } from "@/lib/format";
 import { RESERVED_SLUGS } from "@/lib/brand";
 import { TRIAL_DAYS } from "@/lib/plans";
-import { BUSINESS_TYPE_IDS } from "@/lib/business-types";
 
 export type FormState = { error?: string | null; values?: Record<string, string> } | undefined;
 
@@ -22,7 +21,6 @@ function keep(formData: FormData): Record<string, string> {
 // Rotas do sistema que não podem ser usadas como endereço de estabelecimento
 
 const signupSchema = z.object({
-  businessType: z.enum(BUSINESS_TYPE_IDS, { message: "Escolha o tipo do seu negócio." }),
   name: z.string().trim().min(2, "Informe seu nome."),
   businessName: z.string().trim().min(2, "Informe o nome do estabelecimento."),
   email: z.string().trim().toLowerCase().email("E-mail inválido."),
@@ -44,7 +42,7 @@ async function uniqueSlug(base: string) {
 export async function signup(_: FormState, formData: FormData): Promise<FormState> {
   const parsed = signupSchema.safeParse(Object.fromEntries(formData));
   if (!parsed.success) return { error: parsed.error.issues[0].message, values: keep(formData) };
-  const { name, businessName, businessType, email, password } = parsed.data;
+  const { name, businessName, email, password } = parsed.data;
 
   if (await db.user.findUnique({ where: { email } })) {
     return { error: "Já existe uma conta com este e-mail.", values: keep(formData) };
@@ -57,8 +55,8 @@ export async function signup(_: FormState, formData: FormData): Promise<FormStat
     const business = await tx.business.create({
       data: {
         name: businessName,
+        // Link provisório: o dono escolhe o definitivo no passo 2 da configuração
         slug,
-        businessType,
         trialEndsAt: new Date(Date.now() + TRIAL_DAYS * 86_400_000),
         // Horário padrão: seg a sex 9h-19h (almoço 12h-13h), sábado 9h-14h, domingo fechado
         workingHours: {
