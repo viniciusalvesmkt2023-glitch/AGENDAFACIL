@@ -2,7 +2,7 @@
 
 import { useActionState, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Check, Eye, ImagePlus, Loader2, Moon, Pencil, Sun, Trash2 } from "lucide-react";
+import { Check, ChevronDown, Eye, Folder, ImagePlus, Loader2, Moon, Pencil, Sun, Trash2 } from "lucide-react";
 import { removeImage, saveBranding } from "./actions";
 import { FormMessage } from "@/components/ui";
 import { SubmitButton } from "@/components/submit-button";
@@ -46,6 +46,7 @@ export function BrandingForm({ business: b, services }: { business: Business; se
   const [tab, setTab] = useState<"edit" | "preview">("edit");
   const [theme, setTheme] = useState(b.pageTheme);
   const [pattern, setPattern] = useState(b.bgPattern);
+  const [patternsOpen, setPatternsOpen] = useState(false);
   const patterns = patternsFor(b.businessType);
   const suggested = patterns.filter((p) => p.for.includes(b.businessType as never)).length;
 
@@ -153,34 +154,63 @@ export function BrandingForm({ business: b, services }: { business: Business; se
             </div>
           </section>
 
-          <section className="card space-y-3 p-4 md:p-5">
-            <div>
-              <h2 className="text-lg font-bold">Desenho de fundo</h2>
-              <p className="text-sm text-zinc-500">Os primeiros combinam com {businessTypeInfo(b.businessType).label.toLowerCase()}.</p>
-            </div>
+          <section className="card overflow-hidden">
             <input type="hidden" name="bgPattern" value={pattern} />
-            <div className="grid grid-cols-4 gap-2 sm:grid-cols-5">
-              {[{ id: "NONE", label: "Nenhum" }, ...patterns].map((p, i) => (
-                <button
-                  key={p.id}
-                  type="button"
-                  onClick={() => setPattern(p.id)}
-                  aria-pressed={pattern === p.id}
-                  aria-label={p.label}
-                  className={`overflow-hidden rounded-xl border text-center transition ${
-                    pattern === p.id ? "border-brand-500 ring-2 ring-brand-100" : "border-zinc-200"
-                  }`}
-                >
-                  <span className="relative block h-14 bg-zinc-50 text-brand-600">
-                    {p.id !== "NONE" && <PatternLayer pattern={p.id} uid="amostra" size={40} className="opacity-80" />}
-                    {i > 0 && i <= suggested && (
-                      <span className="absolute right-1 top-1 rounded-full bg-brand-600 px-1.5 text-[9px] font-bold text-white">★</span>
-                    )}
-                  </span>
-                  <span className={`block truncate px-1 py-1 text-[11px] font-semibold ${pattern === p.id ? "text-brand-700" : "text-zinc-600"}`}>{p.label}</span>
-                </button>
-              ))}
-            </div>
+            {/* "Pasta": mostra só o escolhido; toque para abrir as opções */}
+            <button
+              type="button"
+              onClick={() => setPatternsOpen((o) => !o)}
+              aria-expanded={patternsOpen}
+              className="flex w-full items-center gap-3 p-4 text-left md:p-5"
+            >
+              <span className="relative block h-12 w-16 shrink-0 overflow-hidden rounded-xl border border-zinc-200 bg-zinc-50 text-brand-600">
+                {pattern !== "NONE" ? (
+                  <PatternLayer pattern={pattern} uid="atual" size={40} className="opacity-80" />
+                ) : (
+                  <Folder className="absolute inset-0 m-auto h-5 w-5 text-zinc-300" />
+                )}
+              </span>
+              <span className="min-w-0 flex-1">
+                <span className="block text-lg font-bold text-navy-900">Desenho de fundo</span>
+                <span className="block truncate text-sm text-zinc-500">
+                  {pattern === "NONE" ? "Nenhum" : patterns.find((p) => p.id === pattern)?.label}
+                  {" · "}toque para {patternsOpen ? "fechar" : "escolher"}
+                </span>
+              </span>
+              <ChevronDown className={`h-5 w-5 shrink-0 text-zinc-400 transition ${patternsOpen ? "rotate-180" : ""}`} />
+            </button>
+            {patternsOpen && (
+              <div className="border-t border-zinc-100 p-4 md:p-5">
+                <p className="mb-3 text-sm text-zinc-500">
+                  Os com ★ combinam com {businessTypeInfo(b.businessType).label.toLowerCase()}.
+                </p>
+                <div className="grid grid-cols-4 gap-2 sm:grid-cols-5">
+                  {[{ id: "NONE", label: "Nenhum" }, ...patterns].map((p, i) => (
+                    <button
+                      key={p.id}
+                      type="button"
+                      onClick={() => {
+                        setPattern(p.id);
+                        setPatternsOpen(false);
+                      }}
+                      aria-pressed={pattern === p.id}
+                      aria-label={p.label}
+                      className={`overflow-hidden rounded-xl border text-center transition ${
+                        pattern === p.id ? "border-brand-500 ring-2 ring-brand-100" : "border-zinc-200"
+                      }`}
+                    >
+                      <span className="relative block h-14 bg-zinc-50 text-brand-600">
+                        {p.id !== "NONE" && <PatternLayer pattern={p.id} uid="amostra" size={40} className="opacity-80" />}
+                        {i > 0 && i <= suggested && (
+                          <span className="absolute right-1 top-1 rounded-full bg-brand-600 px-1.5 text-[9px] font-bold text-white">★</span>
+                        )}
+                      </span>
+                      <span className={`block truncate px-1 py-1 text-[11px] font-semibold ${pattern === p.id ? "text-brand-700" : "text-zinc-600"}`}>{p.label}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
           </section>
 
           <section className="card space-y-4 p-4 md:p-5">

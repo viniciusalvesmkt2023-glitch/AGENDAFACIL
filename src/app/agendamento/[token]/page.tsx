@@ -7,6 +7,7 @@ import { formatMoney, whatsappLink } from "@/lib/format";
 import { clientCanChange, deadlineLabel } from "@/lib/policy";
 import { hasAccess } from "@/lib/subscription";
 import { PublicShell } from "@/components/public-shell";
+import { directionsUrl } from "@/lib/links";
 import { StatusBadge } from "@/components/ui";
 import { SubmitButton } from "@/components/submit-button";
 import { cancelByClient } from "./actions";
@@ -30,6 +31,7 @@ export default async function AppointmentPage({ params, searchParams }: Props) {
   const canReschedule = check.allowed && b.clientCanReschedule && hasAccess(b);
   const when = `${formatDateLong(a.date)} às ${minutesToTime(a.startMinutes)}`;
   const canceled = a.status === "CANCELED";
+  const directions = directionsUrl(b.mapsUrl, b.address);
   const title = canceled ? "Agendamento cancelado" : remarcado ? "Horário alterado!" : novo === "1" ? "Agendamento realizado!" : "Seu agendamento";
 
   return (
@@ -56,7 +58,20 @@ export default async function AppointmentPage({ params, searchParams }: Props) {
             {a.service.name} · {formatMoney(a.priceCents)}
           </Row>
           <Row icon={<UserRound className="h-4 w-4" />} label="Profissional">{a.professional.name}</Row>
-          {b.address && <Row icon={<MapPin className="h-4 w-4" />} label="Endereço">{b.address}</Row>}
+          {b.homeService ? (
+            <Row icon={<MapPin className="h-4 w-4" />} label="Local">Atendimento a domicílio</Row>
+          ) : (
+            b.address && (
+              <Row icon={<MapPin className="h-4 w-4" />} label="Endereço">
+                {b.address}
+                {directions && (
+                  <a href={directions} target="_blank" rel="noopener noreferrer" className="mt-0.5 block text-xs font-semibold text-brand-700 dark:text-brand-300">
+                    Como chegar
+                  </a>
+                )}
+              </Row>
+            )
+          )}
           <Row icon={<Clock className="h-4 w-4" />} label="Status"><StatusBadge status={a.status} /></Row>
         </ul>
 

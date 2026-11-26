@@ -1,4 +1,4 @@
-import { AtSign, MapPin, MessageCircle, Navigation, Star } from "lucide-react";
+import { MapPin, MessageCircle, Navigation, Star } from "lucide-react";
 import { PatternLayer } from "./patterns";
 
 export type PublicHeaderProps = {
@@ -52,10 +52,11 @@ export function PublicHeader(p: PublicHeaderProps) {
         </div>
         <h1 className="mt-3 break-words text-2xl font-extrabold leading-tight text-navy-900 dark:text-white">{p.name}</h1>
         {p.tagline && <p className="mt-0.5 font-medium text-brand-700 dark:text-brand-300">{p.tagline}</p>}
-        {(p.address || p.homeService) && (
+        {/* Quem atende a domicílio não mostra endereço aqui: a informação aparece na confirmação do agendamento */}
+        {p.address && !p.homeService && (
           <p className="mt-2 flex items-start gap-1.5 text-sm text-zinc-500 dark:text-zinc-400">
             <MapPin className="mt-0.5 h-4 w-4 shrink-0" />
-            <span>{p.homeService ? "Atendimento a domicílio" : p.address}</span>
+            <span>{p.address}</span>
           </p>
         )}
         {p.description && <p className="mt-2 whitespace-pre-line text-sm text-zinc-600 dark:text-zinc-300">{p.description}</p>}
@@ -67,8 +68,13 @@ export function PublicHeader(p: PublicHeaderProps) {
             </a>
           )}
           {p.instagram && (
-            <a href={`https://instagram.com/${p.instagram}`} target="_blank" rel="noopener noreferrer" className={`${chip} border-zinc-200 bg-white text-navy-900 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100`}>
-              <AtSign className="h-4 w-4" /> {p.instagram}
+            <a
+              href={`https://instagram.com/${p.instagram}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className={`${chip} border-transparent bg-[linear-gradient(45deg,#f09433_0%,#e6683c_25%,#dc2743_50%,#cc2366_75%,#bc1888_100%)] text-white shadow-sm`}
+            >
+              <InstagramLogo className="h-4 w-4" /> {p.instagram}
             </a>
           )}
           {p.directionsHref && !p.homeService && (
@@ -84,5 +90,16 @@ export function PublicHeader(p: PublicHeaderProps) {
         </div>
       </div>
     </header>
+  );
+}
+
+/** Logo do Instagram (contorno), para o botão do perfil. */
+function InstagramLogo({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className={className} aria-hidden="true">
+      <rect x="2.5" y="2.5" width="19" height="19" rx="5.5" />
+      <circle cx="12" cy="12" r="4.2" />
+      <circle cx="17.4" cy="6.6" r="1.1" fill="currentColor" stroke="none" />
+    </svg>
   );
 }
