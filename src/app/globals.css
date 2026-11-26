@@ -2,6 +2,9 @@
 @import "@fontsource/nunito/700.css";
 @import "@fontsource/nunito/800.css";
 
+/* Modo escuro só da página pública (o estabelecimento escolhe): vale dentro de .theme-dark */
+@custom-variant dark (&:where(.theme-dark, .theme-dark *));
+
 @theme {
   /* Laranja HoraBoa (logo: #FE6E02) */
   --color-brand-50: #fff4ec;
@@ -44,7 +47,7 @@
   /* Títulos na fonte da marca */
   h1,
   h2 {
-    @apply font-display tracking-tight text-navy-900;
+    @apply font-display tracking-tight text-navy-900 dark:text-white;
   }
 }
 
@@ -63,11 +66,11 @@
 }
 
 @utility btn-secondary {
-  @apply btn border border-zinc-200 bg-white text-zinc-700 hover:bg-zinc-50;
+  @apply btn border border-zinc-200 bg-white text-zinc-700 hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200 dark:hover:bg-zinc-800;
 }
 
 @utility btn-danger {
-  @apply btn border border-red-200 bg-white text-red-600 hover:bg-red-50;
+  @apply btn border border-red-200 bg-white text-red-600 hover:bg-red-50 dark:border-red-900/60 dark:bg-zinc-900 dark:text-red-400;
 }
 
 @utility btn-sm {
@@ -83,15 +86,16 @@
 /* 16px no celular: evita o zoom automático do iPhone ao tocar no campo */
 @utility input {
   @apply min-h-11 w-full rounded-xl border border-zinc-200 bg-white px-3 py-2 text-base text-zinc-900 outline-none transition
-    placeholder:text-zinc-400 focus:border-brand-500 focus:ring-4 focus:ring-brand-100 md:min-h-10 md:text-sm;
+    placeholder:text-zinc-400 focus:border-brand-500 focus:ring-4 focus:ring-brand-100 md:min-h-10 md:text-sm
+    dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100 dark:placeholder:text-zinc-500 dark:focus:ring-brand-900;
 }
 
 @utility label {
-  @apply mb-1.5 block text-sm font-medium text-zinc-700;
+  @apply mb-1.5 block text-sm font-medium text-zinc-700 dark:text-zinc-300;
 }
 
 @utility card {
-  @apply rounded-2xl border border-zinc-200/80 bg-white shadow-[0_1px_2px_rgba(21,35,62,0.04)];
+  @apply rounded-2xl border border-zinc-200/80 bg-white shadow-[0_1px_2px_rgba(21,35,62,0.04)] dark:border-zinc-800 dark:bg-zinc-900;
 }
 
 /* Esconde a barra de rolagem em faixas que rolam de lado (dias da agenda) */

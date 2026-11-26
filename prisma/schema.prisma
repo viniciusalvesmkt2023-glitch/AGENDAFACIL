@@ -51,6 +51,8 @@ model Business {
   reviewUrl     String? // link "Avalie no Google"
   logoImageId   String?
   coverImageId  String?
+  pageTheme     String  @default("LIGHT") // LIGHT | DARK
+  bgPattern     String  @default("NONE") // desenho de fundo (ver src/components/patterns.tsx)
   createdAt         DateTime @default(now())
 
   // ----- Assinatura do estabelecimento -----
@@ -176,6 +178,7 @@ model Service {
   durationMinutes Int
   priceCents      Int
   active          Boolean  @default(true)
+  imageId         String? // foto do serviço (BusinessImage, kind SERVICE)
   createdAt       DateTime @default(now())
 
   professionals ProfessionalService[]
@@ -315,7 +318,7 @@ model BusinessImage {
   id         String   @id @default(cuid())
   businessId String
   business   Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
-  kind       String // LOGO | COVER
+  kind       String // LOGO | COVER | SERVICE
   mime       String
   data       Bytes
   createdAt  DateTime @default(now())

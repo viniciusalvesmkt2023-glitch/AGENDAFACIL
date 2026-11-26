@@ -3,9 +3,9 @@ import { notFound } from "next/navigation";
 import { db } from "@/lib/db";
 import { todayInTimezone } from "@/lib/time";
 import { whatsappLink } from "@/lib/format";
-import { brandPalette } from "@/lib/brand-colors";
 import { directionsUrl } from "@/lib/links";
 import { PublicHeader } from "@/components/public-header";
+import { PublicShell } from "@/components/public-shell";
 import { appUrl } from "@/lib/brand";
 import { BookingWizard } from "./booking-wizard";
 import { hasAccess } from "@/lib/subscription";
@@ -68,8 +68,8 @@ export default async function PublicBookingPage({ params }: Props) {
 
 
   return (
-    // A cor escolhida pelo estabelecimento substitui o laranja padrão em toda a página
-    <div className="min-h-screen bg-zinc-50" style={brandPalette(business.brandColor) as React.CSSProperties}>
+    // Cor, modo claro/escuro e desenho de fundo escolhidos pelo estabelecimento
+    <PublicShell theme={business.pageTheme} color={business.brandColor} pattern={business.bgPattern} uid="pagina" className="min-h-screen">
       <PublicHeader
         name={business.name}
         tagline={business.tagline}
@@ -82,14 +82,16 @@ export default async function PublicBookingPage({ params }: Props) {
         reviewHref={business.reviewUrl}
         logoUrl={business.logoImageId ? `/i/${business.logoImageId}` : null}
         coverUrl={business.coverImageId ? `/i/${business.coverImageId}` : null}
+        pattern={business.bgPattern}
+        uid="pagina"
       />
       <main className="mx-auto mt-5 max-w-3xl px-4 pb-16">
         {!hasAccess(business) ? (
-          <div className="card p-8 text-center text-zinc-500">
+          <div className="card p-8 text-center text-zinc-500 dark:text-zinc-400">
             O agendamento online deste estabelecimento está temporariamente indisponível. Entre em contato diretamente.
           </div>
         ) : business.services.length === 0 ? (
-          <div className="card p-8 text-center text-zinc-500">
+          <div className="card p-8 text-center text-zinc-500 dark:text-zinc-400">
             Este estabelecimento ainda não disponibilizou serviços para agendamento online.
           </div>
         ) : (
@@ -103,6 +105,7 @@ export default async function PublicBookingPage({ params }: Props) {
               description: s.description,
               durationMinutes: s.durationMinutes,
               priceCents: s.priceCents,
+              imageUrl: s.imageId ? `/i/${s.imageId}` : null,
             }))}
             professionals={business.professionals.map((p) => ({
               id: p.id,
@@ -113,13 +116,13 @@ export default async function PublicBookingPage({ params }: Props) {
             }))}
           />
         )}
-        <p className="mt-8 text-center text-xs text-zinc-400">
+        <p className="mt-8 text-center text-xs text-zinc-400 dark:text-zinc-500">
           Agendamento online por{" "}
           <a href="/" className="font-display font-extrabold">
-            <span className="text-navy-900">Hora</span><span className="text-[#FE6E02]">Boa</span>
+            <span className="text-navy-900 dark:text-white">Hora</span><span className="text-[#FE6E02]">Boa</span>
           </a>
         </p>
       </main>
-    </div>
+    </PublicShell>
   );
 }

@@ -11,6 +11,7 @@ import { BookingError, createAppointment, rescheduleAppointment } from "@/lib/bo
 import { parseMoneyToCents } from "@/lib/format";
 import { checkSlug } from "@/lib/slug-check";
 import { CANCEL_POLICIES } from "@/lib/policy";
+import { MAX_IMAGE_BYTES, sniffImage } from "@/lib/images";
 import { timeToMinutes } from "@/lib/time";
 
 export type ActionState = { error?: string | null; success?: string | null; values?: Record<string, string> } | undefined;
@@ -114,21 +115,42 @@ export async function saveService(_: ActionState, formData: FormData): Promise<A
     durationMinutes: z.coerce.number().int().min(5, "Duração mínima de 5 minutos.").max(600),
     price: z.string().min(1, "Informe o preço."),
   });
-  const parsed = schema.safeParse(Object.fromEntries(formData));
+  const parsed = schema.safeParse({
+    id: formData.get("id") || undefined,
+    name: formData.get("name"),
+    description: formData.get("description") ?? undefined,
+    durationMinutes: formData.get("durationMinutes"),
+    price: formData.get("price"),
+  });
   if (!parsed.success) return { error: parsed.error.issues[0].message };
   const { id, name, description, durationMinutes, price } = parsed.data;
   const priceCents = parseMoneyToCents(price);
   if (!Number.isFinite(priceCents) || priceCents < 0) return { error: "Preço inválido." };
 
+  // Foto (opcional): já vem reduzida do navegador
+  const file = formData.get("image");
+  let image: { mime: string; data: Uint8Array<ArrayBuffer> } | null = null;
+  if (file instanceof Blob && file.size > 0) {
+    if (file.size > MAX_IMAGE_BYTES) return { error: "Foto muito grande. Tente outra." };
+    const bytes = new Uint8Array(await file.arrayBuffer());
+    const mime = sniffImage(bytes);
+    if (!mime) return { error: "Use uma foto JPG, PNG ou WebP." };
+    image = { mime, data: bytes };
+  }
+  const removePhoto = formData.get("removeImage") === "1";
+
+  let serviceId = id;
+  let oldImageId: string | null = null;
   if (id) {
-    await db.service.updateMany({
-      where: { id, businessId: user.businessId },
-      data: { name, description: description || null, durationMinutes, priceCents },
-    });
+    const existing = await db.service.findFirst({ where: { id, businessId: user.businessId } });
+    if (!existing) return { error: "Serviço não encontrado." };
+    oldImageId = existing.imageId;
+    await db.service.update({ where: { id }, data: { name, description: description || null, durationMinutes, priceCents } });
   } else {
     const service = await db.service.create({
       data: { businessId: user.businessId, name, description: description || null, durationMinutes, priceCents },
     });
+    serviceId = service.id;
     // Por padrão, todos os profissionais ativos realizam o novo serviço
     const pros = await db.professional.findMany({ where: { businessId: user.businessId, active: true } });
     if (pros.length) {
@@ -137,7 +159,15 @@ export async function saveService(_: ActionState, formData: FormData): Promise<A
       });
     }
   }
+
+  if (image || removePhoto) {
+    const img = image ? await db.businessImage.create({ data: { businessId: user.businessId, kind: "SERVICE", ...image } }) : null;
+    await db.service.update({ where: { id: serviceId }, data: { imageId: img?.id ?? null } });
+    if (oldImageId) await db.businessImage.deleteMany({ where: { id: oldImageId, businessId: user.businessId } });
+  }
+
   revalidatePath("/painel/servicos");
+  revalidatePath(`/${user.business.slug}`);
   return { success: id ? "Serviço atualizado." : "Serviço criado." };
 }
 

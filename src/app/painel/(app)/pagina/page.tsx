@@ -10,13 +10,13 @@ export default async function BrandingPage() {
     where: { businessId: b.id, active: true },
     orderBy: { name: "asc" },
     take: 3,
-    select: { id: true, name: true, durationMinutes: true, priceCents: true },
+    select: { id: true, name: true, durationMinutes: true, priceCents: true, imageId: true },
   });
   return (
     <>
       <PageHeader title="Minha página" description="Deixe seu link de agendamento com a cara do seu negócio." />
       <BrandingForm
-        services={services}
+        services={services.map((s) => ({ ...s, imageUrl: s.imageId ? `/i/${s.imageId}` : null }))}
         business={{
           name: b.name,
           slug: b.slug,
@@ -24,6 +24,9 @@ export default async function BrandingPage() {
           address: b.address,
           homeService: b.homeService,
           brandColor: b.brandColor,
+          businessType: b.businessType,
+          pageTheme: b.pageTheme,
+          bgPattern: b.bgPattern,
           tagline: b.tagline,
           description: b.description,
           instagram: b.instagram,

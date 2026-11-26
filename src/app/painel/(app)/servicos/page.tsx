@@ -53,9 +53,14 @@ export default async function ServicesPage({ searchParams }: Props) {
             <ul className="card divide-y divide-zinc-100 overflow-hidden">
               {services.map((s) => (
                 <li key={s.id} className={`flex items-center gap-3 px-4 py-3 ${s.active ? "" : "opacity-50"}`}>
-                  <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-brand-50 text-brand-600">
-                    <Scissors className="h-5 w-5" />
-                  </span>
+                  {s.imageId ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={`/i/${s.imageId}`} alt="" className="h-10 w-10 shrink-0 rounded-xl object-cover" />
+                  ) : (
+                    <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-brand-50 text-brand-600">
+                      <Scissors className="h-5 w-5" />
+                    </span>
+                  )}
                   <div className="min-w-0 flex-1">
                     <p className="truncate font-semibold text-navy-900">
                       {s.name} {!s.active && <span className="text-xs font-normal text-zinc-500">(inativo)</span>}

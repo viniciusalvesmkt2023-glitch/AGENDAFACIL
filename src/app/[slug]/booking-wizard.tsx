@@ -9,7 +9,7 @@ import { ClosedPeriods, NoSlots } from "@/components/slot-notes";
 import { addDays, formatDateLong, WEEKDAYS_SHORT, weekdayOf } from "@/lib/time";
 import { formatDuration, formatMoney } from "@/lib/format";
 
-type Service = { id: string; name: string; description: string | null; durationMinutes: number; priceCents: number };
+type Service = { id: string; name: string; description: string | null; durationMinutes: number; priceCents: number; imageUrl?: string | null };
 type Professional = { id: string; name: string; serviceIds: string[]; openWeekdays: number[]; closedDates: string[] };
 
 type Props = {
@@ -69,14 +69,20 @@ export function BookingWizard({ slug, today, maxAdvanceDays, services, professio
                 setProfessionalId(available.length === 1 ? available[0].id : undefined);
                 setTime(undefined);
               }}
-              className="rounded-xl border border-zinc-200 bg-white p-4 text-left transition hover:border-brand-500 hover:shadow-sm"
+              className="flex items-center gap-3 rounded-xl border border-zinc-200 bg-white p-3 text-left transition hover:border-brand-500 hover:shadow-sm dark:border-zinc-700 dark:bg-zinc-800/60"
             >
-              <p className="font-medium">{s.name}</p>
-              {s.description && <p className="mt-1 text-sm text-zinc-500">{s.description}</p>}
-              <p className="mt-2 text-sm">
-                <span className="font-semibold text-brand-700">{formatMoney(s.priceCents)}</span>
-                <span className="text-zinc-400"> · {formatDuration(s.durationMinutes)}</span>
-              </p>
+              {s.imageUrl && (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={s.imageUrl} alt="" loading="lazy" className="h-16 w-16 shrink-0 rounded-xl object-cover" />
+              )}
+              <span className="min-w-0 flex-1 px-1">
+                <span className="block font-semibold text-navy-900 dark:text-white">{s.name}</span>
+                {s.description && <span className="mt-0.5 block text-sm text-zinc-500 dark:text-zinc-400">{s.description}</span>}
+                <span className="mt-1 block text-sm">
+                  <span className="font-semibold text-brand-700 dark:text-brand-300">{formatMoney(s.priceCents)}</span>
+                  <span className="text-zinc-400"> · {formatDuration(s.durationMinutes)}</span>
+                </span>
+              </span>
             </button>
           ))}
         </div>
@@ -128,8 +134,8 @@ export function BookingWizard({ slug, today, maxAdvanceDays, services, professio
                     selected
                       ? "border-brand-600 bg-brand-600 text-white"
                       : closed
-                        ? "cursor-not-allowed border-zinc-100 bg-zinc-50 text-zinc-300"
-                        : "border-zinc-200 bg-white hover:border-brand-500"
+                        ? "cursor-not-allowed border-zinc-100 bg-zinc-50 text-zinc-300 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-600"
+                        : "border-zinc-200 bg-white hover:border-brand-500 dark:border-zinc-700 dark:bg-zinc-800/60"
                   }`}
                 >
                   <span className="text-xs">{d === today ? "Hoje" : WEEKDAYS_SHORT[wd]}</span>
@@ -142,7 +148,7 @@ export function BookingWizard({ slug, today, maxAdvanceDays, services, professio
           {date && (
             <div className="mt-4">
               {loading ? (
-                <p className="text-sm text-zinc-500">Buscando horários...</p>
+                <p className="text-sm text-zinc-500 dark:text-zinc-400">Buscando horários...</p>
               ) : slots.length === 0 ? (
                 <NoSlots message={message} />
               ) : (
@@ -153,7 +159,7 @@ export function BookingWizard({ slug, today, maxAdvanceDays, services, professio
                       key={s.time}
                       type="button"
                       onClick={() => setTime(s.time)}
-                      className="rounded-lg border border-zinc-200 bg-white py-2 text-sm font-medium transition hover:border-brand-500 hover:text-brand-700"
+                      className="rounded-lg border border-zinc-200 bg-white py-2 text-sm font-medium transition hover:border-brand-500 hover:text-brand-700 dark:border-zinc-700 dark:bg-zinc-800/60 dark:hover:text-brand-300"
                     >
                       {s.label}
                     </button>
@@ -191,15 +197,15 @@ export function BookingWizard({ slug, today, maxAdvanceDays, services, professio
               <label className="label" htmlFor="notes">Observação (opcional)</label>
               <input className="input" id="notes" name="notes" maxLength={500} defaultValue={state?.values?.notes} />
             </div>
-            <div className="rounded-lg bg-zinc-50 p-4 text-sm">
+            <div className="rounded-lg bg-zinc-50 p-4 text-sm dark:bg-zinc-800/60">
               <p><strong>{service.name}</strong> · {formatDuration(service.durationMinutes)}</p>
-              <p className="text-zinc-600">
+              <p className="text-zinc-600 dark:text-zinc-300">
                 {formatDateLong(date)} às {slots.find((s) => s.time === time)?.label}
                 {pro ? ` com ${pro.name}` : ""}
               </p>
               <p className="mt-1 font-semibold">{formatMoney(service.priceCents)}</p>
             </div>
-            <p className="text-xs text-zinc-500">
+            <p className="text-xs text-zinc-500 dark:text-zinc-400">
               Seus dados serão usados para gerenciar o agendamento e enviar confirmação e lembretes pelo WhatsApp. Veja a{" "}
               <a href="/privacidade" target="_blank" className="underline">Política de Privacidade</a>.
             </p>
@@ -222,15 +228,15 @@ function Step({
   return (
     <section className="card p-5">
       <div className="flex items-center gap-3">
-        <span className={`grid h-7 w-7 place-items-center rounded-full text-sm font-semibold ${done && !active ? "bg-emerald-100 text-emerald-700" : "bg-brand-100 text-brand-700"}`}>
+        <span className={`grid h-7 w-7 place-items-center rounded-full text-sm font-semibold ${done && !active ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-400" : "bg-brand-100 text-brand-700 dark:bg-brand-900 dark:text-brand-200"}`}>
           {done && !active ? "✓" : n}
         </span>
         <div className="min-w-0 flex-1">
           <h2 className="font-semibold">{title}</h2>
-          {!active && summary && <p className="truncate text-sm text-zinc-500">{summary}</p>}
+          {!active && summary && <p className="truncate text-sm text-zinc-500 dark:text-zinc-400">{summary}</p>}
         </div>
         {!active && done && onEdit && (
-          <button type="button" onClick={onEdit} className="text-sm font-medium text-brand-700 hover:underline">Alterar</button>
+          <button type="button" onClick={onEdit} className="text-sm font-medium text-brand-700 hover:underline dark:text-brand-300">Alterar</button>
         )}
       </div>
       {active && <div className="mt-4">{children}</div>}
@@ -240,13 +246,13 @@ function Step({
 
 function ProCard({ name, hint, onClick }: { name: string; hint?: string; onClick: () => void }) {
   return (
-    <button type="button" onClick={onClick} className="flex items-center gap-3 rounded-xl border border-zinc-200 bg-white p-3 text-left transition hover:border-brand-500">
-      <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-brand-100 font-semibold text-brand-700">
+    <button type="button" onClick={onClick} className="flex items-center gap-3 rounded-xl border border-zinc-200 bg-white p-3 text-left transition hover:border-brand-500 dark:border-zinc-700 dark:bg-zinc-800/60">
+      <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-brand-100 font-semibold text-brand-700 dark:bg-brand-900 dark:text-brand-200">
         {hint ? "★" : name.charAt(0).toUpperCase()}
       </span>
       <span>
         <span className="block font-medium">{name}</span>
-        {hint && <span className="block text-xs text-zinc-500">{hint}</span>}
+        {hint && <span className="block text-xs text-zinc-500 dark:text-zinc-400">{hint}</span>}
       </span>
     </button>
   );

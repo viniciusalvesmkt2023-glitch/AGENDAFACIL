@@ -6,7 +6,7 @@ import { formatDateLong, minutesToTime, nowInTimezone } from "@/lib/time";
 import { formatMoney, whatsappLink } from "@/lib/format";
 import { clientCanChange, deadlineLabel } from "@/lib/policy";
 import { hasAccess } from "@/lib/subscription";
-import { brandPalette } from "@/lib/brand-colors";
+import { PublicShell } from "@/components/public-shell";
 import { StatusBadge } from "@/components/ui";
 import { SubmitButton } from "@/components/submit-button";
 import { cancelByClient } from "./actions";
@@ -33,9 +33,9 @@ export default async function AppointmentPage({ params, searchParams }: Props) {
   const title = canceled ? "Agendamento cancelado" : remarcado ? "Horário alterado!" : novo === "1" ? "Agendamento realizado!" : "Seu agendamento";
 
   return (
-    <div className="min-h-screen px-4 py-8 sm:py-12" style={brandPalette(b.brandColor) as React.CSSProperties}>
+    <PublicShell theme={b.pageTheme} color={b.brandColor} pattern={b.bgPattern} uid="agendamento" className="min-h-screen px-4 py-8 sm:py-12">
       <div className="card mx-auto w-full max-w-md overflow-hidden">
-        <div className={`px-6 py-7 text-center ${canceled ? "bg-zinc-100" : "bg-gradient-to-br from-navy-900 to-navy-700 text-white"}`}>
+        <div className={`px-6 py-7 text-center ${canceled ? "bg-zinc-100 dark:bg-zinc-800" : "bg-gradient-to-br from-navy-900 to-navy-700 text-white"}`}>
           {b.logoImageId && !canceled ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img src={`/i/${b.logoImageId}`} alt="" className="mx-auto h-14 w-14 rounded-2xl bg-white object-cover ring-2 ring-white/30" />
@@ -48,7 +48,7 @@ export default async function AppointmentPage({ params, searchParams }: Props) {
           <p className={`mt-0.5 text-sm ${canceled ? "text-zinc-500" : "text-white/75"}`}>{b.name}</p>
         </div>
 
-        <ul className="divide-y divide-zinc-100 px-5 text-sm">
+        <ul className="divide-y divide-zinc-100 px-5 text-sm dark:divide-zinc-800">
           <Row icon={<CalendarDays className="h-4 w-4" />} label="Quando">
             <span className="inline-block first-letter:uppercase">{when}</span>
           </Row>
@@ -60,7 +60,7 @@ export default async function AppointmentPage({ params, searchParams }: Props) {
           <Row icon={<Clock className="h-4 w-4" />} label="Status"><StatusBadge status={a.status} /></Row>
         </ul>
 
-        <div className="space-y-2.5 border-t border-zinc-100 p-5">
+        <div className="space-y-2.5 border-t border-zinc-100 p-5 dark:border-zinc-800">
           {(novo === "1" || remarcado) && !canceled && (
             <p className="rounded-xl bg-emerald-50 px-3 py-2.5 text-center text-sm text-emerald-800">
               Guarde este link para consultar{canReschedule ? ", trocar o horário" : ""} ou cancelar.
@@ -96,7 +96,7 @@ export default async function AppointmentPage({ params, searchParams }: Props) {
           </Link>
         </div>
       </div>
-    </div>
+    </PublicShell>
   );
 }
 
@@ -104,8 +104,8 @@ function Row({ icon, label, children }: { icon: React.ReactNode; label: string; 
   return (
     <li className="flex items-start gap-3 py-3">
       <span className="mt-0.5 text-zinc-400">{icon}</span>
-      <span className="w-24 shrink-0 text-zinc-500">{label}</span>
-      <span className="min-w-0 flex-1 text-right font-medium text-navy-900">{children}</span>
+      <span className="w-24 shrink-0 text-zinc-500 dark:text-zinc-400">{label}</span>
+      <span className="min-w-0 flex-1 text-right font-medium text-navy-900 dark:text-zinc-100">{children}</span>
     </li>
   );
 }

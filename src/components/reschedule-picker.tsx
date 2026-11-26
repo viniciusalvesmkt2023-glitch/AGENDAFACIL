@@ -72,8 +72,8 @@ export function ReschedulePicker({
                   selected
                     ? "border-navy-900 bg-navy-900 text-white"
                     : closed
-                      ? "cursor-not-allowed border-zinc-100 bg-zinc-50 text-zinc-300"
-                      : "border-zinc-200 bg-white text-zinc-700"
+                      ? "cursor-not-allowed border-zinc-100 bg-zinc-50 text-zinc-300 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-600"
+                      : "border-zinc-200 bg-white text-zinc-700 dark:border-zinc-700 dark:bg-zinc-800/60 dark:text-zinc-200"
                 }`}
               >
                 <span className={`text-[11px] font-medium uppercase ${selected ? "text-white/70" : ""}`}>{d === today ? "Hoje" : WEEKDAYS_SHORT[wd]}</span>
@@ -88,7 +88,7 @@ export function ReschedulePicker({
         <div>
           <p className="label">Novo horário</p>
           {loading ? (
-            <p className="text-sm text-zinc-500">Buscando horários...</p>
+            <p className="text-sm text-zinc-500 dark:text-zinc-400">Buscando horários...</p>
           ) : slots.length === 0 ? (
             <NoSlots message={message} />
           ) : (
@@ -100,7 +100,7 @@ export function ReschedulePicker({
                   type="button"
                   onClick={() => setTime(s.time)}
                   className={`rounded-xl border py-2.5 text-sm font-semibold transition ${
-                    time === s.time ? "border-brand-500 bg-brand-500 text-white" : "border-zinc-200 bg-white text-navy-900"
+                    time === s.time ? "border-brand-600 bg-brand-600 text-white" : "border-zinc-200 bg-white text-navy-900 dark:border-zinc-700 dark:bg-zinc-800/60 dark:text-zinc-100"
                   }`}
                 >
                   {s.label}
@@ -115,7 +115,7 @@ export function ReschedulePicker({
       )}
 
       {notify && (
-        <label className="flex items-center gap-2 text-sm text-zinc-700">
+        <label className="flex items-center gap-2 text-sm text-zinc-700 dark:text-zinc-300">
           <input type="checkbox" name="notify" defaultChecked className="h-4 w-4 accent-brand-600" />
           Avisar o cliente no WhatsApp
         </label>

@@ -2,12 +2,15 @@
 
 import { useActionState, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Check, Eye, ImagePlus, Loader2, Pencil, Trash2 } from "lucide-react";
+import { Check, Eye, ImagePlus, Loader2, Moon, Pencil, Sun, Trash2 } from "lucide-react";
 import { removeImage, saveBranding } from "./actions";
 import { FormMessage } from "@/components/ui";
 import { SubmitButton } from "@/components/submit-button";
 import { PublicHeader } from "@/components/public-header";
-import { brandPalette, COLOR_PRESETS, DEFAULT_BRAND } from "@/lib/brand-colors";
+import { PublicShell } from "@/components/public-shell";
+import { patternsFor, PatternLayer } from "@/components/patterns";
+import { businessTypeInfo } from "@/lib/business-types";
+import { COLOR_PRESETS, DEFAULT_BRAND } from "@/lib/brand-colors";
 import { directionsUrl, instagramHandle } from "@/lib/links";
 import { resizeImage } from "@/lib/resize-image";
 import { formatDuration, formatMoney } from "@/lib/format";
@@ -19,6 +22,9 @@ type Business = {
   address: string | null;
   homeService: boolean;
   brandColor: string | null;
+  businessType: string;
+  pageTheme: string;
+  bgPattern: string;
   tagline: string | null;
   description: string | null;
   instagram: string | null;
@@ -27,7 +33,7 @@ type Business = {
   logoUrl: string | null;
   coverUrl: string | null;
 };
-type Service = { id: string; name: string; durationMinutes: number; priceCents: number };
+type Service = { id: string; name: string; durationMinutes: number; priceCents: number; imageUrl?: string | null };
 
 export function BrandingForm({ business: b, services }: { business: Business; services: Service[] }) {
   const [state, action] = useActionState(saveBranding, undefined);
@@ -38,10 +44,16 @@ export function BrandingForm({ business: b, services }: { business: Business; se
   const [mapsUrl, setMapsUrl] = useState(b.mapsUrl ?? "");
   const [reviewUrl, setReviewUrl] = useState(b.reviewUrl ?? "");
   const [tab, setTab] = useState<"edit" | "preview">("edit");
+  const [theme, setTheme] = useState(b.pageTheme);
+  const [pattern, setPattern] = useState(b.bgPattern);
+  const patterns = patternsFor(b.businessType);
+  const suggested = patterns.filter((p) => p.for.includes(b.businessType as never)).length;
 
   const preview = (
     <PhonePreview
       color={color}
+      theme={theme}
+      pattern={pattern}
       header={{
         name: b.name,
         tagline,
@@ -54,6 +66,8 @@ export function BrandingForm({ business: b, services }: { business: Business; se
         reviewHref: reviewUrl ? "#" : null,
         logoUrl: b.logoUrl,
         coverUrl: b.coverUrl,
+        pattern,
+        uid: "previa",
       }}
       services={services}
     />
@@ -114,6 +128,61 @@ export function BrandingForm({ business: b, services }: { business: Business; se
             </div>
           </section>
 
+          <section className="card space-y-3 p-4 md:p-5">
+            <h2 className="text-lg font-bold">Aparência</h2>
+            <input type="hidden" name="pageTheme" value={theme} />
+            <div className="grid grid-cols-2 gap-2">
+              {(
+                [
+                  ["LIGHT", "Claro", Sun],
+                  ["DARK", "Escuro", Moon],
+                ] as const
+              ).map(([id, label, Icon]) => (
+                <button
+                  key={id}
+                  type="button"
+                  onClick={() => setTheme(id)}
+                  aria-pressed={theme === id}
+                  className={`flex items-center justify-center gap-2 rounded-xl border py-3 font-semibold transition ${
+                    theme === id ? "border-brand-500 bg-brand-50 text-brand-700 ring-2 ring-brand-100" : "border-zinc-200 bg-white text-zinc-600"
+                  }`}
+                >
+                  <Icon className="h-5 w-5" /> {label}
+                </button>
+              ))}
+            </div>
+          </section>
+
+          <section className="card space-y-3 p-4 md:p-5">
+            <div>
+              <h2 className="text-lg font-bold">Desenho de fundo</h2>
+              <p className="text-sm text-zinc-500">Os primeiros combinam com {businessTypeInfo(b.businessType).label.toLowerCase()}.</p>
+            </div>
+            <input type="hidden" name="bgPattern" value={pattern} />
+            <div className="grid grid-cols-4 gap-2 sm:grid-cols-5">
+              {[{ id: "NONE", label: "Nenhum" }, ...patterns].map((p, i) => (
+                <button
+                  key={p.id}
+                  type="button"
+                  onClick={() => setPattern(p.id)}
+                  aria-pressed={pattern === p.id}
+                  aria-label={p.label}
+                  className={`overflow-hidden rounded-xl border text-center transition ${
+                    pattern === p.id ? "border-brand-500 ring-2 ring-brand-100" : "border-zinc-200"
+                  }`}
+                >
+                  <span className="relative block h-14 bg-zinc-50 text-brand-600">
+                    {p.id !== "NONE" && <PatternLayer pattern={p.id} uid="amostra" size={40} className="opacity-80" />}
+                    {i > 0 && i <= suggested && (
+                      <span className="absolute right-1 top-1 rounded-full bg-brand-600 px-1.5 text-[9px] font-bold text-white">★</span>
+                    )}
+                  </span>
+                  <span className={`block truncate px-1 py-1 text-[11px] font-semibold ${pattern === p.id ? "text-brand-700" : "text-zinc-600"}`}>{p.label}</span>
+                </button>
+              ))}
+            </div>
+          </section>
+
           <section className="card space-y-4 p-4 md:p-5">
             <h2 className="text-lg font-bold">Textos</h2>
             <div>
@@ -168,32 +237,58 @@ export function BrandingForm({ business: b, services }: { business: Business; se
 }
 
 /** Celular desenhado com a página do cliente, atualizando enquanto o dono edita. */
-function PhonePreview({ color, header, services }: { color: string; header: React.ComponentProps<typeof PublicHeader>; services: Service[] }) {
+function PhonePreview({
+  color,
+  theme,
+  pattern,
+  header,
+  services,
+}: {
+  color: string;
+  theme: string;
+  pattern: string;
+  header: React.ComponentProps<typeof PublicHeader>;
+  services: Service[];
+}) {
   return (
     <div className="mx-auto w-full max-w-[320px] rounded-[2.2rem] border-[9px] border-navy-900 bg-navy-900 shadow-2xl">
-      <div className="h-[560px] overflow-y-auto rounded-[1.6rem] bg-zinc-50 no-scrollbar" style={brandPalette(color) as React.CSSProperties}>
+      <div className="h-[560px] overflow-y-auto rounded-[1.6rem] no-scrollbar" data-testid="previa">
+        <PublicShell theme={theme} color={color} pattern={pattern} uid="previa" className="min-h-full">
         <PublicHeader {...header} />
         <div className="space-y-2 p-3">
           <div className="card p-3">
-            <p className="font-display font-bold text-navy-900">Escolha o serviço</p>
+            <p className="font-display font-bold text-navy-900 dark:text-white">Escolha o serviço</p>
             <div className="mt-2 space-y-2">
-              {(services.length ? services.slice(0, 3) : [{ id: "x", name: "Seu serviço", durationMinutes: 30, priceCents: 4000 }]).map((s, i) => (
-                <div key={s.id} className={`rounded-xl border p-2.5 text-sm ${i === 0 ? "border-brand-500 bg-brand-50" : "border-zinc-200"}`}>
-                  <p className="font-semibold text-navy-900">{s.name}</p>
-                  <p className="text-xs text-zinc-500">{formatDuration(s.durationMinutes)} · {formatMoney(s.priceCents)}</p>
+              {(services.length ? services.slice(0, 3) : [{ id: "x", name: "Seu serviço", durationMinutes: 30, priceCents: 4000, imageUrl: null }]).map((s, i) => (
+                <div
+                  key={s.id}
+                  className={`flex items-center gap-2.5 rounded-xl border p-2 text-sm ${i === 0 ? "border-brand-500 bg-brand-50 dark:bg-brand-900/40" : "border-zinc-200 dark:border-zinc-700"}`}
+                >
+                  {s.imageUrl && (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={s.imageUrl} alt="" className="h-10 w-10 shrink-0 rounded-lg object-cover" />
+                  )}
+                  <div className="min-w-0">
+                    <p className="truncate font-semibold text-navy-900 dark:text-white">{s.name}</p>
+                    <p className="text-xs text-zinc-500 dark:text-zinc-400">{formatDuration(s.durationMinutes)} · {formatMoney(s.priceCents)}</p>
+                  </div>
                 </div>
               ))}
             </div>
           </div>
           <div className="flex gap-1.5">
             {["09:00", "09:30", "10:00", "10:30"].map((t, i) => (
-              <span key={t} className={`flex-1 rounded-lg border py-1.5 text-center text-xs font-semibold ${i === 1 ? "border-brand-600 bg-brand-600 text-white" : "border-zinc-200 bg-white text-navy-900"}`}>
+              <span
+                key={t}
+                className={`flex-1 rounded-lg border py-1.5 text-center text-xs font-semibold ${i === 1 ? "border-brand-600 bg-brand-600 text-white" : "border-zinc-200 bg-white text-navy-900 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"}`}
+              >
                 {t}
               </span>
             ))}
           </div>
           <span className="btn-primary w-full">Confirmar agendamento</span>
         </div>
+        </PublicShell>
       </div>
     </div>
   );
