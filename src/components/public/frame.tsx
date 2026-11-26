@@ -113,3 +113,16 @@ export function PublicFooter() {
     </p>
   );
 }
+
+/**
+ * Visual único das telas depois de agendar (confirmação, trocar horário, cancelado).
+ * Só segue o tema claro/escuro do estabelecimento; cores, desenhos e luzes da personalização não entram.
+ * Claro = branco com pontilhado; escuro = preto com pontilhado e luzes brancas.
+ */
+export function afterBookingFrame(pageTheme: string, color: string | null): { className: string; look: PublicLook } {
+  const dark = pageTheme === "DARK";
+  return {
+    className: dark ? "hb-night" : "hb-white",
+    look: { theme: dark ? "DARK" : "LIGHT", color, glow: "NONE", pattern: "NONE" },
+  };
+}

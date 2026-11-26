@@ -7,7 +7,7 @@ import { clientCanChange } from "@/lib/policy";
 import { openWeekdays } from "@/lib/schedule";
 import { hasAccess } from "@/lib/subscription";
 import { loadClosedDates } from "@/lib/closed-dates";
-import { PublicFooter, PublicFrame } from "@/components/public/frame";
+import { afterBookingFrame, PublicFooter, PublicFrame } from "@/components/public/frame";
 import { RescheduleForm } from "./reschedule-form";
 
 type Props = { params: Promise<{ token: string }> };
@@ -27,7 +27,7 @@ export default async function ClientReschedulePage({ params }: Props) {
   const { closedDatesFor } = await loadClosedDates(b.id, today, b.maxAdvanceDays);
 
   return (
-    <PublicFrame uid="remarcar" className="hb-white" look={{ theme: "LIGHT", color: b.brandColor, glow: "NONE", pattern: "NONE" }}>
+    <PublicFrame uid="remarcar" {...afterBookingFrame(b.pageTheme, b.brandColor)}>
       <div style={{ padding: "20px 0 0" }}>
         <Link href={`/agendamento/${token}`} className="hb-pill hb-glass" style={{ marginLeft: 14 }}>
           <ChevronLeft /> Voltar

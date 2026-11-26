@@ -7,7 +7,7 @@ import { formatMoney } from "@/lib/format";
 import { clientCanChange, deadlineLabel } from "@/lib/policy";
 import { hasAccess } from "@/lib/subscription";
 import { directionsUrl } from "@/lib/links";
-import { PublicFooter, PublicFrame } from "@/components/public/frame";
+import { afterBookingFrame, PublicFooter, PublicFrame } from "@/components/public/frame";
 import { Confetti } from "@/components/public/confetti";
 import { cancelByClient } from "./actions";
 import { CancelButton } from "./cancel-button";
@@ -35,8 +35,8 @@ export default async function AppointmentPage({ params, searchParams }: Props) {
   const celebrate = !canceled && (novo === "1" || remarcado === "1");
 
   return (
-    // Padrão das telas depois de agendar: sempre branco e limpo
-    <PublicFrame uid="agendamento" className="hb-white" look={{ theme: "LIGHT", color: b.brandColor, glow: "NONE", pattern: "NONE" }}>
+    // Padrão das telas depois de agendar: claro ou escuro conforme o tema do estabelecimento
+    <PublicFrame uid="agendamento" {...afterBookingFrame(b.pageTheme, b.brandColor)}>
       {celebrate && <Confetti />}
       <div style={{ paddingTop: 26 }}>
         <Link href={`/${b.slug}`} style={{ display: "flex", flexDirection: "column", alignItems: "center", textDecoration: "none" }}>
@@ -105,11 +105,6 @@ export default async function AppointmentPage({ params, searchParams }: Props) {
               {directions && (
                 <a href={directions} target="_blank" rel="noopener noreferrer" className="hb-btn hb-btn-blue">
                   <Navigation /> Como chegar
-                </a>
-              )}
-              {active && (
-                <a href={`/agendamento/${token}/calendario`} className="hb-btn hb-btn-soft">
-                  <CalendarPlus /> Adicionar à minha agenda
                 </a>
               )}
               {check.allowed ? (

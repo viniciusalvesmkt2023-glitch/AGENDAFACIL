@@ -281,3 +281,19 @@
   -webkit-mask-image: radial-gradient(ellipse 90% 70% at 50% 0%, #000 35%, transparent 80%);
   mask-image: radial-gradient(ellipse 90% 70% at 50% 0%, #000 35%, transparent 80%);
 }
+
+/* Mesmas telas no tema escuro: preto, pontilhado claro e luzes brancas suaves */
+.hb.hb-night { --bg: #09090b; --glass: rgba(255, 255, 255, 0.05); --glass2: rgba(255, 255, 255, 0.08); --line: rgba(255, 255, 255, 0.09); --line2: rgba(255, 255, 255, 0.15);
+  --shadow: 0 1px 0 rgba(255, 255, 255, 0.08) inset, 0 20px 50px rgba(0, 0, 0, 0.5); }
+.hb.hb-night .hb-glow { background: #fff; }
+.hb.hb-night .hb-glow-a { opacity: 0.22; }
+.hb.hb-night .hb-glow-b { opacity: 0.15; }
+.hb.hb-night .hb-glow-c { opacity: 0.1; }
+.hb.hb-night::before {
+  content: ""; position: absolute; inset: 0; z-index: -1; pointer-events: none;
+  background-image: radial-gradient(circle, rgba(255, 255, 255, 0.17) 1.1px, transparent 1.5px);
+  background-size: 18px 18px; background-position: center top;
+  -webkit-mask-image: radial-gradient(ellipse 90% 70% at 50% 0%, #000 35%, transparent 80%);
+  mask-image: radial-gradient(ellipse 90% 70% at 50% 0%, #000 35%, transparent 80%);
+}
+.hb.hb-night .hb-btn-soft { background: rgba(255, 255, 255, 0.08); color: #fafafa; border-color: rgba(255, 255, 255, 0.1); }
