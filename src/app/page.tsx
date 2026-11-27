@@ -22,6 +22,7 @@ import { FeaturesBento } from "@/components/landing/features-bento";
 import { Pricing, type PricingPlan } from "@/components/landing/pricing";
 import { Faq, type FaqItem } from "@/components/landing/faq";
 import { FinalCta } from "@/components/landing/final-cta";
+import { HowItWorks } from "@/components/landing/how-it-works";
 import { SUPPORT_EMAIL } from "@/lib/brand";
 import { formatMoney, whatsappLink } from "@/lib/format";
 import { discountPercent, monthlyEquivalentCents, PLANS, TRIAL_DAYS, type Plan } from "@/lib/plans";
@@ -156,20 +157,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ c
           <span className="eyebrow">Como funciona</span>
           <h2 className="lp-disp">Comece a receber agendamentos <em>hoje</em></h2>
           <p className="lead">Sem instalar nada. Você configura pelo celular e já sai com o seu link pronto para divulgar.</p>
-          <div className="steps">
-            {[
-              ["g-brand", "Cadastre seus serviços", "Preço, duração, foto e quem faz cada um. Leva uns 5 minutos."],
-              ["g-purple", "Compartilhe seu link", "horaboa.com/seunegocio na bio do Instagram, no status e no WhatsApp."],
-              ["g-green", "Receba e atenda", "A agenda se organiza sozinha e o cliente recebe confirmação e lembrete."],
-            ].map(([color, title, text], i) => (
-              <div key={title} className="step lp-glass lp-rv">
-                <span className="big lp-disp">{i + 1}</span>
-                <span className={`n ${color} lp-disp`}>{i + 1}</span>
-                <h3 className="lp-disp">{title}</h3>
-                <p>{text}</p>
-              </div>
-            ))}
-          </div>
+          <HowItWorks trialDays={TRIAL_DAYS} />
         </div>
       </section>
 
