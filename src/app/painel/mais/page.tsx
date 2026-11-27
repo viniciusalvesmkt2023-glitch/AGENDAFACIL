@@ -8,12 +8,11 @@ import { NAV_ITEMS } from "@/components/nav-items";
 import { getAccessState } from "@/lib/subscription";
 
 // Itens do menu em grupos (os da barra de baixo não se repetem aqui)
-const GROUPS = [
-  ["/painel/agendamentos", "/painel/bloqueios"],
-  ["/painel/financas", "/painel/fidelidade", "/painel/produtos", "/painel/produtos/estoque"],
-  ["/painel/pagina", "/painel/profissionais", "/painel/horarios"],
-  ["/painel/whatsapp", "/painel/configuracoes", "/painel/assinatura"],
-  ["/painel/conta", "/painel/suporte"],
+const GROUPS: { title: string; items: string[] }[] = [
+  { title: "Agenda", items: ["/painel/agendamentos", "/painel/bloqueios"] },
+  { title: "Negócio", items: ["/painel/fidelidade", "/painel/financas", "/painel/produtos", "/painel/produtos/estoque", "/painel/profissionais"] },
+  { title: "Página e WhatsApp", items: ["/painel/pagina", "/painel/whatsapp"] },
+  { title: "Configurações", items: ["/painel/configuracoes", "/painel/horarios", "/painel/assinatura", "/painel/conta", "/painel/suporte"] },
 ];
 
 export default async function MorePage() {
@@ -69,9 +68,11 @@ export default async function MorePage() {
         </ul>
       )}
 
-      {GROUPS.map((group, gi) => (
-        <ul key={gi} className="pn-group pn-card">
-          {group.map((href) => {
+      {GROUPS.map((group) => (
+        <section key={group.title}>
+        <h2 className="pn-mais-t">{group.title}</h2>
+        <ul className="pn-group pn-card">
+          {group.items.map((href) => {
             const item = NAV_ITEMS.find((i) => i.href === href)!;
             const Icon = item.icon;
             const tag = tags[href];
@@ -91,6 +92,7 @@ export default async function MorePage() {
             );
           })}
         </ul>
+        </section>
       ))}
 
       <form action={logout}>

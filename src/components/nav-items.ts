@@ -66,8 +66,17 @@ export const SIDEBAR: NavEntry[] = [
   },
   { kind: "quick", label: "Novo agendamento", icon: Plus, color: "pn-g-green" },
   { kind: "item", href: "/painel/clientes" },
-  { kind: "item", href: "/painel/fidelidade" },
-  { kind: "item", href: "/painel/servicos" },
+  {
+    kind: "group",
+    id: "servicos",
+    label: "Serviços",
+    icon: Scissors,
+    color: "pn-g-pink",
+    children: [
+      { href: "/painel/servicos", label: "Serviços" },
+      { href: "/painel/fidelidade", label: "Cartão fidelidade" },
+    ],
+  },
   { kind: "item", href: "/painel/profissionais" },
   {
     kind: "group",
@@ -92,9 +101,9 @@ export const SIDEBAR: NavEntry[] = [
     children: [
       { href: "/painel/configuracoes", label: "Dados e regras" },
       { href: "/painel/horarios", label: "Horários de funcionamento" },
+      { href: "/painel/conta", label: "Minha conta" },
+      { href: "/painel/assinatura", label: "Assinatura" },
     ],
   },
-  { kind: "item", href: "/painel/assinatura" },
-  { kind: "item", href: "/painel/conta" },
   { kind: "item", href: "/painel/suporte" },
 ];

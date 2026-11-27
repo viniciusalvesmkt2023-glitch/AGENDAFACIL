@@ -298,3 +298,7 @@ body:has(.pn) { --o-zinc-50: var(--color-zinc-50); --o-zinc-100: var(--color-zin
 .pn .ag-closed > svg { width: 20px; height: 20px; color: #dc2626; flex-shrink: 0; }
 .pn .ag-closed span { color: var(--pn-muted); }
 }
+
+@layer components {
+.pn .pn-mais-t { margin: 14px 4px 6px; font-size: 11.5px; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; color: var(--pn-muted); }
+}
