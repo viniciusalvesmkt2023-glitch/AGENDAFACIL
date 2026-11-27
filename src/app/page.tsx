@@ -26,6 +26,8 @@ import { RevealOnScroll } from "@/components/landing/reveal";
 import { LandingHeader } from "@/components/landing/header";
 import { Cta } from "@/components/landing/cta";
 import { HeroDemo } from "@/components/landing/hero-demo";
+import { PageEditorDemo } from "@/components/landing/page-editor-demo";
+import { WhatsAppDemo } from "@/components/landing/whatsapp-demo";
 import { formatMoney } from "@/lib/format";
 import { discountPercent, monthlyEquivalentCents, PLANS, TRIAL_DAYS, type Plan } from "@/lib/plans";
 
@@ -158,18 +160,16 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ c
             <span className="eyebrow">Sua página de agendamento</span>
             <h2 className="lp-disp">Um link com a <em>cara do seu negócio</em></h2>
             <p className="lead">O cliente escolhe o serviço, o profissional e o horário em poucos toques — e só vê horários realmente livres.</p>
-            <ul className="checks">
-              <CheckItem icon={<Palette className="i" />} color="g-purple" title="Sua marca:" text="logo, capa, cores, desenhos de fundo e modo claro ou escuro." />
-              <CheckItem icon={<ImageIcon className="i" />} color="g-pink" title="Fotos dos serviços" text="para o cliente ver o que está agendando." />
+            <ul className="checks" id="lp-checks-pagina">
+              <CheckItem k="marca" icon={<Palette className="i" />} color="g-purple" title="Sua marca:" text="logo, capa, cores, desenhos de fundo e modo claro ou escuro." />
+              <CheckItem k="fotos" icon={<ImageIcon className="i" />} color="g-pink" title="Fotos dos serviços" text="para o cliente ver o que está agendando." />
               <CheckItem icon={<Clock className="i" />} color="g-blue" title="Sem conflito:" text="respeita a duração de cada serviço, almoço, folgas e a agenda de cada profissional." />
               <CheckItem icon={<RefreshCw className="i" />} color="g-green" title="O cliente troca ou cancela sozinho," text="dentro das regras que você definir." />
             </ul>
           </div>
-          <div className="showcase lp-glass lp-rv" aria-hidden="true">
+          <div className="showcase lp-glass lp-rv">
             <div className="bgd" />
-            <div className="phone" style={{ position: "relative", transform: "none", left: "auto", top: "auto" }}>
-              <div className="scr"><TimeMock /></div>
-            </div>
+            <PageEditorDemo listId="lp-checks-pagina" />
           </div>
         </div>
       </section>
@@ -183,34 +183,15 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ c
             <p className="lead">
               As mensagens saem do <b>seu próprio número</b>. O cliente responde direto para você, como sempre.
             </p>
-            <ul className="checks">
-              <CheckItem icon={<Check className="i" />} color="g-wa" title="Confirmação na hora" text="com o dia, o horário, o serviço e o link para trocar ou cancelar." />
-              <CheckItem icon={<Bell className="i" />} color="g-amber" title="Lembretes no momento certo:" text="na véspera ou 24h antes, e de novo perto do horário." />
+            <ul className="checks" id="lp-checks-whats">
+              <CheckItem k="conf" icon={<Check className="i" />} color="g-wa" title="Confirmação na hora" text="com o dia, o horário, o serviço e o link para trocar ou cancelar." />
+              <CheckItem k="lemb" icon={<Bell className="i" />} color="g-amber" title="Lembretes no momento certo:" text="na véspera ou 24h antes, e de novo perto do horário." />
               <CheckItem icon={<Pencil className="i" />} color="g-indigo" title="Mensagens do seu jeito:" text="você edita o texto, escolhe quando enviar e pode pausar quando quiser." />
             </ul>
           </div>
-          <div className="showcase dark lp-rv" aria-hidden="true">
+          <div className="showcase dark lp-rv">
             <div className="bgd" />
-            <div className="chat">
-              <div className="ctop">
-                <span className="av">B</span>
-                <div><b>Barbearia do João</b><small>online</small></div>
-              </div>
-              <div className="msgs">
-                <span className="dday">HOJE</span>
-                <div className="msg">
-                  Olá, Lia! ✅ Seu horário em <b>Barbearia do João</b> está confirmado para sexta, 27/11 às 09:30.
-                  <br />✂️ Corte masculino com João
-                  <br /><span style={{ color: "#027eb5" }}>horaboa.com/agendamento/…</span>
-                  <span className="tm">14:02</span>
-                </div>
-                <div className="msg">
-                  Olá, Lia! ⏰ Passando para lembrar do seu horário em <b>Barbearia do João</b> amanhã às 09:30.
-                  <span className="tm">09:30</span>
-                </div>
-                <div className="msg me">Combinado, estarei aí! 👍<span className="tm">09:41 ✓✓</span></div>
-              </div>
-            </div>
+            <WhatsAppDemo listId="lp-checks-whats" />
           </div>
         </div>
       </section>
@@ -322,9 +303,9 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ c
   );
 }
 
-function CheckItem({ icon, color, title, text }: { icon: React.ReactNode; color: string; title: string; text: string }) {
+function CheckItem({ k, icon, color, title, text }: { k?: string; icon: React.ReactNode; color: string; title: string; text: string }) {
   return (
-    <li>
+    <li data-k={k}>
       <span className={`ic ${color}`}>{icon}</span>
       <div>
         <b>{title}</b> <span>{text}</span>
@@ -338,47 +319,5 @@ function PixIcon() {
     <svg className="i" viewBox="0 0 24 24" aria-hidden="true">
       <path d="m12 2 4.5 4.5L12 11 7.5 6.5zM12 13l4.5 4.5L12 22l-4.5-4.5zM2 12l4.5-4.5L11 12l-4.5 4.5zM13 12l4.5-4.5L22 12l-4.5 4.5z" />
     </svg>
-  );
-}
-
-/* ---------- Telas de exemplo dentro dos celulares (só ilustração) ---------- */
-
-
-function TimeMock() {
-  const slot = { border: "1px solid rgba(0,0,0,.08)", borderRadius: 8, padding: "6px 0" };
-  const day = { background: "#f4f4f5", color: "#71717a" };
-  return (
-    <div className="cli">
-      <div className="head" style={{ marginTop: 0, paddingTop: 34, textAlign: "center" }}>
-        <div className="lg" style={{ margin: "0 auto", boxShadow: "0 10px 30px rgba(254,110,2,.35)" }}><span>B</span></div>
-        <h4>Barbearia do João</h4>
-        <span className="open"><i /> Aberto agora · até 19h</span>
-      </div>
-      <div className="mcard">
-        <div className="prog"><i className="on" /><i className="on" /><i className="on" /><i /></div>
-        <h5>Escolha o dia e o horário</h5>
-        <div className="pdays" style={{ marginTop: 0 }}>
-          <span style={day}>HOJE<b style={{ color: "#111" }}>26</b></span>
-          <span className="sel">SEX<b>27</b></span>
-          <span style={day}>SÁB<b style={{ color: "#111" }}>28</b></span>
-          <span style={{ ...day, color: "#a1a1aa" }}>DOM<b style={{ color: "#a1a1aa" }}>29</b></span>
-        </div>
-        <div style={{ marginTop: 10, borderRadius: 14, border: "1px solid rgba(0,0,0,.07)", padding: 8 }}>
-          <b style={{ fontSize: 11, display: "flex", alignItems: "center", gap: 6 }}>
-            <span style={{ width: 20, height: 20, borderRadius: 6, background: "#fef3c7", display: "grid", placeItems: "center" }}>☀️</span>Manhã
-          </b>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 5, marginTop: 7, fontSize: 10.5, fontWeight: 700, textAlign: "center" }}>
-            <span style={slot}>09:00</span>
-            <span className="g-brand" style={{ borderRadius: 8, padding: "6px 0" }}>09:30</span>
-            <span style={slot}>10:00</span>
-            <span style={slot}>11:00</span>
-          </div>
-        </div>
-      </div>
-      <div className="cbar lp-glass">
-        <div className="t"><b>Sex, 27/11 · 09:30</b><span>Corte masculino · João</span></div>
-        <span className="go g-brand">Continuar</span>
-      </div>
-    </div>
   );
 }

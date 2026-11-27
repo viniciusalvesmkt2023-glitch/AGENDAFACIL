@@ -396,3 +396,12 @@
   .lp .lp-perks span:nth-child(3) { border-left: 0; }
 }
 }
+
+@layer components {
+/* Item da lista em destaque enquanto a animação ao lado mostra ele */
+.lp .checks li { padding: 6px 8px; margin: -6px -8px; border-radius: 14px; transition: background .4s; }
+.lp .checks li.live { background: rgba(254, 110, 2, .08); }
+.lp .checks li .ic { transition: transform .4s; }
+.lp .checks li.live .ic { transform: scale(1.12); }
+.lp .showcase { min-height: 640px; }
+}
