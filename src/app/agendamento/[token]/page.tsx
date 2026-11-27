@@ -11,6 +11,8 @@ import { afterBookingFrame, PublicFooter, PublicFrame } from "@/components/publi
 import { Confetti } from "@/components/public/confetti";
 import { cancelByClient } from "./actions";
 import { CancelButton } from "./cancel-button";
+import { loyaltyCard } from "@/lib/loyalty-sync";
+import { LoyaltyCard } from "@/components/public/loyalty-card";
 
 type Props = { params: Promise<{ token: string }>; searchParams: Promise<{ novo?: string; remarcado?: string }> };
 
@@ -33,6 +35,8 @@ export default async function AppointmentPage({ params, searchParams }: Props) {
   const when = `${formatDateLong(a.date)} às ${minutesToTime(a.startMinutes)}`;
   const directions = b.homeService ? null : directionsUrl(b.mapsUrl, b.address);
   const celebrate = !canceled && (novo === "1" || remarcado === "1");
+  const pending = a.status === "SCHEDULED";
+  const card = !canceled ? await loyaltyCard(b, a.clientId) : null;
 
   return (
     // Padrão das telas depois de agendar: claro ou escuro conforme o tema do estabelecimento
@@ -72,8 +76,13 @@ export default async function AppointmentPage({ params, searchParams }: Props) {
                   <path d="m5 12.5 4.5 4.5L19 7.5" />
                 </svg>
               </div>
-              <h1>{remarcado ? "Horário alterado!" : "Agendamento confirmado!"}</h1>
+              <h1>{pending ? (remarcado ? "Pedido de troca enviado!" : "Pedido enviado!") : remarcado ? "Horário alterado!" : "Agendamento confirmado!"}</h1>
               <p>{when}</p>
+              {pending && (
+                <p className="hb-pending" data-testid="pending-note">
+                  ⏳ Aguardando a confirmação de {b.name}. Você recebe a confirmação no WhatsApp.
+                </p>
+              )}
             </div>
           )}
 
@@ -92,7 +101,8 @@ export default async function AppointmentPage({ params, searchParams }: Props) {
             </Link>
           ) : (
             <>
-              {(novo === "1" || remarcado) && (
+              {card && <LoyaltyCard business={b.name} {...card} />}
+              {(novo === "1" || remarcado) && !pending && (
                 <p className="hb-legal" style={{ textAlign: "center" }}>
                   A confirmação foi enviada para o seu WhatsApp. Pelo link dela você volta aqui quando quiser.
                 </p>

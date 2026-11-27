@@ -116,6 +116,21 @@ model Business {
   feeCashBps    Int @default(0)
   feeDebitBps   Int @default(0)
   feeCreditBps  Int @default(0)
+  // Agendamento pelo link: true = já entra confirmado; false = fica "A confirmar" até o dono aprovar
+  autoConfirm   Boolean @default(true)
+  // Cartão fidelidade
+  loyaltyEnabled       Boolean   @default(false)
+  loyaltyGoal          Int       @default(10) // selos para ganhar o prêmio
+  loyaltyRewardType    String    @default("FREE_SERVICE") // FREE_SERVICE | PERCENT (bps) | AMOUNT (centavos)
+  loyaltyRewardServiceId String?
+  loyaltyRewardValue   Int       @default(0)
+  loyaltyServiceIds    String[]  @default([]) // vazio = todos os serviços contam
+  loyaltyStampMonths   Int?      // selos vencem depois de X meses (null = não vencem)
+  loyaltyRewardDays    Int?      @default(90) // prêmio vale X dias (null = não vence)
+  loyaltyNotify        Boolean   @default(true) // avisar no WhatsApp
+  loyaltyStartedAt     DateTime? // atendimentos a partir daqui contam selo
+  loyaltyStamps        LoyaltyStamp[]
+  loyaltyRewards       LoyaltyReward[]
   adminActions AdminAction[]
 }
 
@@ -307,6 +322,8 @@ model Client {
 
   appointments Appointment[]
   productSales StockMove[]
+  loyaltyStamps  LoyaltyStamp[]
+  loyaltyRewards LoyaltyReward[]
 
   @@unique([businessId, phone])
 }
@@ -334,6 +351,10 @@ model Appointment {
   paymentStatus  String       @default("PENDING")
   paymentMethod  String? // PIX | CASH | CARD
   paidAt         DateTime?
+  // Prêmio do cartão fidelidade usado neste atendimento (não gera selo)
+  loyaltyRewardId String? @unique
+  loyaltyReward   LoyaltyReward? @relation("RewardUse", fields: [loyaltyRewardId], references: [id], onDelete: SetNull)
+  loyaltyStamp    LoyaltyStamp?
   cancelToken    String       @unique @default(cuid())
   createdAt      DateTime     @default(now())
 
@@ -444,4 +465,43 @@ model Expense {
   createdAt   DateTime @default(now())
 
   @@index([businessId, date])
+}
+
+// Selo do cartão fidelidade. Atendimento (automático) ou dado na mão. rewardId preenchido = já virou prêmio.
+model LoyaltyStamp {
+  id            String   @id @default(cuid())
+  businessId    String
+  business      Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  clientId      String
+  client        Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  appointmentId String?  @unique
+  appointment   Appointment? @relation(fields: [appointmentId], references: [id], onDelete: Cascade)
+  date          String // dia do atendimento "YYYY-MM-DD" (1 selo por dia)
+  source        String   @default("APPOINTMENT") // APPOINTMENT | MANUAL
+  rewardId      String?
+  reward        LoyaltyReward? @relation(fields: [rewardId], references: [id], onDelete: SetNull)
+  createdAt     DateTime @default(now())
+
+  @@index([businessId, clientId])
+}
+
+// Prêmio liberado ao completar o cartão.
+model LoyaltyReward {
+  id          String    @id @default(cuid())
+  businessId  String
+  business    Business  @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  clientId    String
+  client      Client    @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  // o que vale (copiado da regra no momento em que liberou)
+  rewardType  String
+  rewardValue Int
+  rewardServiceId String?
+  label       String
+  expiresAt   DateTime?
+  usedAt      DateTime?
+  createdAt   DateTime  @default(now())
+  stamps      LoyaltyStamp[]
+  usedOn      Appointment? @relation("RewardUse")
+
+  @@index([businessId, clientId])
 }

@@ -86,7 +86,7 @@ export function FormMessage({ error, success }: { error?: string | null; success
 }
 
 export const STATUS_LABELS: Record<string, { label: string; className: string; dot: string }> = {
-  SCHEDULED: { label: "Agendado", className: "bg-blue-50 text-blue-700", dot: "bg-blue-500" },
+  SCHEDULED: { label: "A confirmar", className: "bg-blue-50 text-blue-700", dot: "bg-blue-500" },
   CONFIRMED: { label: "Confirmado", className: "bg-emerald-50 text-emerald-700", dot: "bg-emerald-500" },
   COMPLETED: { label: "Concluído", className: "bg-zinc-100 text-zinc-600", dot: "bg-zinc-400" },
   CANCELED: { label: "Cancelado", className: "bg-red-50 text-red-700", dot: "bg-red-500" },

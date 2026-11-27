@@ -28,7 +28,8 @@ export async function sendAppointmentMessage(appointmentId: string, type: Messag
     where: {
       id: appointmentId,
       [field]: null,
-      status: { in: ["SCHEDULED", "CONFIRMED"] },
+      // "A confirmar" não recebe confirmação nem lembrete (só depois que o dono aprovar)
+      status: "CONFIRMED",
       business: {
         whatsappRemindersEnabled: true,
         whatsappStatus: "CONNECTED",
@@ -84,4 +85,40 @@ export async function sendAppointmentMessage(appointmentId: string, type: Messag
     }
   }
   return result.ok ? "SENT" : "FAILED";
+}
+
+/**
+ * Mensagem avulsa para o cliente pelo WhatsApp do estabelecimento (recusa de horário, cartão fidelidade).
+ * Só envia se o WhatsApp estiver conectado e as mensagens ligadas.
+ */
+export async function sendClientText(input: { businessId: string; appointmentId?: string | null; phone: string; type: string; text: string }): Promise<"SENT" | "FAILED" | "SKIPPED"> {
+  if (!evolutionConfigured()) return "SKIPPED";
+  const b = await db.business.findUnique({ where: { id: input.businessId } });
+  if (!b || !b.whatsappRemindersEnabled || b.whatsappStatus !== "CONNECTED" || !b.whatsappInstance || !hasAccess(b)) return "SKIPPED";
+  const result = await sendText(b.whatsappInstance, input.phone, input.text);
+  await db.messageLog.create({
+    data: {
+      businessId: b.id,
+      appointmentId: input.appointmentId ?? null,
+      type: input.type,
+      to: input.phone,
+      status: result.ok ? "SENT" : "FAILED",
+      providerMessageId: result.ok ? result.messageId : null,
+      error: result.ok ? null : result.error.slice(0, 500),
+    },
+  });
+  if (!result.ok && result.disconnected) await db.business.update({ where: { id: b.id }, data: { whatsappStatus: "DISCONNECTED" } });
+  return result.ok ? "SENT" : "FAILED";
+}
+
+/** Dono recusou um horário que estava "A confirmar": avisa o cliente com o link para marcar outro. */
+export async function sendDeclinedMessage(appointmentId: string) {
+  const a = await db.appointment.findUnique({ where: { id: appointmentId }, include: { business: true, client: true, service: true } });
+  if (!a) return "SKIPPED";
+  const today = todayInTimezone();
+  const quando = whenText(a.date, minutesToTime(a.startMinutes), today, addDays(today, 1), formatDateLong(a.date));
+  const text =
+    `Olá, ${a.client.name.split(" ")[0]}! Infelizmente não conseguimos confirmar seu horário de ${a.service.name} em *${a.business.name}* ${quando}. 😕\n` +
+    `Escolha outro horário por aqui: ${appUrl()}/${a.business.slug}`;
+  return sendClientText({ businessId: a.businessId, appointmentId: a.id, phone: a.client.phone, type: "DECLINED", text });
 }

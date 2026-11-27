@@ -13,7 +13,7 @@ import "./agendamentos.css";
 type Props = { searchParams: Promise<ListParams> };
 
 const STATUS: Record<string, { label: string; color: string }> = {
-  SCHEDULED: { label: "Agendado", color: "#8b5cf6" },
+  SCHEDULED: { label: "A confirmar", color: "#8b5cf6" },
   CONFIRMED: { label: "Confirmado", color: "#22c55e" },
   COMPLETED: { label: "Concluído", color: "#3b82f6" },
   NO_SHOW: { label: "Faltou", color: "#f59e0b" },

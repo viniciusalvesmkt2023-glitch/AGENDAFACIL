@@ -9,6 +9,7 @@ import { normalizePhone } from "@/lib/format";
 import { isValidDate, nowInTimezone, weekdayOf } from "@/lib/time";
 import { blockIntervals, effectiveHours } from "@/lib/schedule";
 import { sendAppointmentMessage } from "@/lib/notifications";
+import { syncLoyaltyStamp } from "@/lib/loyalty-sync";
 import { countConflicts, isPaymentMethod, planSlots } from "@/lib/quick-book";
 
 /** Dados da janela de agendamento rápido (carregados ao abrir). */
@@ -162,6 +163,8 @@ export async function quickBook(raw: QuickBookInput): Promise<QuickBookResult> {
     }),
   );
   if (d.sendWhatsapp && created[0]) after(() => sendAppointmentMessage(created[0].id, "CONFIRMATION"));
+  // pago na hora (e já aconteceu) conta selo no cartão fidelidade
+  for (const c of created) await syncLoyaltyStamp(c.id);
   revalidatePath("/painel", "layout");
   return { ok: true, count: created.length, date: d.date, conflicts };
 }

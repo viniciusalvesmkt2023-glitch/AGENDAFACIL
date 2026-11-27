@@ -9,6 +9,7 @@ import { clientCanChange } from "@/lib/policy";
 import { BookingError, rescheduleAppointment } from "@/lib/booking";
 import { sendAppointmentMessage } from "@/lib/notifications";
 import { hasAccess } from "@/lib/subscription";
+import { syncLoyaltyStamp } from "@/lib/loyalty-sync";
 
 export async function cancelByClient(formData: FormData) {
   const token = String(formData.get("token"));
@@ -18,6 +19,8 @@ export async function cancelByClient(formData: FormData) {
   if (!clientCanChange(appointment.business, appointment, nowInTimezone()).allowed) return;
 
   await db.appointment.update({ where: { id: appointment.id }, data: { status: "CANCELED" } });
+  // cancelado não conta selo no cartão fidelidade
+  await syncLoyaltyStamp(appointment.id);
   revalidatePath(`/agendamento/${token}`);
 }
 
@@ -34,7 +37,7 @@ export async function rescheduleByClient(_: { error?: string | null } | undefine
   const time = Number(formData.get("time"));
   if (!date || !Number.isFinite(time) || formData.get("time") === "") return { error: "Escolha o novo dia e horário." };
   try {
-    await rescheduleAppointment({ business: b, appointmentId: appointment.id, date, startMinutes: time, enforceWindow: true });
+    await rescheduleAppointment({ business: b, appointmentId: appointment.id, date, startMinutes: time, enforceWindow: true, needsApproval: !b.autoConfirm });
   } catch (e) {
     if (e instanceof BookingError) return { error: e.message };
     throw e;

@@ -56,7 +56,7 @@ export function Filters({
         <span className="am-lbl">Situação</span>
         <select className="am-in" value={values.situacao} onChange={(e) => go({ situacao: e.target.value })} data-testid="f-status">
           <option value="">Todas</option>
-          <option value="SCHEDULED">Agendado</option>
+          <option value="SCHEDULED">A confirmar</option>
           <option value="CONFIRMED">Confirmado</option>
           <option value="COMPLETED">Concluído</option>
           <option value="NO_SHOW">Faltou</option>

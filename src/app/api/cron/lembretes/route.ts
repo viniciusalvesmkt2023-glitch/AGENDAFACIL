@@ -24,7 +24,7 @@ export async function GET(req: NextRequest) {
     where: {
       // lembretes saem no máximo ~2 dias antes (véspera em horário fixo)
       date: { in: [today, addDays(today, 1), addDays(today, 2)] },
-      status: { in: ["SCHEDULED", "CONFIRMED"] },
+      status: "CONFIRMED",
       reminderShortSentAt: null,
       business: { whatsappRemindersEnabled: true, whatsappStatus: "CONNECTED" },
     },

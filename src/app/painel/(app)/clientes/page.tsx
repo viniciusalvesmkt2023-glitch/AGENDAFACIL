@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { db } from "@/lib/db";
 import { requireActiveUser } from "@/lib/auth";
 import { formatDateShort } from "@/lib/time";
@@ -26,6 +27,7 @@ export default async function ClientsPage({ searchParams }: Props) {
         select: { date: true, priceCents: true, status: true },
         orderBy: { date: "desc" },
       },
+      _count: { select: { loyaltyStamps: { where: { rewardId: null, source: { in: ["APPOINTMENT", "MANUAL"] } } }, loyaltyRewards: { where: { usedAt: null } } } },
     },
     orderBy: { name: "asc" },
     take: 200,
@@ -53,8 +55,11 @@ export default async function ClientsPage({ searchParams }: Props) {
                 <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-navy-50 font-display font-bold text-navy-700">
                   {c.name.charAt(0).toUpperCase()}
                 </span>
-                <div className="min-w-0 flex-1">
-                  <p className="truncate font-semibold text-navy-900">{c.name}</p>
+                <Link href={`/painel/clientes/${c.id}`} className="min-w-0 flex-1" data-testid="client-link">
+                  <p className="truncate font-semibold text-navy-900">
+                    {c.name}
+                    {user.business.loyaltyEnabled && (c._count.loyaltyRewards > 0 ? " 🎁" : c._count.loyaltyStamps > 0 ? ` · 🎟 ${Math.min(c._count.loyaltyStamps, user.business.loyaltyGoal)}/${user.business.loyaltyGoal}` : "")}
+                  </p>
                   <p className="truncate text-sm text-zinc-500">
                     {formatPhone(c.phone)}
                     <span className="hidden sm:inline"> · </span>
@@ -64,7 +69,7 @@ export default async function ClientsPage({ searchParams }: Props) {
                       {last && ` · último: ${formatDateShort(last)}`}
                     </span>
                   </p>
-                </div>
+                </Link>
                 <a
                   href={whatsappLink(c.phone, `Olá, ${c.name.split(" ")[0]}!`)}
                   target="_blank"

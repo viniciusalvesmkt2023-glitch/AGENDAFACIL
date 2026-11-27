@@ -22,6 +22,7 @@ type Business = {
   clientCancelPolicy: string;
   cancelDeadlineMinutes: number;
   clientCanReschedule: boolean;
+  autoConfirm: boolean;
 };
 
 const POLICIES = [
@@ -62,6 +63,25 @@ export function SettingsForm({ business }: { business: Business }) {
 
       <section className="card space-y-4 p-4 md:p-5">
         <h2 className="text-lg font-bold">Regras de agendamento online</h2>
+        <fieldset>
+          <legend className="label">Quando o cliente agenda pelo link</legend>
+          <div className="grid gap-2 sm:grid-cols-2">
+            <label className="flex cursor-pointer gap-3 rounded-xl border border-zinc-200 p-3 has-[:checked]:border-brand-500 has-[:checked]:bg-brand-50 has-[:checked]:ring-2 has-[:checked]:ring-brand-100">
+              <input type="radio" name="confirmMode" value="auto" defaultChecked={business.autoConfirm} className="mt-1 h-4 w-4 accent-brand-600" data-testid="confirm-auto" />
+              <span>
+                <span className="block font-semibold text-navy-900">Confirmar na hora</span>
+                <span className="block text-sm text-zinc-500">O horário já fica confirmado e o cliente recebe a confirmação.</span>
+              </span>
+            </label>
+            <label className="flex cursor-pointer gap-3 rounded-xl border border-zinc-200 p-3 has-[:checked]:border-brand-500 has-[:checked]:bg-brand-50 has-[:checked]:ring-2 has-[:checked]:ring-brand-100">
+              <input type="radio" name="confirmMode" value="manual" defaultChecked={!business.autoConfirm} className="mt-1 h-4 w-4 accent-brand-600" data-testid="confirm-manual" />
+              <span>
+                <span className="block font-semibold text-navy-900">Eu confirmo cada um</span>
+                <span className="block text-sm text-zinc-500">Fica “A confirmar” até você aprovar. Se recusar, o cliente é avisado.</span>
+              </span>
+            </label>
+          </div>
+        </fieldset>
         <div className="grid gap-4 sm:grid-cols-3">
           <div>
             <label className="label" htmlFor="slotInterval">Intervalo entre horários</label>

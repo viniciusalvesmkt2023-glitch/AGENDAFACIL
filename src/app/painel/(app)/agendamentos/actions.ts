@@ -8,6 +8,7 @@ import { normalizePhone } from "@/lib/format";
 import { isPaymentMethod } from "@/lib/quick-book";
 import { fold, parseDate, parseMoney, parsePaid, parseTime } from "@/lib/appointments-list";
 import { nowInTimezone } from "@/lib/time";
+import { syncLoyaltyStamp } from "@/lib/loyalty-sync";
 
 /** Marca o atendimento como pago (com a forma) ou volta para "a receber". */
 export async function setPayment(id: string, method: string | null) {
@@ -17,6 +18,7 @@ export async function setPayment(id: string, method: string | null) {
     where: { id, businessId: user.businessId },
     data: paid ? { paymentStatus: "PAID", paymentMethod: method, paidAt: new Date() } : { paymentStatus: "PENDING", paymentMethod: null, paidAt: null },
   });
+  await syncLoyaltyStamp(id);
   revalidatePath("/painel/agendamentos");
   return { ok: true };
 }

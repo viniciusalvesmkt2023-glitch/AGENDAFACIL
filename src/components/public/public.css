@@ -301,3 +301,23 @@
 .hb-av-img { display: block; object-fit: cover; padding: 0; }
 .hb-pro.sel .hb-av-img { box-shadow: 0 0 0 3px var(--bg, #fff), 0 0 0 5px var(--b); }
 .hb-bar-thumb.round[style] { background-size: cover; background-position: center; }
+/* Aguardando confirmação e cartão fidelidade */
+.hb-pending { margin: 10px auto 0; max-width: 320px; padding: 9px 12px; border-radius: 12px; font-size: 13.5px; font-weight: 600;
+  background: color-mix(in srgb, #8b5cf6 12%, transparent); color: var(--fg); }
+.hb-loyal { position: relative; overflow: hidden; margin-top: 16px; padding: 16px; border-radius: 22px; color: #fff; text-align: left;
+  background: radial-gradient(120% 120% at 100% 0%, #ffb067 0%, var(--b, #fe6e02) 45%, #9a3a00 100%); box-shadow: 0 16px 34px color-mix(in srgb, var(--b, #fe6e02) 35%, transparent); }
+.hb-loyal.ready { background: radial-gradient(120% 120% at 100% 0%, #86efac 0%, #16a34a 50%, #14532d 100%); box-shadow: 0 16px 34px rgba(22, 163, 74, 0.35); }
+.hb-loyal::after { content: ""; position: absolute; right: -40px; top: -40px; width: 150px; height: 150px; border-radius: 50%; background: rgba(255, 255, 255, 0.12); pointer-events: none; }
+.hb-loyal-top { display: flex; justify-content: space-between; align-items: center; position: relative; z-index: 1; }
+.hb-loyal-top b { display: block; font-size: 17px; font-weight: 800; }
+.hb-loyal-top small { font-size: 12px; opacity: 0.9; }
+.hb-stamps { display: grid; gap: 7px; margin: 12px 0 10px; position: relative; z-index: 1; }
+.hb-stamps span { aspect-ratio: 1; border-radius: 50%; display: grid; place-items: center; font-weight: 900; font-size: 15px; border: 2px dashed rgba(255, 255, 255, 0.55); }
+.hb-stamps span.on { background: #fff; border: 0; color: var(--b, #fe6e02); box-shadow: 0 3px 8px rgba(0, 0, 0, 0.15); animation: hb-stamp 0.5s cubic-bezier(0.3, 1.6, 0.5, 1) both; }
+.hb-loyal.ready .hb-stamps span.on { color: #16a34a; }
+.hb-stamps span.gift { border-style: solid; border-color: #fff; background: rgba(255, 255, 255, 0.18); }
+.hb-stamps span.gift.on { background: #fff; }
+@keyframes hb-stamp { from { transform: scale(0.3); opacity: 0; } }
+.hb-loyal p { position: relative; z-index: 1; margin: 0; font-weight: 700; font-size: 14px; }
+.hb-loyal p small { display: block; margin-top: 2px; font-weight: 500; font-size: 12px; opacity: 0.9; }
+@media (prefers-reduced-motion: reduce) { .hb-stamps span.on { animation: none; } }

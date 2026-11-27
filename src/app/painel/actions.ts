@@ -3,7 +3,8 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { after } from "next/server";
-import { sendAppointmentMessage } from "@/lib/notifications";
+import { sendAppointmentMessage, sendDeclinedMessage } from "@/lib/notifications";
+import { syncLoyaltyStamp } from "@/lib/loyalty-sync";
 import { z } from "zod";
 import { db } from "@/lib/db";
 import { requireActiveUser, requireUser } from "@/lib/auth";
@@ -46,6 +47,11 @@ export async function updateAppointmentStatus(formData: FormData) {
   }
 
   await db.appointment.update({ where: { id }, data: { status } });
+  // Estava "A confirmar": aprovou → manda a confirmação; recusou → avisa o cliente
+  if (appointment.status === "SCHEDULED" && status === "CONFIRMED") after(() => sendAppointmentMessage(id, "CONFIRMATION"));
+  if (appointment.status === "SCHEDULED" && status === "CANCELED") after(() => sendDeclinedMessage(id));
+  // Cartão fidelidade: concluído ganha selo; cancelado/falta/reaberto perde
+  await syncLoyaltyStamp(id);
   revalidatePath("/painel");
   revalidatePath("/painel/agendamentos");
 }
@@ -430,6 +436,7 @@ export async function saveSettings(_: ActionState, formData: FormData): Promise<
       clientCancelPolicy: d.clientCancelPolicy,
       cancelDeadlineMinutes: d.cancelDeadlineMinutes,
       clientCanReschedule: formData.get("clientCanReschedule") === "on",
+      autoConfirm: formData.get("confirmMode") !== "manual",
     },
   });
   revalidatePath("/painel", "layout");

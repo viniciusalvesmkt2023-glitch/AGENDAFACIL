@@ -13,6 +13,7 @@ import {
   DollarSign,
   List,
   Lock,
+  Bell,
   MessageCircle,
   MoreHorizontal,
   Phone,
@@ -39,7 +40,7 @@ type View = "dia" | "semana" | "lista";
 
 /** Cor e nome de cada situação do agendamento. */
 const STATUS: Record<string, { label: string; color: string }> = {
-  SCHEDULED: { label: "Agendado", color: "#8b5cf6" },
+  SCHEDULED: { label: "A confirmar", color: "#8b5cf6" },
   CONFIRMED: { label: "Confirmado", color: "#22c55e" },
   COMPLETED: { label: "Concluído", color: "#3b82f6" },
   NO_SHOW: { label: "Faltou", color: "#f59e0b" },
@@ -127,6 +128,16 @@ export default async function AgendaPage({ searchParams }: Props) {
     return (hasHours && !h?.isOpen) || dayOffBlocks.some((bl) => blockAppliesOn(bl, d, wd));
   };
   const appointments = rangeAppointments.filter((a) => a.date === date);
+  // Cartão fidelidade: clientes com prêmio disponível ganham 🎁 na agenda
+  const giftRows = user.business.loyaltyEnabled
+    ? await db.loyaltyReward.findMany({
+        where: { businessId: user.businessId, clientId: { in: [...new Set(rangeAppointments.map((a) => a.clientId))] }, usedAt: null, OR: [{ expiresAt: null }, { expiresAt: { gt: new Date() } }] },
+        select: { clientId: true, label: true },
+      })
+    : [];
+  const giftOf = new Map(giftRows.map((g) => [g.clientId, g.label]));
+  // Pedidos esperando o dono confirmar (modo manual)
+  const pendingCount = await db.appointment.count({ where: { businessId: user.businessId, status: "SCHEDULED", date: { gte: today } } });
   const busyDays = new Set(perDay.map((d) => d.date));
   const blocks = rangeBlocks
     .filter((b) => blockAppliesOn(b, date, weekdayOf(date)))
@@ -204,6 +215,8 @@ export default async function AgendaPage({ searchParams }: Props) {
     professional: a.professional.name,
     notes: a.notes,
     waHref: whatsappLink(a.client.phone, message(a)),
+    gift: giftOf.get(a.clientId) ?? null,
+    rewardUsed: !!a.loyaltyRewardId,
   });
   const columnFor = (d: string, p: (typeof allPros)[number]): CalColumn => {
     const wd = weekdayOf(d);
@@ -317,6 +330,18 @@ export default async function AgendaPage({ searchParams }: Props) {
           </Link>
         ))}
       </div>
+      )}
+
+      {pendingCount > 0 && (
+        <div className="ag-pending" data-testid="pending-banner">
+          <Bell />
+          <span>
+            <b>
+              {pendingCount} agendamento{pendingCount === 1 ? "" : "s"} esperando sua confirmação
+            </b>
+          </span>
+          <Link href="/painel/agendamentos?periodo=proximos&situacao=SCHEDULED">Ver e confirmar</Link>
+        </div>
       )}
 
       {view !== "semana" && isClosed(date) && (

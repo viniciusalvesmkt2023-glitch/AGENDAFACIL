@@ -14,6 +14,8 @@ type BusinessRules = {
   minAdvanceMinutes: number;
   maxAdvanceDays: number;
   bufferMinutes: number;
+  /** false = agendamento pelo link fica "A confirmar" até o dono aprovar */
+  autoConfirm?: boolean;
 };
 
 type Db = Prisma.TransactionClient | typeof db;
@@ -212,7 +214,7 @@ export async function createAppointment(input: {
         priceCents: service.priceCents,
         notes: input.notes || null,
         source: input.source,
-        status: "CONFIRMED",
+        status: input.source === "ONLINE" && business.autoConfirm === false ? "SCHEDULED" : "CONFIRMED",
       },
       include: { service: true, professional: true, client: true },
     });
@@ -229,6 +231,8 @@ export async function rescheduleAppointment(input: {
   date: string;
   startMinutes: number;
   enforceWindow: boolean;
+  /** cliente remarcando no modo manual: volta para "A confirmar" */
+  needsApproval?: boolean;
 }) {
   const { business } = input;
   if (!isValidDate(input.date)) throw new BookingError("Data inválida.");
@@ -264,7 +268,7 @@ export async function rescheduleAppointment(input: {
         date: input.date,
         startMinutes: input.startMinutes,
         endMinutes: input.startMinutes + duration,
-        status: "CONFIRMED",
+        status: input.needsApproval ? "SCHEDULED" : "CONFIRMED",
         confirmationSentAt: null,
         reminderDaySentAt: null,
         reminderShortSentAt: null,

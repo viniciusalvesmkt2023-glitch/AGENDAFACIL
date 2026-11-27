@@ -11,6 +11,7 @@ import {
   MessageCircle,
   Package,
   Wallet,
+  Gift,
   Boxes,
   Plus,
   Scissors,
@@ -27,6 +28,7 @@ export const NAV_ITEMS: MenuItem[] = [
   { href: "/painel", label: "Agenda", desc: "Seus horários do dia", icon: CalendarDays, color: "pn-g-brand" },
   { href: "/painel/novo", label: "Novo agendamento", desc: "Marcar um horário", icon: Plus, color: "pn-g-green" },
   { href: "/painel/clientes", label: "Clientes", desc: "Quem já agendou", icon: Users, color: "pn-g-blue" },
+  { href: "/painel/fidelidade", label: "Cartão fidelidade", desc: "Selos e prêmios para quem volta", icon: Gift, color: "pn-g-pink" },
   { href: "/painel/servicos", label: "Serviços", desc: "O que você oferece", icon: Scissors, color: "pn-g-pink" },
   { href: "/painel/agendamentos", label: "Agendamentos", desc: "Lista, filtros, pagamentos e planilhas", icon: ClipboardList, color: "pn-g-brand" },
   { href: "/painel/profissionais", label: "Gestão de equipe", desc: "Profissionais, horários e serviços", icon: UserRound, color: "pn-g-indigo" },
@@ -64,6 +66,7 @@ export const SIDEBAR: NavEntry[] = [
   },
   { kind: "quick", label: "Novo agendamento", icon: Plus, color: "pn-g-green" },
   { kind: "item", href: "/painel/clientes" },
+  { kind: "item", href: "/painel/fidelidade" },
   { kind: "item", href: "/painel/servicos" },
   { kind: "item", href: "/painel/profissionais" },
   {

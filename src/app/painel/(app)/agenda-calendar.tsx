@@ -6,6 +6,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Bell, CalendarClock, Check, CheckCheck, MessageCircle, Phone, RotateCcw, UserX, X } from "lucide-react";
 import { updateAppointmentStatus } from "@/app/painel/actions";
 import { openQuickBook } from "@/components/quick-book-trigger";
+import { applyReward } from "@/app/painel/loyalty-actions";
 
 export type CalAppt = {
   id: string;
@@ -20,6 +21,9 @@ export type CalAppt = {
   professional: string;
   notes: string | null;
   waHref: string;
+  /** prêmio do cartão fidelidade disponível para este cliente */
+  gift?: string | null;
+  rewardUsed?: boolean;
 };
 
 export type CalColumn = {
@@ -45,7 +49,7 @@ type Props = {
 };
 
 export const STATUS: Record<string, { label: string; color: string }> = {
-  SCHEDULED: { label: "Agendado", color: "#8b5cf6" },
+  SCHEDULED: { label: "A confirmar", color: "#8b5cf6" },
   CONFIRMED: { label: "Confirmado", color: "#22c55e" },
   COMPLETED: { label: "Concluído", color: "#3b82f6" },
   NO_SHOW: { label: "Faltou", color: "#f59e0b" },
@@ -289,7 +293,10 @@ export function AgendaCalendar({ mode, columns, t0, t1, today, timezone, initial
                           {!short && <span className="tend"> – {hm(a.end)}</span>}
                           {showProInBlock && <span className="tpro"> · {a.professional}</span>}
                         </span>
-                        <b>{a.client}</b>
+                        <b>
+                          {a.gift && !a.rewardUsed && a.status !== "CANCELED" ? "🎁 " : ""}
+                          {a.client}
+                        </b>
                         <small>
                           <span className="svc">{a.service}</span>
                           {!short && <span className="pr"> · {a.price}</span>}
@@ -398,6 +405,8 @@ function Detail({ a, today, onClose }: { a: CalAppt; today: string; onClose: () 
         <b>{a.professional}</b>
       </div>
       {a.notes && <p className="ag-note">“{a.notes}”</p>}
+      {a.rewardUsed && <p className="ag-gift used">🎁 Prêmio do cartão fidelidade usado neste atendimento</p>}
+      {a.gift && !a.rewardUsed && a.status !== "CANCELED" && a.status !== "NO_SHOW" && <GiftBox id={a.id} label={a.gift} onDone={onClose} />}
       <div className="ag-acts">
         {a.status === "SCHEDULED" && (
           <StatusButton onDone={onClose} id={a.id} status="CONFIRMED" className="pn-btn pn-g-green full">
@@ -429,7 +438,7 @@ function Detail({ a, today, onClose }: { a: CalAppt; today: string; onClose: () 
               <UserX /> Faltou
             </StatusButton>
             <StatusButton onDone={onClose} id={a.id} status="CANCELED" className="pn-btn soft full ag-danger">
-              <X /> Cancelar agendamento
+              <X /> {a.status === "SCHEDULED" ? "Recusar (avisa o cliente)" : "Cancelar agendamento"}
             </StatusButton>
           </>
         )}
@@ -447,5 +456,36 @@ function StatusButton({ id, status, className, children, onDone }: { id: string;
       <input type="hidden" name="status" value={status} />
       <button className={`${className.replace("full", "")} w-full`}>{children}</button>
     </form>
+  );
+}
+
+/** Cliente com prêmio do cartão fidelidade: um toque aplica o desconto neste atendimento. */
+function GiftBox({ id, label, onDone }: { id: string; label: string; onDone: () => void }) {
+  const router = useRouter();
+  const [busy, setBusy] = useState(false);
+  const [msg, setMsg] = useState<string | null>(null);
+  return (
+    <div className="ag-gift" data-testid="gift-box">
+      <div>
+        <b>🎁 Prêmio disponível: {label}</b>
+        <small>{msg ?? "Do cartão fidelidade. Use neste atendimento?"}</small>
+      </div>
+      <button
+        type="button"
+        className="pn-btn sm pn-g-green"
+        disabled={busy}
+        data-testid="gift-use"
+        onClick={async () => {
+          setBusy(true);
+          const r = await applyReward(id);
+          setBusy(false);
+          if (!r.ok) return setMsg(r.error);
+          router.refresh();
+          onDone();
+        }}
+      >
+        Usar prêmio
+      </button>
+    </div>
   );
 }

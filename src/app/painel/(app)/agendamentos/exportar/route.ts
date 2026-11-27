@@ -5,7 +5,7 @@ import { formatPhone } from "@/lib/format";
 import { methodLabel } from "@/lib/quick-book";
 import { listAppointments, readFilters } from "../query";
 
-const STATUS: Record<string, string> = { SCHEDULED: "Agendado", CONFIRMED: "Confirmado", COMPLETED: "Concluído", NO_SHOW: "Faltou", CANCELED: "Cancelado" };
+const STATUS: Record<string, string> = { SCHEDULED: "A confirmar", CONFIRMED: "Confirmado", COMPLETED: "Concluído", NO_SHOW: "Faltou", CANCELED: "Cancelado" };
 
 /** Exporta os agendamentos (com os filtros da tela) para uma planilha do Excel. */
 export async function GET(req: Request) {
