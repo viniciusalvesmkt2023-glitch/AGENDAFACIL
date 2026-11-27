@@ -11,6 +11,7 @@ import {
   Heart,
   Image as ImageIcon,
   Lock,
+  LockOpen,
   MessageCircle,
   Moon,
   Navigation,
@@ -20,13 +21,17 @@ import {
   Plus,
   RefreshCw,
   ShieldCheck,
+  Smartphone,
   Users,
+  Zap,
 } from "lucide-react";
 import { RevealOnScroll } from "@/components/landing/reveal";
 import { LandingHeader } from "@/components/landing/header";
 import { Cta } from "@/components/landing/cta";
 import { formatMoney } from "@/lib/format";
 import { discountPercent, monthlyEquivalentCents, PLANS, TRIAL_DAYS, type Plan } from "@/lib/plans";
+
+const HEADLINE_ENDINGS = ["sem esforço.", "sem estresse.", "sem bagunça.", "sem perder clientes."];
 
 const TYPES = [
   ["💈", "Barbearias"],
@@ -81,7 +86,13 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ c
           <h1 className="lp-disp">
             Sua agenda cheia,
             <br />
-            <em>sem esforço.</em>
+            <span className="sr-only">sem esforço.</span>
+            {/* Final do título trocando sozinho (o primeiro se repete no fim para o loop não "pular") */}
+            <em className="lp-rot" aria-hidden="true">
+              {[...HEADLINE_ENDINGS, HEADLINE_ENDINGS[0]].map((t, i) => (
+                <span key={i}>{t}</span>
+              ))}
+            </em>
           </h1>
           <p className="sub">
             O cliente agenda sozinho pelo seu link, recebe confirmação e lembrete no seu WhatsApp, e você só atende. Para barbearias,
@@ -93,10 +104,10 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ c
               <CirclePlay className="i" /> Ver como funciona
             </a>
           </div>
-          <div className="trust">
-            <span><Check className="i" /> Pronto em 5 minutos</span>
-            <span><Check className="i" /> Sem fidelidade</span>
-            <span><Check className="i" /> Feito para o celular</span>
+          <div className="lp-perks">
+            <span><Zap className="i" /> Pronto em 5 minutos</span>
+            <span><LockOpen className="i" /> Sem fidelidade</span>
+            <span><Smartphone className="i" /> Feito para o celular</span>
           </div>
 
           <div className="stage" aria-hidden="true">

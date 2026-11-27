@@ -369,3 +369,30 @@
 @keyframes lp-ping { 0% { transform: scale(1); opacity: .7; } 100% { transform: scale(2.1); opacity: 0; } }
 @media (prefers-reduced-motion: reduce) { .lp .badge .dot::before, .lp .badge .dot::after { animation: none; opacity: 0; } }
 }
+
+@layer components {
+/* ---------- Título: final trocando (sem esforço / sem estresse / sem bagunça / sem perder clientes) ---------- */
+.lp h1 .lp-rot { display: inline-block; vertical-align: bottom; height: 1.2em; overflow: hidden; background: none; color: inherit; font-size: min(1em, 8.2vw); }
+.lp h1 .lp-rot span { display: block; height: 1.2em; line-height: 1.2em; white-space: nowrap; text-align: center;
+  background: linear-gradient(120deg, #ffa766, var(--b) 40%, #c2410c); -webkit-background-clip: text; background-clip: text; color: transparent;
+  animation: lp-titulo 11s cubic-bezier(.7, 0, .2, 1) infinite; }
+@keyframes lp-titulo {
+  0%, 20% { transform: translateY(0); }
+  25%, 45% { transform: translateY(-100%); }
+  50%, 70% { transform: translateY(-200%); }
+  75%, 95% { transform: translateY(-300%); }
+  100% { transform: translateY(-400%); }
+}
+@media (prefers-reduced-motion: reduce) { .lp h1 .lp-rot span { animation: none; } }
+
+/* ---------- Vantagens embaixo dos botões: ícone laranja + divisórias finas ---------- */
+.lp .lp-perks { display: flex; justify-content: center; flex-wrap: wrap; row-gap: 10px; margin-top: 20px; font-size: 14px; font-weight: 600; color: var(--navy); }
+.lp .lp-perks span { display: inline-flex; align-items: center; gap: 8px; padding: 0 16px; }
+.lp .lp-perks span + span { border-left: 1px solid rgba(0, 0, 0, .1); }
+.lp .lp-perks svg { width: 18px; height: 18px; color: var(--b); }
+@media (max-width: 520px) {
+  .lp .lp-perks { font-size: 13px; }
+  .lp .lp-perks span { padding: 0 10px; }
+  .lp .lp-perks span:nth-child(3) { border-left: 0; }
+}
+}
