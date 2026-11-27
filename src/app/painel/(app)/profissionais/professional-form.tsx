@@ -1,12 +1,13 @@
 "use client";
 
 import { useActionState, useEffect, useRef, useState } from "react";
-import { Camera, Loader2, Trash2 } from "lucide-react";
+import { Camera, Loader2, Scissors, Trash2, UserRound } from "lucide-react";
 import { saveProfessional } from "@/app/painel/actions";
 import { resizeImage } from "@/lib/resize-image";
 import { ProHoursFields, type HourRow } from "./pro-hours-fields";
 import { CommissionFields } from "./commission-fields";
 import { FormMessage } from "@/components/ui";
+import { ModalFoot, useFormModal } from "@/components/form-modal";
 import { SubmitButton } from "@/components/submit-button";
 
 type Professional = { id: string; name: string; phone: string | null; serviceIds: string[]; imageId?: string | null; customHours?: boolean; hours?: HourRow[]; commissionType?: string; commissionRate?: number; productCommissionBps?: number };
@@ -28,8 +29,6 @@ export function ProfessionalForm({
   const [removed, setRemoved] = useState(false);
   const [busy, setBusy] = useState(false);
   const [photoError, setPhotoError] = useState<string | null>(null);
-  // Depois de cadastrar um novo, o bloco de horário volta ao padrão
-  const [hoursKey, setHoursKey] = useState(0);
   // Foto escolhida (já reduzida). Vai junto no envio; fica guardada se o formulário der erro.
   const pending = useRef<File | null>(null);
   const submit = (formData: FormData) => {
@@ -37,15 +36,16 @@ export function ProfessionalForm({
     return action(formData);
   };
 
+  const { done } = useFormModal();
+  // Salvou: fecha a janela e mostra o aviso
   useEffect(() => {
-    if (state?.success && !professional) {
-      formRef.current?.reset();
-      setPhoto(null);
-      setRemoved(false);
-      setHoursKey((k) => k + 1);
+    if (state?.success) {
+      pending.current = null;
+      done(state.success);
     }
-    if (state?.success) pending.current = null;
-  }, [state, professional]);
+    // erro aparece no topo da janela: rola até ele
+    if (state?.error) formRef.current?.querySelector(".fm-body")?.scrollTo({ top: 0, behavior: "smooth" });
+  }, [state, done]);
 
   async function pick(file: File) {
     setBusy(true);
@@ -71,9 +71,15 @@ export function ProfessionalForm({
   }
 
   return (
-    <form ref={formRef} action={submit} className="space-y-4">
+    <form ref={formRef} action={submit} className="fm-form">
       {professional && <input type="hidden" name="id" value={professional.id} />}
       <input type="hidden" name="removeImage" value={removed ? "1" : ""} />
+      <div className="fm-body">
+      <FormMessage error={state?.error} />
+      <div className="fm-cols">
+      <div className="fm-col">
+      <section className="fm-sec">
+      <h3><UserRound /> Dados</h3>
       <div className="flex items-center gap-4">
         <button
           type="button"
@@ -129,48 +135,54 @@ export function ProfessionalForm({
       {photoError && <p className="-mt-2 text-sm text-red-600">{photoError}</p>}
       <div>
         <label className="label" htmlFor="name">Nome</label>
-        <input className="input" id="name" name="name" defaultValue={professional?.name} required />
+        <input className="input" id="name" name="name" defaultValue={professional?.name} required placeholder="Ex.: João Victor" autoFocus={!professional} />
       </div>
       <div>
         <label className="label" htmlFor="phone">WhatsApp (opcional)</label>
         <input className="input" id="phone" name="phone" defaultValue={professional?.phone ?? ""} placeholder="(11) 99999-9999" />
       </div>
+      </section>
+      <section className="fm-sec">
+        <h3><Scissors /> Serviços que realiza</h3>
+        {services.length === 0 ? (
+          <p className="fm-d">Cadastre serviços primeiro.</p>
+        ) : (
+          <>
+            <p className="fm-d">Toque para marcar ou desmarcar.</p>
+            <div className="fm-chips">
+              {services.map((s) => (
+                <label key={s.id} className="fm-chip">
+                  <input type="checkbox" name="serviceIds" value={s.id} defaultChecked={professional ? professional.serviceIds.includes(s.id) : true} />
+                  {s.name}
+                </label>
+              ))}
+            </div>
+          </>
+        )}
+      </section>
+      </div>
+      <div className="fm-col">
+      <div className="fm-sec">
       <ProHoursFields
-        key={hoursKey}
         name={professional?.name ?? ""}
         business={businessHours}
         own={professional?.hours ?? []}
         initialCustom={professional?.customHours ?? false}
       />
+      </div>
+      <div className="fm-sec">
       <CommissionFields
-        key={`c${hoursKey}`}
         type={professional?.commissionType ?? "NONE"}
         rate={professional?.commissionRate ?? 0}
         productBps={professional?.productCommissionBps ?? 0}
       />
-      <fieldset>
-        <legend className="label">Serviços que realiza</legend>
-        {services.length === 0 ? (
-          <p className="text-sm text-zinc-500">Cadastre serviços primeiro.</p>
-        ) : (
-          <div className="space-y-2">
-            {services.map((s) => (
-              <label key={s.id} className="flex items-center gap-3 rounded-xl border border-zinc-200 px-3 py-2.5 text-sm has-[:checked]:border-brand-300 has-[:checked]:bg-brand-50">
-                <input
-                  type="checkbox"
-                  name="serviceIds"
-                  value={s.id}
-                  defaultChecked={professional ? professional.serviceIds.includes(s.id) : true}
-                  className="h-5 w-5 accent-brand-600"
-                />
-                {s.name}
-              </label>
-            ))}
-          </div>
-        )}
-      </fieldset>
-      <FormMessage error={state?.error} success={state?.success} />
-      <SubmitButton className="btn-primary w-full">{professional ? "Salvar alterações" : "Adicionar profissional"}</SubmitButton>
+      </div>
+      </div>
+      </div>
+      </div>
+      <ModalFoot hint="Você pode mudar tudo isso depois.">
+        <SubmitButton className="btn-primary">{professional ? "Salvar alterações" : "Adicionar profissional"}</SubmitButton>
+      </ModalFoot>
     </form>
   );
 }

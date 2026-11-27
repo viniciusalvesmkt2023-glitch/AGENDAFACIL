@@ -4,6 +4,7 @@ import { useActionState, useEffect, useRef, useState } from "react";
 import { ImagePlus, Loader2, Trash2 } from "lucide-react";
 import { saveService } from "@/app/painel/actions";
 import { FormMessage } from "@/components/ui";
+import { ModalFoot, useFormModal } from "@/components/form-modal";
 import { SubmitButton } from "@/components/submit-button";
 import { resizeImage } from "@/lib/resize-image";
 
@@ -25,14 +26,15 @@ export function ServiceForm({ service }: { service?: Service }) {
     return action(formData);
   };
 
+  const { done } = useFormModal();
+  // Salvou: fecha a janela e mostra o aviso
   useEffect(() => {
-    if (state?.success && !service) {
-      formRef.current?.reset();
-      setPhoto(null);
-      setRemoved(false);
+    if (state?.success) {
+      pending.current = null;
+      done(state.success);
     }
-    if (state?.success) pending.current = null;
-  }, [state, service]);
+    if (state?.error) formRef.current?.querySelector(".fm-body")?.scrollTo({ top: 0, behavior: "smooth" });
+  }, [state, done]);
 
   async function pick(file: File) {
     setBusy(true);
@@ -58,13 +60,15 @@ export function ServiceForm({ service }: { service?: Service }) {
   }
 
   return (
-    <form ref={formRef} action={submit} className="space-y-4">
+    <form ref={formRef} action={submit} className="fm-form">
       {service && <input type="hidden" name="id" value={service.id} />}
       <input type="hidden" name="removeImage" value={removed ? "1" : ""} />
+      <div className="fm-body">
+      <FormMessage error={state?.error} />
 
       <div>
         <label className="label" htmlFor="name">Nome</label>
-        <input className="input" id="name" name="name" defaultValue={service?.name} required placeholder="Ex.: Corte masculino" />
+        <input className="input" id="name" name="name" defaultValue={service?.name} required placeholder="Ex.: Corte masculino" autoFocus={!service} />
       </div>
       <div className="grid grid-cols-2 gap-3">
         <div>
@@ -127,8 +131,10 @@ export function ServiceForm({ service }: { service?: Service }) {
         />
       </div>
 
-      <FormMessage error={state?.error} success={state?.success} />
-      <SubmitButton className="btn-primary w-full">{service ? "Salvar alterações" : "Adicionar serviço"}</SubmitButton>
+      </div>
+      <ModalFoot>
+        <SubmitButton className="btn-primary">{service ? "Salvar alterações" : "Adicionar serviço"}</SubmitButton>
+      </ModalFoot>
     </form>
   );
 }

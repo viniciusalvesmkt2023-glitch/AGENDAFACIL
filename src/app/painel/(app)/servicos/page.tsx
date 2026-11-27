@@ -4,7 +4,7 @@ import { db } from "@/lib/db";
 import { requireActiveUser } from "@/lib/auth";
 import { formatDuration, formatMoney } from "@/lib/format";
 import { EmptyState } from "@/components/ui";
-import { FormPanel } from "@/components/form-panel";
+import { FormModal, SavedToast } from "@/components/form-modal";
 import { Pencil, Plus, Scissors } from "lucide-react";
 import { toggleService } from "@/app/painel/actions";
 import { ServiceForm } from "./service-form";
@@ -28,13 +28,14 @@ export default async function ServicesPage({ searchParams }: Props) {
     where: { businessId: user.businessId },
     orderBy: [{ active: "desc" }, { name: "asc" }],
   });
-  // Sem serviços: já abre o formulário (pelo endereço, para ele continuar aberto depois de salvar o primeiro)
-  if (services.length === 0 && !params.novo) redirect(`/painel/servicos?novo=1${params.bemvindo ? "&bemvindo=1" : ""}`);
+  // Primeira vez (vindo da configuração) e sem serviços: já abre a janela de cadastro
+  if (services.length === 0 && params.bemvindo && !params.novo) redirect("/painel/servicos?novo=1&bemvindo=1");
   const editing = params.editar ? services.find((s) => s.id === params.editar) : undefined;
   const showForm = !!editing || !!params.novo;
 
   return (
     <div className="space-y-4">
+      <SavedToast />
       {params.bemvindo && (
         <div className="rounded-2xl border border-brand-200 bg-brand-50 p-4 text-sm text-brand-900">
           <p className="font-semibold">Bem-vindo ao HoraBoa! 🎉</p>
@@ -51,30 +52,26 @@ export default async function ServicesPage({ searchParams }: Props) {
           <h1 className="pn-h1">Serviços</h1>
           <p className="pn-hello">O que seus clientes podem agendar</p>
         </div>
-        {!showForm && (
-          <Link href="/painel/servicos?novo=1" className="pn-btn pn-g-brand shrink-0">
-            <Plus /> Novo
-          </Link>
-        )}
+        <Link href="/painel/servicos?novo=1" scroll={false} className="pn-btn pn-g-brand shrink-0" data-testid="new-service">
+          <Plus /> <span className="hidden sm:inline">Novo serviço</span><span className="sm:hidden">Novo</span>
+        </Link>
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-[1fr_360px] lg:items-start">
-        {showForm && (
-          <div className="min-w-0 lg:order-2 lg:sticky lg:top-8">
-            <FormPanel key={editing?.id ?? "novo"} title={editing ? `Editar: ${editing.name}` : "Novo serviço"} open>
-              <ServiceForm key={editing?.id ?? "new"} service={editing} />
-              {(editing || services.length > 0) && (
-                <Link href="/painel/servicos" className="mt-3 block text-center text-sm text-zinc-500 hover:underline">
-                  {editing ? "Cancelar edição" : "Fechar"}
-                </Link>
-              )}
-            </FormPanel>
-          </div>
-        )}
-        <div className={`min-w-0 lg:order-1 ${showForm ? "" : "lg:col-span-2"}`}>
+      {showForm && (
+        <FormModal
+          icon={<Scissors />}
+          title={editing ? `Editar: ${editing.name}` : "Novo serviço"}
+          subtitle="Nome, duração, preço e foto."
+          closeHref="/painel/servicos"
+        >
+          <ServiceForm key={editing?.id ?? "new"} service={editing} />
+        </FormModal>
+      )}
+      <div>
           {services.length === 0 ? (
             <EmptyState title="Nenhum serviço cadastrado" icon={<Scissors className="h-6 w-6" />}>
               Cadastre o que você oferece, com duração, preço e foto.
+              <Link href="/painel/servicos?novo=1" scroll={false} className="pn-btn pn-g-brand mt-4"><Plus /> Adicionar serviço</Link>
             </EmptyState>
           ) : (
             <ul className="pn-svcs">
@@ -87,7 +84,7 @@ export default async function ServicesPage({ searchParams }: Props) {
                     {!s.imageId && s.name.charAt(0).toUpperCase()}
                   </div>
                   <span className="dur">{formatDuration(s.durationMinutes)}</span>
-                  <Link href={`/painel/servicos?editar=${s.id}`} className="edit" aria-label={`Editar ${s.name}`}>
+                  <Link href={`/painel/servicos?editar=${s.id}`} scroll={false} className="edit" aria-label={`Editar ${s.name}`}>
                     <Pencil />
                   </Link>
                   <div className="bd">
@@ -113,7 +110,6 @@ export default async function ServicesPage({ searchParams }: Props) {
               ))}
             </ul>
           )}
-        </div>
       </div>
     </div>
   );

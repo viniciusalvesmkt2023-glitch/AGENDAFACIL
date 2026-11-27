@@ -3,15 +3,15 @@ import { db } from "@/lib/db";
 import { requireActiveUser } from "@/lib/auth";
 import { formatPhone } from "@/lib/format";
 import { EmptyState, PageHeader } from "@/components/ui";
-import { FormPanel } from "@/components/form-panel";
-import { Clock, Pencil, Power, UserRound } from "lucide-react";
+import { FormModal, SavedToast } from "@/components/form-modal";
+import { Clock, Pencil, Plus, Power, UserRound } from "lucide-react";
 
 import { toggleProfessional } from "@/app/painel/actions";
 import { ProfessionalForm } from "./professional-form";
 import { summarizeWeek } from "@/lib/pro-hours";
 import "./pro-hours.css";
 
-type Props = { searchParams: Promise<{ editar?: string }> };
+type Props = { searchParams: Promise<{ editar?: string; novo?: string }> };
 
 export default async function ProfessionalsPage({ searchParams }: Props) {
   const user = await requireActiveUser();
@@ -35,45 +35,58 @@ export default async function ProfessionalsPage({ searchParams }: Props) {
   });
   const editing = params.editar ? professionals.find((p) => p.id === params.editar) : undefined;
 
+  const showForm = !!editing || !!params.novo;
+
   return (
     <>
-      <PageHeader title="Gestão de equipe" description="Seus profissionais, os horários e os serviços de cada um." />
-      <div className="grid gap-4 lg:grid-cols-[1fr_360px] lg:items-start">
-        <div className="min-w-0 lg:order-2 lg:sticky lg:top-8">
-          <FormPanel key={editing?.id ?? "novo"} title={editing ? `Editar: ${editing.name}` : "Novo profissional"} open={!!editing || professionals.length === 0}>
-            <ProfessionalForm
-              key={editing?.id ?? "new"}
-              services={services}
-              businessHours={businessHours.map(pick)}
-              professional={
-                editing && {
-                  id: editing.id,
-                  name: editing.name,
-                  phone: editing.phone,
-                  serviceIds: editing.services.map((s) => s.serviceId),
-                  imageId: editing.imageId,
-                  customHours: editing.customHours,
-                  commissionType: editing.commissionType,
-                  commissionRate: editing.commissionRate,
-                  productCommissionBps: editing.productCommissionBps,
-                  hours: editing.hours.map(pick),
-                }
+      <SavedToast />
+      <PageHeader
+        title="Gestão de equipe"
+        description="Seus profissionais, os horários e os serviços de cada um."
+        action={
+          <Link href="/painel/profissionais?novo=1" scroll={false} className="pn-btn pn-g-brand" data-testid="new-professional">
+            <Plus /> <span className="hidden sm:inline">Novo profissional</span><span className="sm:hidden">Novo</span>
+          </Link>
+        }
+      />
+      {showForm && (
+        <FormModal
+          wide
+          icon={<UserRound />}
+          title={editing ? `Editar: ${editing.name}` : "Novo profissional"}
+          subtitle="Dados, serviços, horário e comissão em um só lugar."
+          closeHref="/painel/profissionais"
+        >
+          <ProfessionalForm
+            key={editing?.id ?? "new"}
+            services={services}
+            businessHours={businessHours.map(pick)}
+            professional={
+              editing && {
+                id: editing.id,
+                name: editing.name,
+                phone: editing.phone,
+                serviceIds: editing.services.map((s) => s.serviceId),
+                imageId: editing.imageId,
+                customHours: editing.customHours,
+                commissionType: editing.commissionType,
+                commissionRate: editing.commissionRate,
+                productCommissionBps: editing.productCommissionBps,
+                hours: editing.hours.map(pick),
               }
-            />
-            {editing && (
-              <Link href="/painel/profissionais" className="mt-3 block text-center text-sm text-zinc-500 hover:underline">
-                Cancelar edição
-              </Link>
-            )}
-          </FormPanel>
-        </div>
-        <div className="min-w-0 lg:order-1">
+            }
+          />
+        </FormModal>
+      )}
+      <div>
           {professionals.length === 0 ? (
-            <EmptyState title="Nenhum profissional cadastrado" icon={<UserRound className="h-6 w-6" />} />
+            <EmptyState title="Nenhum profissional cadastrado" icon={<UserRound className="h-6 w-6" />}>
+              <Link href="/painel/profissionais?novo=1" scroll={false} className="pn-btn pn-g-brand mt-4"><Plus /> Adicionar profissional</Link>
+            </EmptyState>
           ) : (
-            <ul className="card divide-y divide-zinc-100 overflow-hidden">
+            <ul className="grid gap-3 lg:grid-cols-2">
               {professionals.map((p) => (
-                <li key={p.id} className={`flex items-center gap-3 px-4 py-3 ${p.active ? "" : "opacity-50"}`}>
+                <li key={p.id} className={`card flex items-center gap-3 rounded-3xl px-4 py-3.5 ${p.active ? "" : "opacity-50"}`}>
                   {p.imageId ? (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img src={`/i/${p.imageId}`} alt="" className="h-11 w-11 shrink-0 rounded-full object-cover" />
@@ -110,7 +123,7 @@ export default async function ProfessionalsPage({ searchParams }: Props) {
                       );
                     })()}
                   </div>
-                  <Link href={`/painel/profissionais?editar=${p.id}`} className="btn-icon" aria-label={`Editar ${p.name}`}>
+                  <Link href={`/painel/profissionais?editar=${p.id}`} scroll={false} className="btn-icon" aria-label={`Editar ${p.name}`}>
                     <Pencil className="h-4 w-4" />
                   </Link>
                   <form action={toggleProfessional}>
@@ -121,9 +134,13 @@ export default async function ProfessionalsPage({ searchParams }: Props) {
                   </form>
                 </li>
               ))}
+              <li>
+                <Link href="/painel/profissionais?novo=1" scroll={false} className="fm-add h-full">
+                  <Plus /> Adicionar profissional
+                </Link>
+              </li>
             </ul>
           )}
-        </div>
       </div>
     </>
   );

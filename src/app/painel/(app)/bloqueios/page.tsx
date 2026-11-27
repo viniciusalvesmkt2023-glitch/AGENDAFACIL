@@ -1,18 +1,19 @@
-import { CalendarOff, Repeat, Trash2 } from "lucide-react";
+import { CalendarOff, Plus, Repeat, Trash2 } from "lucide-react";
 import { db } from "@/lib/db";
 import { requireActiveUser } from "@/lib/auth";
 import { isValidDate, todayInTimezone } from "@/lib/time";
 import { blockWhen } from "@/lib/blocks";
 import { EmptyState, PageHeader } from "@/components/ui";
-import { FormPanel } from "@/components/form-panel";
+import Link from "next/link";
+import { FormModal, SavedToast } from "@/components/form-modal";
 import { BlockForm } from "./block-form";
 import { deleteBlock } from "./actions";
 
-type Props = { searchParams: Promise<{ data?: string }> };
+type Props = { searchParams: Promise<{ data?: string; novo?: string }> };
 
 export default async function BlocksPage({ searchParams }: Props) {
   const user = await requireActiveUser();
-  const { data } = await searchParams;
+  const { data, novo } = await searchParams;
   const today = todayInTimezone();
   const [professionals, blocks] = await Promise.all([
     db.professional.findMany({ where: { businessId: user.businessId, active: true }, orderBy: { name: "asc" }, select: { id: true, name: true } }),
@@ -54,17 +55,26 @@ export default async function BlocksPage({ searchParams }: Props) {
 
   return (
     <>
-      <PageHeader title="Bloqueios" description="Folgas, férias e compromissos. Horários bloqueados somem do seu link de agendamento." />
-      <div className="grid gap-4 lg:grid-cols-[1fr_360px] lg:items-start">
-        <div className="lg:order-2 lg:sticky lg:top-8">
-          <FormPanel title="Novo bloqueio" open={blocks.length === 0 || !!data}>
-            <BlockForm professionals={professionals} today={today} defaultDate={data && isValidDate(data) && data >= today ? data : today} />
-          </FormPanel>
-        </div>
-        <div className="space-y-5 lg:order-1">
+      <SavedToast />
+      <PageHeader
+        title="Bloqueios"
+        description="Folgas, férias e compromissos. Horários bloqueados somem do seu link de agendamento."
+        action={
+          <Link href="/painel/bloqueios?novo=1" scroll={false} className="pn-btn pn-g-brand" data-testid="new-block">
+            <Plus /> <span className="hidden sm:inline">Novo bloqueio</span><span className="sm:hidden">Novo</span>
+          </Link>
+        }
+      />
+      {(novo || data) && (
+        <FormModal icon={<CalendarOff />} title="Novo bloqueio" subtitle="Ninguém consegue marcar nesse horário." closeHref="/painel/bloqueios">
+          <BlockForm professionals={professionals} today={today} defaultDate={data && isValidDate(data) && data >= today ? data : today} />
+        </FormModal>
+      )}
+        <div className="space-y-5">
           {blocks.length === 0 ? (
             <EmptyState title="Nenhum bloqueio" icon={<CalendarOff className="h-6 w-6" />}>
               Vai tirar folga, viajar ou tem um compromisso? Bloqueie o horário para ninguém marcar.
+              <Link href="/painel/bloqueios?novo=1" scroll={false} className="pn-btn pn-g-brand mt-4"><Plus /> Novo bloqueio</Link>
             </EmptyState>
           ) : (
             <>
@@ -83,7 +93,6 @@ export default async function BlocksPage({ searchParams }: Props) {
             </>
           )}
         </div>
-      </div>
     </>
   );
 }

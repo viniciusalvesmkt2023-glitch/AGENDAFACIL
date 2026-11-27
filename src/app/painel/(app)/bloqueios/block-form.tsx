@@ -3,6 +3,7 @@
 import { useActionState, useEffect, useRef, useState } from "react";
 import { createBlock } from "./actions";
 import { FormMessage } from "@/components/ui";
+import { ModalFoot, useFormModal } from "@/components/form-modal";
 import { SubmitButton } from "@/components/submit-button";
 import { Switch } from "@/components/switch";
 import { WEEKDAYS_SHORT } from "@/lib/time";
@@ -16,12 +17,18 @@ export function BlockForm({ professionals, today, defaultDate }: { professionals
   const [period, setPeriod] = useState(false);
   const [weekdays, setWeekdays] = useState<number[]>([]);
   const ref = useRef<HTMLFormElement>(null);
+  const { done } = useFormModal();
   useEffect(() => {
-    if (state?.success) setWeekdays([]);
-  }, [state]);
+    // Salvou sem aviso: fecha a janela. Com aviso (clientes já marcados), deixa o aviso na tela.
+    if (state?.success && !state.warning) done(state.success);
+    if (state?.error || state?.warning) ref.current?.querySelector(".fm-body")?.scrollTo({ top: 0, behavior: "smooth" });
+  }, [state, done]);
 
   return (
-    <form ref={ref} action={action} className="space-y-4">
+    <form ref={ref} action={action} className="fm-form">
+      <div className="fm-body">
+      <FormMessage error={state?.error} success={state?.warning ? state.success : null} />
+      {state?.warning && <p className="rounded-xl bg-amber-50 px-3 py-2.5 text-sm text-amber-800">{state.warning}</p>}
       <input type="hidden" name="kind" value={kind} />
       {weekdays.map((d) => (
         <input key={d} type="hidden" name="weekdays" value={d} />
@@ -130,9 +137,16 @@ export function BlockForm({ professionals, today, defaultDate }: { professionals
         <input className="input" id="reason" name="reason" maxLength={80} placeholder="Ex.: médico, folga, curso" />
       </div>
 
-      <FormMessage error={state?.error} success={state?.success} />
-      {state?.warning && <p className="rounded-xl bg-amber-50 px-3 py-2.5 text-sm text-amber-800">{state.warning}</p>}
-      <SubmitButton className="btn-primary w-full">Bloquear</SubmitButton>
+      </div>
+      {state?.warning ? (
+        <div className="fm-foot">
+          <button type="button" className="btn-primary" onClick={() => done(state.success ?? "Bloqueio criado.")}>Entendi</button>
+        </div>
+      ) : (
+        <ModalFoot>
+          <SubmitButton className="btn-primary">Bloquear horário</SubmitButton>
+        </ModalFoot>
+      )}
     </form>
   );
 }
