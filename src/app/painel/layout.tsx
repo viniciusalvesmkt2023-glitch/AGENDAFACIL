@@ -1,7 +1,8 @@
 import "./painel.css";
 import Link from "next/link";
-import { AlertTriangle, Clock3, ExternalLink, ListChecks, LogOut, WifiOff } from "lucide-react";
+import { AlertTriangle, Clock3, ExternalLink, ListChecks, LogOut, ShieldCheck, WifiOff } from "lucide-react";
 import { requireUser } from "@/lib/auth";
+import { isAdminEmail } from "@/lib/admin";
 import { Logo } from "@/components/ui";
 import { BottomNav, SidebarNav } from "@/components/nav";
 import { CopyButton, ShareLinkButton } from "@/components/copy-button";
@@ -52,6 +53,14 @@ export default async function DashboardLayout({ children }: { children: React.Re
         </div>
         <SidebarNav />
         <div className="mt-auto space-y-1 pt-4">
+          {isAdminEmail(user.email) && (
+            <Link href="/admin" className="pn-nav-a" data-testid="link-admin">
+              <span className="ic pn-g-navy">
+                <ShieldCheck />
+              </span>
+              Painel admin
+            </Link>
+          )}
           <ThemeToggle dark={dark} className="pn-nav-a w-full" withLabel />
           <form action={logout}>
             <button className="pn-nav-a danger w-full">

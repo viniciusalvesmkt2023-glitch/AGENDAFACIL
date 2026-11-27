@@ -1,6 +1,7 @@
 import Link from "next/link";
-import { ChevronRight, ExternalLink, LogOut } from "lucide-react";
+import { ChevronRight, ExternalLink, LogOut, ShieldCheck } from "lucide-react";
 import { requireUser } from "@/lib/auth";
+import { isAdminEmail } from "@/lib/admin";
 import { logout } from "../../(auth)/actions";
 import { ShareLinkButton } from "@/components/copy-button";
 import { NAV_ITEMS } from "@/components/nav-items";
@@ -48,6 +49,23 @@ export default async function MorePage() {
           </Link>
         </div>
       </div>
+
+      {isAdminEmail(user.email) && (
+        <ul className="pn-group pn-card">
+          <li>
+            <Link href="/admin" className="pn-row" data-testid="link-admin">
+              <span className="ic pn-g-navy">
+                <ShieldCheck />
+              </span>
+              <span className="tx">
+                <b>Painel admin</b>
+                <small>Clientes, vendas e pagamentos</small>
+              </span>
+              <ChevronRight className="chev" />
+            </Link>
+          </li>
+        </ul>
+      )}
 
       {GROUPS.map((group, gi) => (
         <ul key={gi} className="pn-group pn-card">
