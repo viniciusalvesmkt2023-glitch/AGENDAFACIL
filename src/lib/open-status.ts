@@ -1,4 +1,6 @@
 // "Aberto agora · até 19h" / "Fechado agora · abre amanhã às 9h" (pelo horário do estabelecimento).
+// O intervalo de almoço não entra aqui: ele só tira horários da agenda; para o cliente o
+// estabelecimento aparece aberto da hora que abre até a hora que fecha.
 import { minutesToTime } from "./time";
 
 type Hour = { weekday: number; isOpen: boolean; startMinutes: number; endMinutes: number; breakStart: number | null; breakEnd: number | null };
@@ -14,12 +16,7 @@ export function openStatus(hours: Hour[], now: { weekday: number; minutes: numbe
   const today = hours.find((h) => h.weekday === now.weekday);
   if (today?.isOpen && !closedToday) {
     const m = now.minutes;
-    const inBreak = today.breakStart != null && today.breakEnd != null && m >= today.breakStart && m < today.breakEnd;
-    if (m >= today.startMinutes && m < today.endMinutes && !inBreak) {
-      const until = today.breakStart != null && today.breakStart > m ? today.breakStart : today.endMinutes;
-      return { open: true, text: `até ${hm(until)}` };
-    }
-    if (inBreak) return { open: false, text: `volta às ${hm(today.breakEnd!)}` };
+    if (m >= today.startMinutes && m < today.endMinutes) return { open: true, text: `até ${hm(today.endMinutes)}` };
     if (m < today.startMinutes) return { open: false, text: `abre hoje às ${hm(today.startMinutes)}` };
   }
   for (let i = 1; i <= 7; i++) {
