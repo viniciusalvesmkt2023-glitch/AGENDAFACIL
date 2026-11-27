@@ -9,7 +9,7 @@ import {
   Palette,
   Pencil,
   RefreshCw,
-  Smartphone,
+  MonitorSmartphone,
   Zap,
 } from "lucide-react";
 import { RevealOnScroll } from "@/components/landing/reveal";
@@ -128,7 +128,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ c
           <div className="lp-perks">
             <span><Zap className="i" /> Pronto em 5 minutos</span>
             <span><LockOpen className="i" /> Sem fidelidade</span>
-            <span><Smartphone className="i" /> Feito para o celular</span>
+            <span><MonitorSmartphone className="i" /> Sem instalar nada</span>
           </div>
 
           <HeroDemo />
