@@ -85,8 +85,8 @@ export default async function AgendaPage({ searchParams }: Props) {
   if (view !== user.agendaView || (chosenPro || null) !== user.agendaProfessional || showCanceled !== user.agendaShowCanceled) {
     await db.user.update({ where: { id: user.id }, data: { agendaView: view, agendaProfessional: chosenPro || null, agendaShowCanceled: showCanceled } });
   }
-  // A semana mostra um profissional por vez (com todos juntos as colunas ficam estreitas demais)
-  const pro = chosenPro || (view === "semana" ? (allPros[0]?.id ?? "") : "");
+  // "" = todos os profissionais (na Semana, cada dia mostra a equipe toda junta)
+  const pro = chosenPro;
   // Faixa de dias: 3 antes e 10 depois da data escolhida
   const days = Array.from({ length: 14 }, (_, i) => addDays(date, i - 3));
   const weekStart = addDays(date, -weekdayOf(date));
@@ -218,6 +218,22 @@ export default async function AgendaPage({ searchParams }: Props) {
     gift: giftOf.get(a.clientId) ?? null,
     rewardUsed: !!a.loyaltyRewardId,
   });
+  // Semana com "Todos": um dia por coluna com os agendamentos da equipe inteira (horário do estabelecimento)
+  const columnForTeam = (d: string): CalColumn => {
+    const wd = weekdayOf(d);
+    const h = businessHours.find((x) => x.weekday === wd);
+    return {
+      key: `${d}-todos`,
+      date: d,
+      proId: "",
+      head: { kind: "day", weekday: WEEKDAYS_SHORT[wd], day: Number(d.slice(8)), href: qs({ data: d, ver: "dia" }) },
+      hours: h && h.isOpen ? { start: h.startMinutes, end: h.endMinutes, breakStart: h.breakStart ?? null, breakEnd: h.breakEnd ?? null } : null,
+      blocks: rangeBlocks
+        .filter((bl) => bl.professionalId === null && blockAppliesOn(bl, d, wd))
+        .map((bl) => ({ start: bl.startMinutes ?? 0, end: bl.endMinutes ?? 24 * 60, label: bl.reason || "Bloqueado" })),
+      appts: rangeAppointments.filter((a) => a.date === d && (showCanceled || a.status !== "CANCELED")).map(toCal),
+    };
+  };
   const columnFor = (d: string, p: (typeof allPros)[number]): CalColumn => {
     const wd = weekdayOf(d);
     const h = effectiveHours(p, businessHours, wd);
@@ -246,7 +262,17 @@ export default async function AgendaPage({ searchParams }: Props) {
     ),
   ];
   const columns: CalColumn[] =
-    view === "semana" ? (shownPros[0] ? range.map((d) => columnFor(d, shownPros[0])) : []) : view === "dia" ? dayPros.map((p) => columnFor(date, p)) : [];
+    view === "semana"
+      ? pro
+        ? shownPros[0]
+          ? range.map((d) => columnFor(d, shownPros[0]))
+          : []
+        : allPros.length
+          ? range.map((d) => columnForTeam(d))
+          : []
+      : view === "dia"
+        ? dayPros.map((p) => columnFor(date, p))
+        : [];
   // Faixa de horas: do primeiro horário de abertura (ou agendamento) até o último, de hora em hora
   const starts = columns.flatMap((c) => [c.hours?.start, ...c.appts.map((a) => a.start)]).filter((v): v is number => v != null);
   const ends = columns.flatMap((c) => [c.hours?.end, ...c.appts.map((a) => a.end)]).filter((v): v is number => v != null);
@@ -380,7 +406,7 @@ export default async function AgendaPage({ searchParams }: Props) {
       {/* Filtro por profissional */}
       {(professionals.length > 1 || view !== "lista") && (
         <div className="pn-chips">
-          {professionals.length > 1 && view !== "semana" && (
+          {professionals.length > 1 && (
             <Link href={href(date, "")} className={`pn-chip plain pn-card ${pro === "" ? "on" : ""}`}>
               Todos
             </Link>
@@ -423,7 +449,7 @@ export default async function AgendaPage({ searchParams }: Props) {
             today={today}
             timezone={TIMEZONE}
             initialNow={now.minutes}
-            showProInBlock={false}
+            showProInBlock={view === "semana" && !pro}
           />
         )
       ) : (

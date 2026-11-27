@@ -291,7 +291,6 @@ export function AgendaCalendar({ mode, columns, t0, t1, today, timezone, initial
                         <span className="t">
                           {hm(a.start)}
                           {!short && <span className="tend"> – {hm(a.end)}</span>}
-                          {showProInBlock && <span className="tpro"> · {a.professional}</span>}
                         </span>
                         <b>
                           {a.gift && !a.rewardUsed && a.status !== "CANCELED" ? "🎁 " : ""}
@@ -299,7 +298,7 @@ export function AgendaCalendar({ mode, columns, t0, t1, today, timezone, initial
                         </b>
                         <small>
                           <span className="svc">{a.service}</span>
-                          {!short && <span className="pr"> · {a.price}</span>}
+                          {showProInBlock ? <span className="who"> · {a.professional}</span> : !short && <span className="pr"> · {a.price}</span>}
                         </small>
                       </button>
                     );
