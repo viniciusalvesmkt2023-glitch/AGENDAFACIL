@@ -1,6 +1,6 @@
 @layer components {
 /* Seção "Recursos" da página de vendas: mosaico com mini demonstrações. Prefixo rc- dentro de .rc. */
-.rc { --disp: "Nunito", -apple-system, BlinkMacSystemFont, system-ui, sans-serif; --card: rgba(255,255,255,.82); }
+.rc { --disp: "Nunito", -apple-system, BlinkMacSystemFont, system-ui, sans-serif; --ui: -apple-system, BlinkMacSystemFont, "SF Pro Text", Inter, system-ui, sans-serif; --card: rgba(255,255,255,.82); }
 .rc .rc-g-brand { background: linear-gradient(145deg, #fea766, #fe6e02 45%, #b84f01); }
 .rc .rc-g-indigo { background: linear-gradient(135deg, #818cf8, #4338ca); }
 .rc .rc-g-amber { background: linear-gradient(135deg, #fbbf24, #d97706); }

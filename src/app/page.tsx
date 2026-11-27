@@ -1,5 +1,4 @@
 import "./vendas.css";
-import Link from "next/link";
 import {
   Bell,
   Check,
@@ -9,7 +8,6 @@ import {
   LockOpen,
   Palette,
   Pencil,
-  Plus,
   RefreshCw,
   Smartphone,
   Zap,
@@ -22,7 +20,10 @@ import { PageEditorDemo } from "@/components/landing/page-editor-demo";
 import { WhatsAppDemo } from "@/components/landing/whatsapp-demo";
 import { FeaturesBento } from "@/components/landing/features-bento";
 import { Pricing, type PricingPlan } from "@/components/landing/pricing";
-import { formatMoney } from "@/lib/format";
+import { Faq, type FaqItem } from "@/components/landing/faq";
+import { FinalCta } from "@/components/landing/final-cta";
+import { SUPPORT_EMAIL } from "@/lib/brand";
+import { formatMoney, whatsappLink } from "@/lib/format";
 import { discountPercent, monthlyEquivalentCents, PLANS, TRIAL_DAYS, type Plan } from "@/lib/plans";
 
 const HEADLINE_ENDINGS = ["sem esforço.", "sem estresse.", "sem bagunça.", "sem perder clientes."];
@@ -37,12 +38,23 @@ const TYPES = [
 ];
 
 
-const FAQ = [
-  ["Preciso de cartão para testar?", `Não. Você usa tudo por ${TRIAL_DAYS} dias grátis e só assina se gostar. Sem cartão e sem compromisso.`],
-  ["As mensagens saem de qual WhatsApp?", "Do seu próprio número. Você conecta o WhatsApp do negócio em poucos passos e o cliente responde direto para você."],
-  ["Meu cliente precisa baixar algum aplicativo?", "Não. Ele abre o seu link, escolhe o horário e pronto. Funciona em qualquer celular."],
-  ["Funciona para quem trabalha sozinho?", "Sim! Funciona para quem atende sozinho e para equipes, com horários próprios para cada profissional."],
-  ["Posso cancelar quando quiser?", "Pode. Não tem fidelidade nem multa: é só cancelar no painel."],
+const FAQ: FaqItem[] = [
+  { cat: "plano", color: "fq-g-green", icon: '<rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/>', q: "Preciso de cartão para testar?",
+    a: <><b>Não.</b> Você usa tudo por {TRIAL_DAYS} dias grátis e só assina se gostar. Sem cartão e sem compromisso.</> },
+  { cat: "whats", color: "fq-g-wa", icon: '<path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/>', q: "As mensagens saem de qual WhatsApp?",
+    a: <>Do <b>seu próprio número</b>. Você conecta o WhatsApp do negócio em poucos passos (QR code ou código) e o cliente responde direto para você.</> },
+  { cat: "whats", color: "fq-g-amber", icon: '<path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9M10.3 21a1.94 1.94 0 0 0 3.4 0"/>', q: "Posso escolher quando os lembretes são enviados?",
+    a: <>Pode. Você escolhe o lembrete da <b>véspera ou 24h antes</b> e outro <b>perto do horário</b>, edita o texto das mensagens e pausa quando quiser.</> },
+  { cat: "uso", color: "fq-g-blue", icon: '<rect x="6" y="2" width="12" height="20" rx="3"/><path d="M11 18h2"/>', q: "Meu cliente precisa baixar algum aplicativo?",
+    a: <><b>Não.</b> Ele abre o seu link, escolhe o horário e pronto. Funciona em qualquer celular ou computador.</> },
+  { cat: "uso", color: "fq-g-purple", icon: '<path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 16h5v5"/>', q: "O cliente consegue remarcar ou cancelar sozinho?",
+    a: <>Sim, pelo link da confirmação — e só dentro das <b>regras que você definir</b> (por exemplo, até algumas horas antes do horário).</> },
+  { cat: "uso", color: "fq-g-indigo", icon: '<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/>', q: "Funciona para quem trabalha sozinho?",
+    a: <>Sim! Funciona para quem atende sozinho e para equipes, com <b>horários próprios para cada profissional</b>.</> },
+  { cat: "plano", color: "fq-g-brand", icon: '<rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 9.9-1"/>', q: "Posso cancelar quando quiser?",
+    a: <>Pode. <b>Não tem fidelidade nem multa</b>: é só cancelar no painel.</> },
+  { cat: "plano", color: "fq-g-teal", icon: '<path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/>', q: "Meus dados e os dos clientes ficam seguros?",
+    a: <>Sim. Seguimos a <b>LGPD</b>: os dados são usados só para os agendamentos, e você pode excluir sua conta quando quiser.</> },
 ];
 
 
@@ -70,6 +82,8 @@ function pricingPlans(): PricingPlan[] {
 
 export default async function Home({ searchParams }: { searchParams: Promise<{ conta?: string }> }) {
   const deleted = (await searchParams).conta === "excluida";
+  // WhatsApp do suporte (opcional): sem ele, só aparece o e-mail
+  const supportWhatsapp = process.env.SUPPORT_WHATSAPP ? whatsappLink(process.env.SUPPORT_WHATSAPP, "Olá! Tenho uma dúvida sobre o HoraBoa.") : null;
   return (
     <div className="lp">
       <RevealOnScroll />
@@ -225,47 +239,16 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ c
       </section>
 
       {/* Perguntas */}
-      <section className="blk lp-center">
+      <section className="blk">
         <div className="lp-wrap">
-          <span className="eyebrow">Dúvidas</span>
-          <h2 className="lp-disp">Perguntas frequentes</h2>
-          <div className="faq" style={{ textAlign: "left" }}>
-            {FAQ.map(([q, a], i) => (
-              <details key={q} className="lp-glass" open={i === 0}>
-                <summary>
-                  {q} <span className="pl"><Plus className="i" /></span>
-                </summary>
-                <p>{a}</p>
-              </details>
-            ))}
-          </div>
+          <Faq items={FAQ} trialDays={TRIAL_DAYS} whatsappHref={supportWhatsapp} email={SUPPORT_EMAIL} />
         </div>
       </section>
 
-      {/* Chamada final */}
+      {/* Chamada final e rodapé */}
       <div className="lp-wrap">
-        <section className="final lp-rv">
-          <h2 className="lp-disp">Pronto para encher sua agenda?</h2>
-          <p>Crie sua conta em 2 minutos e comece a receber agendamentos hoje mesmo.</p>
-          <Cta href="/cadastro">Testar grátis por {TRIAL_DAYS} dias</Cta>
-          <div className="trust" style={{ color: "rgba(255,255,255,.65)" }}>
-            <span><Check className="i" /> Sem cartão</span>
-            <span><Check className="i" /> Sem fidelidade</span>
-          </div>
-        </section>
+        <FinalCta trialDays={TRIAL_DAYS} year={new Date().getFullYear()} />
       </div>
-
-      <footer>
-        <div className="lp-wrap">
-          <span className="logo lp-disp" style={{ fontSize: 18 }}>
-            <b>Hora</b>
-            <span>Boa</span>
-          </span>
-          <span>
-            © {new Date().getFullYear()} HoraBoa · <Link href="/termos">Termos</Link> · <Link href="/privacidade">Privacidade</Link>
-          </span>
-        </div>
-      </footer>
     </div>
   );
 }

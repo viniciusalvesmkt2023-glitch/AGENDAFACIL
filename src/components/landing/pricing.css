@@ -1,6 +1,6 @@
 @layer components {
 /* Seção "Preços" da página de vendas: seletor de plano + cartão grande. Prefixo pz- dentro de .pz. */
-.pz { --disp: "Nunito", -apple-system, BlinkMacSystemFont, system-ui, sans-serif; --shadow: 0 1px 2px rgba(15,15,20,.04), 0 18px 44px rgba(15,15,20,.08); }
+.pz { --disp: "Nunito", -apple-system, BlinkMacSystemFont, system-ui, sans-serif; --ui: -apple-system, BlinkMacSystemFont, "SF Pro Text", Inter, system-ui, sans-serif; --shadow: 0 1px 2px rgba(15,15,20,.04), 0 18px 44px rgba(15,15,20,.08); }
 .pz .pz-g-brand { background: linear-gradient(145deg, #fea766, #fe6e02 45%, #b84f01); }
 .pz .pz-g-indigo { background: linear-gradient(135deg, #818cf8, #4338ca); }
 .pz .pz-g-amber { background: linear-gradient(135deg, #fbbf24, #d97706); }
