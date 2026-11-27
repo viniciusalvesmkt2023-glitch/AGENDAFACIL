@@ -26,7 +26,7 @@ import { addDays, formatDateLong, isValidDate, minutesToTime, nowInTimezone, WEE
 import { formatMoney, whatsappLink } from "@/lib/format";
 import { FormMessage } from "@/components/ui";
 import { updateAppointmentStatus } from "@/app/painel/actions";
-import { DatePickerButton } from "./agenda-controls";
+import { DatePickerButton, NewAppointmentButton } from "./agenda-controls";
 import { blockAppliesOn, blockIntervals, effectiveHours } from "@/lib/schedule";
 import { blockTime } from "@/lib/blocks";
 import { computeAvailableSlots } from "@/lib/availability";
@@ -257,9 +257,9 @@ export default async function AgendaPage({ searchParams }: Props) {
             <ChevronRight />
           </Link>
           <DatePickerButton date={date} professional={params.profissional ?? ""} view={view} />
-          <Link href={`/painel/novo?data=${date}`} className="pn-btn pn-g-brand hidden md:inline-flex">
+          <NewAppointmentButton date={date} className="pn-btn pn-g-brand hidden md:inline-flex">
             <CalendarPlus /> Novo agendamento
-          </Link>
+          </NewAppointmentButton>
         </div>
       </div>
 

@@ -37,7 +37,7 @@ export default async function ProfessionalsPage({ searchParams }: Props) {
 
   return (
     <>
-      <PageHeader title="Profissionais" description="Sua equipe e os serviços de cada um." />
+      <PageHeader title="Gestão de equipe" description="Seus profissionais, os horários e os serviços de cada um." />
       <div className="grid gap-4 lg:grid-cols-[1fr_360px] lg:items-start">
         <div className="min-w-0 lg:order-2 lg:sticky lg:top-8">
           <FormPanel key={editing?.id ?? "novo"} title={editing ? `Editar: ${editing.name}` : "Novo profissional"} open={!!editing || professionals.length === 0}>

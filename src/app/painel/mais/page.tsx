@@ -9,7 +9,8 @@ import { getAccessState } from "@/lib/subscription";
 
 // Itens do menu em grupos (os da barra de baixo não se repetem aqui)
 const GROUPS = [
-  ["/painel/pagina", "/painel/profissionais", "/painel/horarios", "/painel/bloqueios"],
+  ["/painel/agendamentos", "/painel/bloqueios"],
+  ["/painel/pagina", "/painel/profissionais", "/painel/horarios"],
   ["/painel/whatsapp", "/painel/configuracoes", "/painel/assinatura"],
   ["/painel/conta", "/painel/suporte"],
 ];

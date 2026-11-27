@@ -46,6 +46,7 @@ export async function updateAppointmentStatus(formData: FormData) {
 
   await db.appointment.update({ where: { id }, data: { status } });
   revalidatePath("/painel");
+  revalidatePath("/painel/agendamentos");
 }
 
 export async function createManualAppointment(_: ActionState, formData: FormData): Promise<ActionState> {

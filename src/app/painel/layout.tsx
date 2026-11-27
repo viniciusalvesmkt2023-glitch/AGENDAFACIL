@@ -5,6 +5,7 @@ import { requireUser } from "@/lib/auth";
 import { isAdminEmail } from "@/lib/admin";
 import { Logo } from "@/components/ui";
 import { BottomNav, SidebarNav } from "@/components/nav";
+import { QuickBook } from "./quick-book";
 import { CopyButton, ShareLinkButton } from "@/components/copy-button";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { logout } from "../(auth)/actions";
@@ -112,6 +113,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
       </div>
 
       <BottomNav />
+      <QuickBook />
     </div>
   );
 }

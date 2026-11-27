@@ -311,7 +311,11 @@ model Appointment {
   status         String       @default("SCHEDULED")
   priceCents     Int
   notes          String?
-  source         String       @default("ONLINE") // ONLINE | MANUAL
+  source         String       @default("ONLINE") // ONLINE | MANUAL | QUICK | IMPORT
+  // Pagamento do atendimento (controle do dono): PENDING = a receber, PAID = pago
+  paymentStatus  String       @default("PENDING")
+  paymentMethod  String? // PIX | CASH | CARD
+  paidAt         DateTime?
   cancelToken    String       @unique @default(cuid())
   createdAt      DateTime     @default(now())
 
@@ -323,6 +327,7 @@ model Appointment {
   @@index([businessId, date])
   @@index([date, status])
   @@index([professionalId, date])
+  @@index([businessId, paymentStatus])
 }
 
 // Imagens da página pública (logo e capa), já reduzidas no navegador antes do envio.

@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Bell, CalendarClock, Check, CheckCheck, MessageCircle, Phone, RotateCcw, UserX, X } from "lucide-react";
 import { updateAppointmentStatus } from "@/app/painel/actions";
+import { openQuickBook } from "@/components/quick-book-trigger";
 
 export type CalAppt = {
   id: string;
@@ -333,9 +334,16 @@ export function AgendaCalendar({ mode, columns, t0, t1, today, timezone, initial
             {slot.date === today ? "Hoje" : WEEKDAY[new Date(`${slot.date}T12:00:00`).getDay()]}, {slot.date.slice(8)}/{slot.date.slice(5, 7)}
           </small>
           <div className="ag-popacts">
-            <Link className="pn-btn sm pn-g-brand" href={`/painel/novo?data=${slot.date}&hora=${hm(slot.minute)}&profissional=${slot.proId}`}>
+            <button
+              type="button"
+              className="pn-btn sm pn-g-brand"
+              onClick={() => {
+                openQuickBook({ date: slot.date, time: slot.minute, professionalId: slot.proId });
+                setSlot(null);
+              }}
+            >
               Marcar horário
-            </Link>
+            </button>
             <Link className="pn-btn sm soft" href={`/painel/bloqueios?data=${slot.date}`}>
               Bloquear
             </Link>

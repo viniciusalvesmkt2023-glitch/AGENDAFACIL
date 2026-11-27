@@ -1,5 +1,7 @@
 "use client";
 
+import { openQuickBook } from "@/components/quick-book-trigger";
+
 import { useRef } from "react";
 import { useRouter } from "next/navigation";
 import { CalendarDays } from "lucide-react";
@@ -23,5 +25,14 @@ export function DatePickerButton({ date, professional, view = "dia" }: { date: s
         }}
       />
     </label>
+  );
+}
+
+/** Botão "Novo agendamento" do topo da agenda: abre o Agendamento rápido no dia que está aberto. */
+export function NewAppointmentButton({ date, className, children }: { date: string; className: string; children: React.ReactNode }) {
+  return (
+    <button type="button" className={className} onClick={() => openQuickBook({ date })} data-testid="agenda-new">
+      {children}
+    </button>
   );
 }
