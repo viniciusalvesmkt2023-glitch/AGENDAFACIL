@@ -156,7 +156,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ c
         <div className="lp-wrap">
           <span className="eyebrow">Como funciona</span>
           <h2 className="lp-disp">Comece a receber agendamentos <em>hoje</em></h2>
-          <p className="lead">Sem instalar nada. Você configura pelo celular e já sai com o seu link pronto para divulgar.</p>
+          <p className="lead">Funciona direto no navegador, no celular ou no computador. Em poucos minutos seu link está pronto para divulgar.</p>
           <HowItWorks trialDays={TRIAL_DAYS} />
         </div>
       </section>
