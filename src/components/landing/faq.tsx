@@ -46,9 +46,18 @@ export function Faq({ items, trialDays, whatsappHref, email }: { items: FaqItem[
             </div>
           </div>
           <div className="fq-stats">
-            <div><b>{trialDays} dias</b><small>grátis</small></div>
-            <div><b>5 min</b><small>pra configurar</small></div>
-            <div><b>0</b><small>fidelidade</small></div>
+            <div>
+              <i className="fq-g-green"><I d='<rect x="3" y="8" width="18" height="4" rx="1"/><path d="M12 8v13M19 12v7a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2v-7M7.5 8a2.5 2.5 0 0 1 0-5C10 3 12 8 12 8s2-5 4.5-5a2.5 2.5 0 0 1 0 5"/>' /></i>
+              <b>{trialDays} dias</b><small>grátis</small>
+            </div>
+            <div>
+              <i className="fq-g-brand"><I d='<path d="M13 2 3 14h9l-1 8 10-12h-9z"/>' /></i>
+              <b>5 min</b><small>pra configurar</small>
+            </div>
+            <div>
+              <i className="fq-g-purple"><I d='<rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 9.9-1"/>' /></i>
+              <b>0</b><small>fidelidade</small>
+            </div>
           </div>
         </div>
         <div>

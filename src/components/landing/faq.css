@@ -31,10 +31,13 @@
 .fq .fq-help .fq-acts a { height: 44px; border-radius: 13px; display: inline-flex; align-items: center; justify-content: center; gap: 7px; font-weight: 700; font-size: 14px; color: #fff; text-decoration: none; }
 .fq .fq-help .fq-acts a.fq-soft { background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.12); }
 .fq .fq-help .fq-acts svg { width: 17px; height: 17px; }
-.fq .fq-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 14px; }
-.fq .fq-stats div { border-radius: 16px; background: #fff; border: 1px solid var(--line); padding: 12px; box-shadow: var(--shadow); }
-.fq .fq-stats b { display: block; font-family: var(--disp); font-size: 22px; color: var(--navy); }
-.fq .fq-stats small { font-size: 12px; color: var(--muted); }
+.fq .fq-stats { display: grid; grid-template-columns: repeat(3, 1fr); margin-top: 14px; border-radius: 20px; background: #fff; border: 1px solid var(--line); box-shadow: var(--shadow); padding: 14px 4px; }
+.fq .fq-stats > div { text-align: center; padding: 0 6px; min-width: 0; }
+.fq .fq-stats > div + div { border-left: 1px dashed rgba(0,0,0,.12); }
+.fq .fq-stats i { width: 34px; height: 34px; border-radius: 11px; display: grid; place-items: center; color: #fff; margin: 0 auto; box-shadow: 0 6px 12px rgba(0,0,0,.12); }
+.fq .fq-stats i svg { width: 17px; height: 17px; }
+.fq .fq-stats b { display: block; margin-top: 8px; font-family: var(--disp); font-size: 22px; color: var(--navy); font-variant-numeric: tabular-nums; }
+.fq .fq-stats small { display: block; font-size: 12px; color: var(--muted); }
 .fq .fq-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 14px; }
 .fq .fq-chips button { height: 36px; padding: 0 14px; border-radius: 99px; border: 1px solid var(--line); background: #fff; font: 600 13.5px var(--ui); color: var(--navy); cursor: pointer; transition: all .25s; }
 .fq .fq-chips button.on { background: var(--navy); color: #fff; border-color: transparent; }
