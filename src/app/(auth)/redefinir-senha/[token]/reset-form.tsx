@@ -2,24 +2,18 @@
 
 import { useActionState } from "react";
 import { resetPassword } from "../../password-actions";
-import { FormMessage } from "@/components/ui";
-import { SubmitButton } from "@/components/submit-button";
+import { ErrorBox, GoButton, PasswordField } from "../../fields";
 
 export function ResetForm({ token }: { token: string }) {
   const [state, action] = useActionState(resetPassword, undefined);
   return (
-    <form action={action} className="mt-6 space-y-4">
+    <form action={action}>
       <input type="hidden" name="token" value={token} />
-      <div>
-        <label className="label" htmlFor="password">Nova senha</label>
-        <input className="input" id="password" name="password" type="password" required minLength={8} autoComplete="new-password" />
-      </div>
-      <div>
-        <label className="label" htmlFor="confirm">Repita a nova senha</label>
-        <input className="input" id="confirm" name="confirm" type="password" required minLength={8} autoComplete="new-password" />
-      </div>
-      <FormMessage error={state?.error} />
-      <SubmitButton className="btn-primary w-full" pendingText="Salvando...">Salvar nova senha</SubmitButton>
+      <ErrorBox error={state?.error} />
+      <PasswordField id="password" label="Nova senha" required minLength={8} autoComplete="new-password" placeholder="Pelo menos 8 caracteres" />
+      <PasswordField id="confirm" label="Repita a nova senha" required minLength={8} autoComplete="new-password" placeholder="Digite de novo" />
+      <p className="au-hint" style={{ margin: "0 0 16px" }}>Por segurança, os outros aparelhos conectados serão desconectados.</p>
+      <GoButton pending="Salvando...">Salvar nova senha</GoButton>
     </form>
   );
 }

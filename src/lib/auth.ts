@@ -1,38 +1,17 @@
 import "server-only";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
-import { SignJWT, jwtVerify } from "jose";
 import { db } from "./db";
 import { hasAccess } from "./subscription";
+import { COOKIE_NAME, cookieOptions, readSession, signSession } from "./session-token";
 
-const COOKIE_NAME = "agendafacil_session";
-const SESSION_DAYS = 30;
+type NewSession = { userId: string; businessId: string; sessionVersion: number; remember?: boolean };
 
-function getSecret() {
-  const secret = process.env.AUTH_SECRET;
-  if (!secret || secret.length < 16) {
-    throw new Error("AUTH_SECRET não configurado (mínimo 16 caracteres). Veja .env.example.");
-  }
-  return new TextEncoder().encode(secret);
-}
-
-type SessionPayload = { userId: string; businessId: string };
-
-export async function createSession(payload: SessionPayload) {
-  const token = await new SignJWT(payload)
-    .setProtectedHeader({ alg: "HS256" })
-    .setIssuedAt()
-    .setExpirationTime(`${SESSION_DAYS}d`)
-    .sign(getSecret());
-
+/** Entra na conta neste aparelho. Com "manter conectado" (padrão) o login fica salvo por 180 dias. */
+export async function createSession({ userId, businessId, sessionVersion, remember = true }: NewSession) {
+  const token = await signSession({ userId, businessId, v: sessionVersion, remember });
   const store = await cookies();
-  store.set(COOKIE_NAME, token, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "lax",
-    path: "/",
-    maxAge: SESSION_DAYS * 24 * 60 * 60,
-  });
+  store.set(COOKIE_NAME, token, cookieOptions(remember));
 }
 
 export async function destroySession() {
@@ -40,28 +19,34 @@ export async function destroySession() {
   store.delete(COOKIE_NAME);
 }
 
-export async function getSession(): Promise<SessionPayload | null> {
+/** Lê o login do cookie (sem olhar o banco). */
+async function readCookie() {
   const store = await cookies();
-  const token = store.get(COOKIE_NAME)?.value;
-  if (!token) return null;
-  try {
-    const { payload } = await jwtVerify(token, getSecret());
-    if (typeof payload.userId !== "string" || typeof payload.businessId !== "string") return null;
-    return { userId: payload.userId, businessId: payload.businessId };
-  } catch {
-    return null;
-  }
+  return readSession(store.get(COOKIE_NAME)?.value);
+}
+
+/** Login válido: o token confere e a senha não foi trocada depois dele (troca de senha desconecta os outros aparelhos). */
+export async function getSession(): Promise<{ userId: string; businessId: string; remember: boolean } | null> {
+  const s = await readCookie();
+  if (!s) return null;
+  const u = await db.user.findUnique({ where: { id: s.userId }, select: { businessId: true, sessionVersion: true } });
+  if (!u || u.businessId !== s.businessId || u.sessionVersion !== s.v) return null;
+  return { userId: s.userId, businessId: s.businessId, remember: s.remember };
+}
+
+/** Usuário logado (ou null), já com o estabelecimento. */
+export async function getCurrentUser() {
+  const s = await readCookie();
+  if (!s) return null;
+  const user = await db.user.findUnique({ where: { id: s.userId }, include: { business: true } });
+  if (!user || user.businessId !== s.businessId || user.sessionVersion !== s.v) return null;
+  return user;
 }
 
 /** Retorna o usuário logado e seu estabelecimento, ou redireciona para o login. */
 export async function requireUser() {
-  const session = await getSession();
-  if (!session) redirect("/entrar");
-  const user = await db.user.findUnique({
-    where: { id: session.userId },
-    include: { business: true },
-  });
-  if (!user || user.businessId !== session.businessId) redirect("/entrar");
+  const user = await getCurrentUser();
+  if (!user) redirect("/entrar");
   return user;
 }
 

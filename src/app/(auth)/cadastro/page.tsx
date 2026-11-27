@@ -1,47 +1,11 @@
-"use client";
+import type { Metadata } from "next";
+import { redirect } from "next/navigation";
+import { getCurrentUser } from "@/lib/auth";
+import { SignupForm } from "./signup-form";
 
-import Link from "next/link";
-import { useActionState } from "react";
-import { signup } from "../actions";
-import { FormMessage } from "@/components/ui";
-import { SubmitButton } from "@/components/submit-button";
+export const metadata: Metadata = { title: "Criar conta — HoraBoa" };
 
-export default function SignupPage() {
-  const [state, action] = useActionState(signup, undefined);
-  return (
-    <>
-      <h1 className="text-2xl font-extrabold">Crie sua conta</h1>
-      <p className="mt-1 text-sm text-zinc-500">Comece a receber agendamentos em poucos minutos.</p>
-      <form action={action} className="mt-6 space-y-4">
-        <div>
-          <label className="label" htmlFor="name">Seu nome</label>
-          <input className="input" id="name" name="name" required autoComplete="name" defaultValue={state?.values?.name} />
-        </div>
-        <div>
-          <label className="label" htmlFor="businessName">Nome do estabelecimento</label>
-          <input className="input" id="businessName" name="businessName" required placeholder="Ex.: Barbearia do João" defaultValue={state?.values?.businessName} />
-        </div>
-        <div>
-          <label className="label" htmlFor="email">E-mail</label>
-          <input className="input" id="email" name="email" type="email" required autoComplete="email" defaultValue={state?.values?.email} />
-        </div>
-        <div>
-          <label className="label" htmlFor="password">Senha</label>
-          <input className="input" id="password" name="password" type="password" required minLength={8} autoComplete="new-password" />
-        </div>
-        <label className="flex items-start gap-2 text-sm text-zinc-600">
-          <input type="checkbox" name="acceptTerms" required defaultChecked={state?.values?.acceptTerms === "on"} className="mt-0.5 h-4 w-4 accent-brand-600" />
-          <span>
-            Li e aceito os <Link href="/termos" target="_blank" className="text-brand-700 underline">Termos de Uso</Link> e a{" "}
-            <Link href="/privacidade" target="_blank" className="text-brand-700 underline">Política de Privacidade</Link>.
-          </span>
-        </label>
-        <FormMessage error={state?.error} />
-        <SubmitButton className="btn-primary w-full" pendingText="Criando conta...">Criar conta</SubmitButton>
-      </form>
-      <p className="mt-6 text-center text-sm text-zinc-500">
-        Já tem conta? <Link href="/entrar" className="font-medium text-brand-700">Entrar</Link>
-      </p>
-    </>
-  );
+export default async function SignupPage() {
+  if (await getCurrentUser()) redirect("/painel");
+  return <SignupForm />;
 }

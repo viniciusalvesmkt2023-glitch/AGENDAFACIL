@@ -76,7 +76,7 @@ export async function signup(_: FormState, formData: FormData): Promise<FormStat
     return tx.user.create({ data: { name, email, passwordHash, businessId: business.id, termsAcceptedAt: new Date() } });
   });
 
-  await createSession({ userId: user.id, businessId: user.businessId });
+  await createSession({ userId: user.id, businessId: user.businessId, sessionVersion: user.sessionVersion });
   // Abre a configuração guiada (5 passos)
   redirect("/comecar");
 }
@@ -95,7 +95,9 @@ export async function login(_: FormState, formData: FormData): Promise<FormState
     return { error: "E-mail ou senha incorretos.", values: keep(formData) };
   }
 
-  await createSession({ userId: user.id, businessId: user.businessId });
+  // "Manter conectado neste aparelho" vem marcado; desmarcado, o login some ao fechar o navegador
+  const remember = formData.get("remember") === "on";
+  await createSession({ userId: user.id, businessId: user.businessId, sessionVersion: user.sessionVersion, remember });
   redirect("/painel");
 }
 

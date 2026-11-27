@@ -13,16 +13,17 @@ export default async function ResetPasswordPage({ params }: Props) {
   if (!valid) {
     return (
       <>
-        <h1 className="text-2xl font-extrabold">Link inválido ou expirado</h1>
-        <p className="mt-2 text-sm text-zinc-500">Peça um novo link para redefinir sua senha.</p>
-        <Link href="/esqueci-senha" className="btn-primary mt-6 w-full">Pedir novo link</Link>
+        <h1>Link inválido ou expirado</h1>
+        <p className="au-sub">Peça um novo link para redefinir sua senha.</p>
+        <Link href="/esqueci-senha" className="au-alt">Pedir novo link</Link>
+        <Link href="/entrar" className="au-back">← Voltar para o login</Link>
       </>
     );
   }
   return (
     <>
-      <h1 className="text-2xl font-extrabold">Criar nova senha</h1>
-      <p className="mt-1 text-sm text-zinc-500">Escolha uma senha com pelo menos 8 caracteres.</p>
+      <h1>Criar nova senha</h1>
+      <p className="au-sub">Escolha uma senha com pelo menos 8 caracteres.</p>
       <ResetForm token={token} />
     </>
   );

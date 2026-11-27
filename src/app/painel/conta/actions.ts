@@ -5,7 +5,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { db } from "@/lib/db";
-import { destroySession, requireUser } from "@/lib/auth";
+import { createSession, destroySession, getSession, requireUser } from "@/lib/auth";
 import { getStripe } from "@/lib/stripe";
 import { cancelAsaasSubscription } from "@/lib/pix/asaas-billing";
 import { deleteInstance, logoutInstance } from "@/lib/evolution";
@@ -39,10 +39,13 @@ export async function changePassword(_: AccountState, formData: FormData): Promi
   if (next.length < 8) return { error: "A nova senha precisa ter pelo menos 8 caracteres." };
   if (next !== confirm) return { error: "A confirmação não é igual à nova senha." };
   if (next === current) return { error: "A nova senha precisa ser diferente da atual." };
-  await db.user.update({ where: { id: user.id }, data: { passwordHash: await bcrypt.hash(next, 10) } });
+  const remember = (await getSession())?.remember ?? true;
+  // Senha nova desconecta os outros aparelhos; este continua conectado
+  const updated = await db.user.update({ where: { id: user.id }, data: { passwordHash: await bcrypt.hash(next, 10), sessionVersion: { increment: 1 } } });
+  await createSession({ userId: updated.id, businessId: updated.businessId, sessionVersion: updated.sessionVersion, remember });
   // Links de "esqueci minha senha" antigos deixam de valer
   await db.passwordResetToken.deleteMany({ where: { userId: user.id, usedAt: null } });
-  return { success: "Senha alterada." };
+  return { success: "Senha alterada. Os outros aparelhos foram desconectados." };
 }
 
 /** Exclui a conta e todos os dados do estabelecimento (LGPD). Cancela as cobranças antes. */

@@ -65,14 +65,15 @@ export async function resetPassword(_: ResetState, formData: FormData): Promise<
     return { error: "Este link é inválido ou expirou. Peça um novo." };
   }
 
-  await db.$transaction([
-    db.user.update({ where: { id: record.userId }, data: { passwordHash: await bcrypt.hash(password, 10) } }),
+  const [updated] = await db.$transaction([
+    // nova senha: os outros aparelhos com login salvo são desconectados
+    db.user.update({ where: { id: record.userId }, data: { passwordHash: await bcrypt.hash(password, 10), sessionVersion: { increment: 1 } } }),
     db.passwordResetToken.update({ where: { id: record.id }, data: { usedAt: new Date() } }),
     // Invalida outros links pendentes
     db.passwordResetToken.deleteMany({ where: { userId: record.userId, usedAt: null, id: { not: record.id } } }),
   ]);
 
-  await createSession({ userId: record.user.id, businessId: record.user.businessId });
+  await createSession({ userId: updated.id, businessId: updated.businessId, sessionVersion: updated.sessionVersion });
   redirect("/painel");
 }
 

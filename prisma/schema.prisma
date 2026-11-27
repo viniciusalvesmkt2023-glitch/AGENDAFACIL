@@ -143,6 +143,8 @@ model User {
   businessId   String
   business     Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
   termsAcceptedAt DateTime?
+  // Aumenta quando a senha muda: derruba o login salvo nos outros aparelhos
+  sessionVersion Int      @default(0)
   panelTheme   String   @default("LIGHT") // tema do painel: LIGHT | DARK (chave no topo do painel)
   // Como a agenda abre (fica salvo na conta): DIA | SEMANA | LISTA, profissional (null = todos) e cancelados
   agendaView         String   @default("dia")
