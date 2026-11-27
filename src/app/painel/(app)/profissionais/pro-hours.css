@@ -48,3 +48,15 @@
 .pn .pr-mini i { height: 5px; border-radius: 3px; background: var(--pn-line2); }
 .pn .pr-mini i.on { background: var(--b); }
 }
+
+@layer components {
+.pn .pr-ctypes { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 8px; }
+.pn .pr-ctypes label { position: relative; cursor: pointer; }
+.pn .pr-ctypes input { position: absolute; opacity: 0; }
+.pn .pr-ctypes span { display: block; height: 100%; padding: 10px 12px; border-radius: 14px; border: 1.5px solid var(--pn-line2); background: var(--ui-solid); font-weight: 700; font-size: 13.5px; color: var(--pn-fg); }
+.pn .pr-ctypes small { display: block; margin-top: 2px; font-weight: 500; font-size: 11.5px; color: var(--pn-muted); }
+.pn .pr-ctypes input:checked + span { border-color: var(--b); background: color-mix(in srgb, var(--b) 9%, var(--ui-solid)); }
+.pn .pr-ctypes input:focus-visible + span { outline: 3px solid color-mix(in srgb, var(--b) 40%, transparent); }
+.pn .pr-cfield { display: block; margin-top: 10px; }
+.pn .pr-ex { margin: 10px 0 0; padding: 10px 12px; border-radius: 12px; background: var(--pn-raised); font-size: 12.5px; color: var(--pn-muted); }
+}

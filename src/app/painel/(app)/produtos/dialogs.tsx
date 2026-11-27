@@ -46,7 +46,7 @@ const toCents = (v: string) => {
 };
 
 /** Todas as janelas de produto (uma por vez). */
-export function ProductDialogs({ products }: { products: ProductLite[] }) {
+export function ProductDialogs({ products, professionals = [] }: { products: ProductLite[]; professionals?: { id: string; name: string }[] }) {
   const [open, setOpen] = useState<Open | null>(null);
   const [toast, setToast] = useState<string | null>(null);
   useEffect(() => {
@@ -73,7 +73,7 @@ export function ProductDialogs({ products }: { products: ProductLite[] }) {
           {open.kind === "new" || open.kind === "edit" ? (
             <ProductForm product={open.kind === "edit" ? products.find((p) => p.id === open.id) : undefined} onClose={close} onDone={done} />
           ) : open.kind === "sell" ? (
-            <SellForm products={products.filter((p) => p.active)} initial={open.id} onClose={close} onDone={done} />
+            <SellForm products={products.filter((p) => p.active)} professionals={professionals} initial={open.id} onClose={close} onDone={done} />
           ) : (
             <MoveForm products={products} kind={open.move} initial={open.id} onClose={close} onDone={done} />
           )}
@@ -243,13 +243,14 @@ function ProductSelect({ products, value, onChange }: { products: ProductLite[];
   );
 }
 
-function SellForm({ products, initial, onClose, onDone }: { products: ProductLite[]; initial?: string; onClose: () => void; onDone: (m: string) => void }) {
+function SellForm({ products, professionals, initial, onClose, onDone }: { products: ProductLite[]; professionals: { id: string; name: string }[]; initial?: string; onClose: () => void; onDone: (m: string) => void }) {
   const router = useRouter();
   const [id, setId] = useState(initial && products.some((p) => p.id === initial) ? initial : (products[0]?.id ?? ""));
   const p = products.find((x) => x.id === id);
   const [qty, setQty] = useState(1);
   const [price, setPrice] = useState(priceText(p?.priceCents ?? 0));
   const [method, setMethod] = useState("PIX");
+  const [seller, setSeller] = useState("");
   const [q, setQ] = useState("");
   const [found, setFound] = useState<{ id: string; name: string; phone: string }[]>([]);
   const [client, setClient] = useState<{ id: string; name: string; phone: string } | null>(null);
@@ -274,7 +275,7 @@ function SellForm({ products, initial, onClose, onDone }: { products: ProductLit
     setError(null);
     if (!Number.isFinite(unit) || unit < 0) return setError("Confira o valor.");
     setSaving(true);
-    const r = await sellProduct({ productId: p!.id, quantity: qty, unitPriceCents: unit, paymentMethod: method, clientId: client?.id }).catch(() => ({ ok: false as const, error: "Não foi possível registrar." }));
+    const r = await sellProduct({ productId: p!.id, quantity: qty, unitPriceCents: unit, paymentMethod: method, clientId: client?.id, professionalId: seller || null }).catch(() => ({ ok: false as const, error: "Não foi possível registrar." }));
     setSaving(false);
     if (!r.ok) return setError(r.error);
     onDone(`Venda registrada: ${money(r.total)} · ficam ${r.balance} no estoque`);
@@ -325,6 +326,19 @@ function SellForm({ products, initial, onClose, onDone }: { products: ProductLit
             </select>
           </label>
         </div>
+        {professionals.length > 0 && (
+          <label>
+            <span className="qb-lbl">Quem vendeu (opcional · para a comissão)</span>
+            <select className="qb-in" value={seller} onChange={(e) => setSeller(e.target.value)} data-testid="sell-seller">
+              <option value="">Ninguém / balcão</option>
+              {professionals.map((p) => (
+                <option key={p.id} value={p.id}>
+                  {p.name}
+                </option>
+              ))}
+            </select>
+          </label>
+        )}
         <div className="qb-client">
           <span className="qb-lbl">Cliente (opcional)</span>
           {client ? (

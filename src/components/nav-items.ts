@@ -10,6 +10,7 @@ import {
   Clock,
   MessageCircle,
   Package,
+  Wallet,
   Boxes,
   Plus,
   Scissors,
@@ -33,6 +34,7 @@ export const NAV_ITEMS: MenuItem[] = [
   { href: "/painel/bloqueios", label: "Bloqueios de agenda", desc: "Folgas, férias e compromissos", icon: Lock, color: "pn-g-amber" },
   { href: "/painel/produtos", label: "Produtos", desc: "Catálogo e vendas no balcão", icon: Package, color: "pn-g-teal" },
   { href: "/painel/produtos/estoque", label: "Controle de estoque", desc: "Entradas, saídas e vendas", icon: Boxes, color: "pn-g-teal" },
+  { href: "/painel/financas", label: "Finanças", desc: "Faturamento, comissões e lucro", icon: Wallet, color: "pn-g-green" },
   { href: "/painel/pagina", label: "Minha página", desc: "Logo, capa, cor e redes sociais", icon: Palette, color: "pn-g-purple" },
   { href: "/painel/whatsapp", label: "WhatsApp", desc: "Confirmações e lembretes", icon: MessageCircle, color: "pn-g-wa" },
   { href: "/painel/configuracoes", label: "Configurações", desc: "Dados e regras de agendamento", icon: SlidersHorizontal, color: "pn-g-gray" },
@@ -75,6 +77,7 @@ export const SIDEBAR: NavEntry[] = [
       { href: "/painel/produtos/estoque", label: "Controle de estoque" },
     ],
   },
+  { kind: "item", href: "/painel/financas" },
   { kind: "item", href: "/painel/pagina" },
   { kind: "item", href: "/painel/whatsapp" },
   {

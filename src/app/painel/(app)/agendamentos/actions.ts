@@ -107,7 +107,7 @@ async function readSheet(file: File): Promise<{ rows: { line: number; raw: Raw }
   return { rows };
 }
 
-type Planned = { line: number; date: string; start: number; end: number; name: string; phone: string; serviceId: string; professionalId: string; priceCents: number; paid: "PIX" | "CASH" | "CARD" | null };
+type Planned = { line: number; date: string; start: number; end: number; name: string; phone: string; serviceId: string; professionalId: string; priceCents: number; paid: "PIX" | "CASH" | "DEBIT" | "CREDIT" | null };
 type Plan = { valid: Planned[]; problems: { line: number; msg: string }[]; duplicates: number };
 
 async function planImport(businessId: string, file: File): Promise<Plan | { error: string }> {

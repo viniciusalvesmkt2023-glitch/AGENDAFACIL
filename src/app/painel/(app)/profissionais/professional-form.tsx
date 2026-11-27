@@ -5,10 +5,11 @@ import { Camera, Loader2, Trash2 } from "lucide-react";
 import { saveProfessional } from "@/app/painel/actions";
 import { resizeImage } from "@/lib/resize-image";
 import { ProHoursFields, type HourRow } from "./pro-hours-fields";
+import { CommissionFields } from "./commission-fields";
 import { FormMessage } from "@/components/ui";
 import { SubmitButton } from "@/components/submit-button";
 
-type Professional = { id: string; name: string; phone: string | null; serviceIds: string[]; imageId?: string | null; customHours?: boolean; hours?: HourRow[] };
+type Professional = { id: string; name: string; phone: string | null; serviceIds: string[]; imageId?: string | null; customHours?: boolean; hours?: HourRow[]; commissionType?: string; commissionRate?: number; productCommissionBps?: number };
 
 export function ProfessionalForm({
   professional,
@@ -140,6 +141,12 @@ export function ProfessionalForm({
         business={businessHours}
         own={professional?.hours ?? []}
         initialCustom={professional?.customHours ?? false}
+      />
+      <CommissionFields
+        key={`c${hoursKey}`}
+        type={professional?.commissionType ?? "NONE"}
+        rate={professional?.commissionRate ?? 0}
+        productBps={professional?.productCommissionBps ?? 0}
       />
       <fieldset>
         <legend className="label">Serviços que realiza</legend>

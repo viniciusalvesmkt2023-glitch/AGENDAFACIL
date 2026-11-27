@@ -82,7 +82,7 @@ async function takeFromStock(businessId: string, productId: string, n: number) {
 }
 
 /** Registrar venda: baixa o estoque e guarda valor, pagamento e cliente (opcional). */
-export async function sellProduct(input: { productId: string; quantity: number; unitPriceCents: number; paymentMethod: string; clientId?: string | null }) {
+export async function sellProduct(input: { productId: string; quantity: number; unitPriceCents: number; paymentMethod: string; clientId?: string | null; professionalId?: string | null }) {
   const user = await requireActiveUser();
   const n = qty.safeParse(input.quantity);
   if (!n.success) return { ok: false as const, error: n.error.issues[0].message };
@@ -91,6 +91,7 @@ export async function sellProduct(input: { productId: string; quantity: number; 
   const product = await db.product.findFirst({ where: { id: input.productId, businessId: user.businessId } });
   if (!product) return { ok: false as const, error: "Produto não encontrado." };
   if (input.clientId && !(await db.client.findFirst({ where: { id: input.clientId, businessId: user.businessId } }))) return { ok: false as const, error: "Cliente não encontrado." };
+  if (input.professionalId && !(await db.professional.findFirst({ where: { id: input.professionalId, businessId: user.businessId } }))) return { ok: false as const, error: "Profissional não encontrado." };
   const after = await takeFromStock(user.businessId, product.id, n.data);
   if (!after) return { ok: false as const, error: `Só tem ${product.stock} no estoque.` };
   const total = input.unitPriceCents * n.data;
@@ -104,6 +105,8 @@ export async function sellProduct(input: { productId: string; quantity: number; 
       totalCents: total,
       paymentMethod: input.paymentMethod,
       clientId: input.clientId || null,
+      professionalId: input.professionalId || null,
+      costCents: product.costCents != null ? product.costCents * n.data : null,
     },
   });
   refresh();

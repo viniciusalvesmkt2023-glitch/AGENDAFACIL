@@ -53,6 +53,9 @@ export default async function ProfessionalsPage({ searchParams }: Props) {
                   serviceIds: editing.services.map((s) => s.serviceId),
                   imageId: editing.imageId,
                   customHours: editing.customHours,
+                  commissionType: editing.commissionType,
+                  commissionRate: editing.commissionRate,
+                  productCommissionBps: editing.productCommissionBps,
                   hours: editing.hours.map(pick),
                 }
               }

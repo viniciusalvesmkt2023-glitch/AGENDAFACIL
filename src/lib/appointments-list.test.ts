@@ -34,7 +34,8 @@ describe("planilha", () => {
     expect(parseMoney(45.5)).toBe(4550);
     expect(parseMoney("")).toBeNull();
     expect(parsePaid("Pix")).toBe("PIX");
-    expect(parsePaid("Cartão de crédito")).toBe("CARD");
+    expect(parsePaid("Cartão de crédito")).toBe("CREDIT");
+    expect(parsePaid("débito")).toBe("DEBIT");
     expect(parsePaid("sim")).toBe("CASH");
     expect(parsePaid("não")).toBeNull();
     expect(parsePaid("")).toBeNull();

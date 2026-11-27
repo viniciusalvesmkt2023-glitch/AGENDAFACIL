@@ -110,6 +110,12 @@ model Business {
   images        BusinessImage[]
   products      Product[]
   stockMoves    StockMove[]
+  expenses      Expense[]
+  // Taxa da maquininha/banco por forma de pagamento, em centésimos de % (349 = 3,49%)
+  feePixBps     Int @default(0)
+  feeCashBps    Int @default(0)
+  feeDebitBps   Int @default(0)
+  feeCreditBps  Int @default(0)
   adminActions AdminAction[]
 }
 
@@ -123,6 +129,10 @@ model User {
   business     Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
   termsAcceptedAt DateTime?
   panelTheme   String   @default("LIGHT") // tema do painel: LIGHT | DARK (chave no topo do painel)
+  // Como a agenda abre (fica salvo na conta): DIA | SEMANA | LISTA, profissional (null = todos) e cancelados
+  agendaView         String   @default("dia")
+  agendaProfessional String?
+  agendaShowCanceled Boolean  @default(false)
   createdAt    DateTime @default(now())
 
   passwordResetTokens PasswordResetToken[]
@@ -208,6 +218,11 @@ model Professional {
   name       String
   phone      String?
   imageId    String? // foto do profissional (BusinessImage, kind PROFESSIONAL)
+  // Comissão: NONE | PERCENT (commissionRate em centésimos de %) | PER_SERVICE (centavos por atendimento) | SALARY (centavos por mês)
+  commissionType     String @default("NONE")
+  commissionRate     Int    @default(0)
+  productCommissionBps Int  @default(0) // % sobre os produtos que ele vender
+  productSales       StockMove[]
   active     Boolean  @default(true)
   // false = segue o horário do estabelecimento; true = usa ProfessionalHour
   customHours Boolean @default(false)
@@ -406,8 +421,27 @@ model StockMove {
   paymentMethod String? // PIX | CASH | CARD
   clientId      String?
   client        Client?  @relation(fields: [clientId], references: [id], onDelete: SetNull)
+  costCents     Int? // custo total do que foi vendido (para o lucro)
+  professionalId String? // quem vendeu (comissão sobre produtos)
+  professional  Professional? @relation(fields: [professionalId], references: [id], onDelete: SetNull)
   createdAt     DateTime @default(now())
 
   @@index([businessId, createdAt])
   @@index([productId, createdAt])
+}
+
+// Despesa do estabelecimento (aluguel, luz, material...). Fixa = repete todo mês no mesmo dia até endDate.
+model Expense {
+  id          String   @id @default(cuid())
+  businessId  String
+  business    Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  description String
+  category    String // ALUGUEL | CONTAS | MATERIAL | MARKETING | PESSOAL | OUTROS
+  amountCents Int
+  date        String // "YYYY-MM-DD" (primeira vez, se for fixa)
+  recurring   Boolean  @default(false)
+  endDate     String? // fixa: até quando repete (null = continua)
+  createdAt   DateTime @default(now())
+
+  @@index([businessId, date])
 }

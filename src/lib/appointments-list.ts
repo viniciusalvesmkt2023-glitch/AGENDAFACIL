@@ -95,10 +95,11 @@ export function parseMoney(v: unknown): number | null {
 }
 
 /** "sim", "pago", "pix", "dinheiro", "cartão" → forma de pagamento (ou null = a receber). */
-export function parsePaid(v: unknown): "PIX" | "CASH" | "CARD" | null {
+export function parsePaid(v: unknown): "PIX" | "CASH" | "DEBIT" | "CREDIT" | null {
   const s = fold(String(v ?? ""));
   if (!s || ["nao", "n", "a receber", "pendente", "0", "false"].includes(s)) return null;
   if (s.includes("pix")) return "PIX";
-  if (s.includes("cart") || s.includes("credito") || s.includes("debito")) return "CARD";
+  if (s.includes("debito")) return "DEBIT";
+  if (s.includes("cart") || s.includes("credito")) return "CREDIT";
   return "CASH";
 }

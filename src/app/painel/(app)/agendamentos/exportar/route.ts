@@ -2,7 +2,7 @@ import ExcelJS from "exceljs";
 import { requireActiveUser } from "@/lib/auth";
 import { nowInTimezone, minutesToTime } from "@/lib/time";
 import { formatPhone } from "@/lib/format";
-import { PAYMENT_METHODS, isPaymentMethod } from "@/lib/quick-book";
+import { methodLabel } from "@/lib/quick-book";
 import { listAppointments, readFilters } from "../query";
 
 const STATUS: Record<string, string> = { SCHEDULED: "Agendado", CONFIRMED: "Confirmado", COMPLETED: "Concluído", NO_SHOW: "Faltou", CANCELED: "Cancelado" };
@@ -40,7 +40,7 @@ export async function GET(req: Request) {
       servico: a.service.name,
       profissional: a.professional.name,
       situacao: STATUS[a.status] ?? a.status,
-      pagamento: a.paymentStatus === "PAID" ? `Pago${isPaymentMethod(a.paymentMethod) ? ` · ${PAYMENT_METHODS[a.paymentMethod]}` : ""}` : a.status === "CANCELED" || a.status === "NO_SHOW" ? "—" : "A receber",
+      pagamento: a.paymentStatus === "PAID" ? `Pago${a.paymentMethod ? ` · ${methodLabel(a.paymentMethod)}` : ""}` : a.status === "CANCELED" || a.status === "NO_SHOW" ? "—" : "A receber",
       valor: a.priceCents / 100,
       obs: a.notes ?? "",
     });

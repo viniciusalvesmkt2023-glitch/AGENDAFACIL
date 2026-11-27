@@ -277,3 +277,24 @@ body:has(.pn) { --o-zinc-50: var(--color-zinc-50); --o-zinc-100: var(--color-zin
 .pn-nav-sub a:hover { background: var(--pn-raised); color: var(--pn-fg); }
 .pn-nav-sub a.on { background: var(--tint); color: var(--pn-fg); }
 }
+
+/* Faixa de dias menor e dias fechados em vermelho riscado */
+@layer components {
+.pn .pn-days { gap: 6px; }
+.pn .pn-day { width: 44px; padding: 7px 0 6px; border-radius: 15px; position: relative; }
+.pn .pn-day small { font-size: 9.5px; }
+.pn .pn-day b { font-size: 16px; }
+.pn .pn-day i { width: 4px; height: 4px; margin-top: 3px; }
+.pn .pn-day.closed { background: color-mix(in srgb, #dc2626 8%, var(--ui-solid)); border-color: rgba(220, 38, 38, 0.3); color: #dc2626; }
+.pn .pn-day.closed small { color: rgba(220, 38, 38, 0.75); }
+.pn .pn-day.closed::after { content: ""; position: absolute; left: 9px; right: 9px; top: 50%; border-top: 1.5px solid rgba(220, 38, 38, 0.55); transform: rotate(-35deg); }
+.pn .pn-day.closed i { opacity: 0; }
+.pn .pn-day.closed.sel { background: linear-gradient(145deg, #f87171, #dc2626); color: #fff; box-shadow: 0 8px 18px rgba(220, 38, 38, 0.35); }
+.pn .pn-day.closed.sel small { color: rgba(255, 255, 255, 0.9); }
+.pn .pn-day.closed.sel::after { border-color: rgba(255, 255, 255, 0.6); }
+.pn.pn-dark .pn-day.closed:not(.sel) { color: #f87171; }
+.pn .ag-closed { display: flex; align-items: center; gap: 10px; padding: 11px 14px; border-radius: 16px; font-size: 14px; color: var(--pn-fg);
+  background: color-mix(in srgb, #dc2626 8%, var(--ui-solid)); border: 1px solid rgba(220, 38, 38, 0.25); }
+.pn .ag-closed > svg { width: 20px; height: 20px; color: #dc2626; flex-shrink: 0; }
+.pn .ag-closed span { color: var(--pn-muted); }
+}

@@ -4,7 +4,7 @@ import { db } from "@/lib/db";
 import { requireActiveUser } from "@/lib/auth";
 import { formatMoney, formatPhone } from "@/lib/format";
 import { MOVE_KINDS, isMoveKind } from "@/lib/products";
-import { PAYMENT_METHODS, isPaymentMethod } from "@/lib/quick-book";
+import { methodLabel } from "@/lib/quick-book";
 import { ProductButton, ProductDialogs } from "../dialogs";
 import { StockFilters } from "./filters";
 import "../../agendamentos/agendamentos.css";
@@ -26,10 +26,11 @@ export default async function StockPage({ searchParams }: Props) {
     orderBy: { createdAt: "desc" },
     take: 300,
   });
+  const sellers = await db.professional.findMany({ where: { businessId: user.businessId, active: true }, orderBy: { name: "asc" }, select: { id: true, name: true } });
   const lite = products.map((x) => ({ id: x.id, name: x.name, code: x.code, priceCents: x.priceCents, costCents: x.costCents, stock: x.stock, minStock: x.minStock, description: x.description, imageId: x.imageId, active: x.active }));
   const detail = (m: (typeof moves)[number]) =>
     m.kind === "SALE"
-      ? [m.client ? m.client.name : "Balcão", isPaymentMethod(m.paymentMethod) ? PAYMENT_METHODS[m.paymentMethod] : null, m.totalCents != null ? formatMoney(m.totalCents).replace(",00", "") : null].filter(Boolean).join(" · ")
+      ? [m.client ? m.client.name : "Balcão", methodLabel(m.paymentMethod) || null, m.totalCents != null ? formatMoney(m.totalCents).replace(",00", "") : null].filter(Boolean).join(" · ")
       : (m.note ?? "—");
 
   return (
@@ -125,7 +126,7 @@ export default async function StockPage({ searchParams }: Props) {
           <span />
         </div>
       </div>
-      <ProductDialogs products={lite} />
+      <ProductDialogs products={lite} professionals={sellers} />
     </div>
   );
 }

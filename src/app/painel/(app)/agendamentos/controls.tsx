@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState, useTransition } from "react";
 import { Check, Download, FileSpreadsheet, Loader2, Search, Upload, X, Zap } from "lucide-react";
 import { openQuickBook } from "@/components/quick-book-trigger";
-import { PAYMENT_METHODS } from "@/lib/quick-book";
+import { PAYMENT_METHODS, methodLabel } from "@/lib/quick-book";
 import { previewImport, runImport, setPayment, type ImportPreview } from "./actions";
 
 /** Filtros (situação, profissional, pagamento, busca e datas): mudam a página na hora. */
@@ -108,7 +108,7 @@ export function PaymentPill({ id, paid, method, disabled }: { id: string; paid: 
     return () => document.removeEventListener("click", close);
   }, [open]);
   if (disabled) return <span className="am-pill" style={{ ["--c" as string]: "#a1a1aa" }}>—</span>;
-  const label = paid ? `Pago${method && method in PAYMENT_METHODS ? ` · ${PAYMENT_METHODS[method as keyof typeof PAYMENT_METHODS]}` : ""}` : "A receber";
+  const label = paid ? `Pago${method ? ` · ${methodLabel(method)}` : ""}` : "A receber";
   const pick = (m: string | null) => {
     setOpen(false);
     start(async () => {

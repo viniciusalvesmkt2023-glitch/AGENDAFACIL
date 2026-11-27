@@ -14,6 +14,7 @@ import { CANCEL_POLICIES } from "@/lib/policy";
 import { MAX_IMAGE_BYTES, sniffImage } from "@/lib/images";
 import { timeToMinutes } from "@/lib/time";
 import { EMPTY_ADDRESS, parseAddress } from "@/lib/address";
+import { isCommissionType } from "@/lib/finance";
 
 export type ActionState = { error?: string | null; success?: string | null; values?: Record<string, string> } | undefined;
 
@@ -205,6 +206,22 @@ export async function saveProfessional(_: ActionState, formData: FormData): Prom
   if (!parsed.success) return { error: parsed.error.issues[0].message };
   const { id, name, phone } = parsed.data;
 
+  // Comissão (como o profissional ganha)
+  const ctype = String(formData.get("commissionType") ?? "NONE");
+  const toNum = (v: FormDataEntryValue | null) => {
+    const raw = String(v ?? "").replace(/[^\d,.-]/g, "");
+    if (!raw) return 0;
+    const n = Number(raw.includes(",") ? raw.replace(/\./g, "").replace(",", ".") : raw);
+    return Number.isFinite(n) ? n : NaN;
+  };
+  const cval = toNum(formData.get("commissionValue"));
+  const pval = toNum(formData.get("productCommission"));
+  if (!isCommissionType(ctype)) return { error: "Escolha como o profissional ganha." };
+  if (!Number.isFinite(cval) || cval < 0 || (ctype === "PERCENT" && cval > 100)) return { error: "Confira o valor da comissão." };
+  if (ctype !== "NONE" && cval === 0) return { error: "Informe o valor da comissão (ou escolha “Não calcular”)." };
+  if (!Number.isFinite(pval) || pval < 0 || pval > 100) return { error: "A % sobre produtos vai de 0 a 100." };
+  const commission = { commissionType: ctype, commissionRate: ctype === "NONE" ? 0 : Math.round(cval * 100), productCommissionBps: Math.round(pval * 100) };
+
   // Horário de trabalho (vem junto no cadastro): igual ao do estabelecimento ou próprio
   const hoursMode = formData.get("hoursMode");
   let week: WeekRow[] | null = null;
@@ -234,7 +251,7 @@ export async function saveProfessional(_: ActionState, formData: FormData): Prom
     if (!pro) return { error: "Profissional não encontrado." };
     oldImageId = pro.imageId;
     await db.$transaction([
-      db.professional.update({ where: { id }, data: { name, phone: phone || null } }),
+      db.professional.update({ where: { id }, data: { name, phone: phone || null, ...commission } }),
       db.professionalService.deleteMany({ where: { professionalId: id } }),
       db.professionalService.createMany({ data: serviceIds.map((serviceId) => ({ professionalId: id, serviceId })) }),
     ]);
@@ -244,6 +261,7 @@ export async function saveProfessional(_: ActionState, formData: FormData): Prom
         businessId: user.businessId,
         name,
         phone: phone || null,
+        ...commission,
         services: { create: serviceIds.map((serviceId) => ({ serviceId })) },
       },
     });

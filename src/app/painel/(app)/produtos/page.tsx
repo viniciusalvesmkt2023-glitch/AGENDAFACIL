@@ -25,6 +25,7 @@ export default async function ProductsPage({ searchParams }: Props) {
   const shown = term ? products.filter((p) => p.name.toLowerCase().includes(term.toLowerCase()) || (p.code ?? "").includes(term)) : products;
   const low = products.filter((p) => p.active && stockState(p.stock, p.minStock) !== "OK").length;
   const value = products.reduce((s, p) => s + Math.max(0, p.stock) * (p.costCents ?? p.priceCents), 0);
+  const sellers = await db.professional.findMany({ where: { businessId: user.businessId, active: true }, orderBy: { name: "asc" }, select: { id: true, name: true } });
   const lite = products.map((p) => ({ id: p.id, name: p.name, code: p.code, priceCents: p.priceCents, costCents: p.costCents, stock: p.stock, minStock: p.minStock, description: p.description, imageId: p.imageId, active: p.active }));
 
   return (
@@ -185,7 +186,7 @@ export default async function ProductsPage({ searchParams }: Props) {
           </div>
         )}
       </div>
-      <ProductDialogs products={lite} />
+      <ProductDialogs products={lite} professionals={sellers} />
     </div>
   );
 }

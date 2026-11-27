@@ -26,7 +26,7 @@ import { addDays, formatDateLong, isValidDate, minutesToTime, nowInTimezone, WEE
 import { formatMoney, whatsappLink } from "@/lib/format";
 import { FormMessage } from "@/components/ui";
 import { updateAppointmentStatus } from "@/app/painel/actions";
-import { DatePickerButton, NewAppointmentButton } from "./agenda-controls";
+import { DatePickerButton } from "./agenda-controls";
 import { blockAppliesOn, blockIntervals, effectiveHours } from "@/lib/schedule";
 import { blockTime } from "@/lib/blocks";
 import { computeAvailableSlots } from "@/lib/availability";
@@ -69,16 +69,23 @@ export default async function AgendaPage({ searchParams }: Props) {
   const now = nowInTimezone();
   const today = now.date;
   const date = params.data && isValidDate(params.data) ? params.data : today;
-  const view: View = params.ver === "semana" || params.ver === "lista" ? params.ver : "dia";
-  const showCanceled = params.cancelados === "1";
   const allPros = await db.professional.findMany({
     where: { businessId: user.businessId, active: true },
     include: { hours: true },
     orderBy: { name: "asc" },
   });
   const professionals = allPros;
+  // Como a agenda abre fica salvo na conta: o que vier no link vale e é guardado; sem nada no link, usa o salvo
+  const viewRaw = params.ver ?? user.agendaView;
+  const view: View = viewRaw === "semana" || viewRaw === "lista" ? viewRaw : "dia";
+  const proRaw = params.profissional !== undefined ? (params.profissional === "todos" ? "" : params.profissional) : (user.agendaProfessional ?? "");
+  const chosenPro = allPros.some((p) => p.id === proRaw) ? proRaw : "";
+  const showCanceled = params.cancelados !== undefined ? params.cancelados === "1" : user.agendaShowCanceled;
+  if (view !== user.agendaView || (chosenPro || null) !== user.agendaProfessional || showCanceled !== user.agendaShowCanceled) {
+    await db.user.update({ where: { id: user.id }, data: { agendaView: view, agendaProfessional: chosenPro || null, agendaShowCanceled: showCanceled } });
+  }
   // A semana mostra um profissional por vez (com todos juntos as colunas ficam estreitas demais)
-  const pro = params.profissional || (view === "semana" ? (allPros[0]?.id ?? "") : "");
+  const pro = chosenPro || (view === "semana" ? (allPros[0]?.id ?? "") : "");
   // Faixa de dias: 3 antes e 10 depois da data escolhida
   const days = Array.from({ length: 14 }, (_, i) => addDays(date, i - 3));
   const weekStart = addDays(date, -weekdayOf(date));
@@ -109,6 +116,16 @@ export default async function AgendaPage({ searchParams }: Props) {
     }),
     db.workingHour.findMany({ where: { businessId: user.businessId } }),
   ]);
+  // Dias em que o estabelecimento não abre: fechado no horário ou bloqueado o dia inteiro para todos
+  const dayOffBlocks = await db.timeBlock.findMany({
+    where: { businessId: user.businessId, professionalId: null, startMinutes: null, date: { lte: days[days.length - 1] }, OR: [{ endDate: null }, { endDate: { gte: days[0] } }] },
+  });
+  const hasHours = businessHours.length > 0;
+  const isClosed = (d: string) => {
+    const wd = weekdayOf(d);
+    const h = businessHours.find((x) => x.weekday === wd);
+    return (hasHours && !h?.isOpen) || dayOffBlocks.some((bl) => blockAppliesOn(bl, d, wd));
+  };
   const appointments = rangeAppointments.filter((a) => a.date === date);
   const busyDays = new Set(perDay.map((d) => d.date));
   const blocks = rangeBlocks
@@ -151,13 +168,12 @@ export default async function AgendaPage({ searchParams }: Props) {
     const v = o.ver ?? view;
     const q = new URLSearchParams();
     q.set("data", o.data ?? date);
-    if (v !== "dia") q.set("ver", v);
-    const pp = o.p ?? params.profissional ?? "";
-    if (pp) q.set("profissional", pp);
-    if (o.x ?? showCanceled) q.set("cancelados", "1");
+    q.set("ver", v);
+    q.set("profissional", (o.p ?? chosenPro) || "todos");
+    q.set("cancelados", (o.x ?? showCanceled) ? "1" : "0");
     return `/painel?${q}`;
   };
-  const href = (d: string, p = params.profissional ?? "") => qs({ data: d, p });
+  const href = (d: string, p = chosenPro) => qs({ data: d, p });
   // Próximo atendimento (destaque), só no dia de hoje
   const next =
     date === today
@@ -198,7 +214,7 @@ export default async function AgendaPage({ searchParams }: Props) {
       proId: p.id,
       head:
         view === "semana"
-          ? { kind: "day", weekday: WEEKDAYS_SHORT[wd], day: Number(d.slice(8)), href: qs({ data: d, ver: "dia", p: "" }) }
+          ? { kind: "day", weekday: WEEKDAYS_SHORT[wd], day: Number(d.slice(8)), href: qs({ data: d, ver: "dia" }) }
           : { kind: "pro", name: p.name, img: p.imageId ? `/i/${p.imageId}` : null, color: AVATARS[(proIndex.get(p.id) ?? 0) % AVATARS.length] },
       hours: h && h.isOpen ? { start: h.startMinutes, end: h.endMinutes, breakStart: h.breakStart ?? null, breakEnd: h.breakEnd ?? null } : null,
       blocks: rangeBlocks
@@ -256,22 +272,19 @@ export default async function AgendaPage({ searchParams }: Props) {
           <Link href={href(addDays(date, view === "semana" ? 7 : 1))} className="pn-ib hidden md:grid" aria-label={view === "semana" ? "Próxima semana" : "Próximo dia"}>
             <ChevronRight />
           </Link>
-          <DatePickerButton date={date} professional={params.profissional ?? ""} view={view} />
-          <NewAppointmentButton date={date} className="pn-btn pn-g-brand hidden md:inline-flex">
-            <CalendarPlus /> Novo agendamento
-          </NewAppointmentButton>
+          <DatePickerButton date={date} professional={chosenPro || "todos"} view={view} />
         </div>
       </div>
 
       {/* Dia / Semana / Lista */}
       <nav className="ag-views" aria-label="Como ver a agenda">
-        <Link href={qs({ ver: "dia", p: view === "semana" ? "" : undefined })} className={view === "dia" ? "on" : ""} aria-current={view === "dia" ? "page" : undefined}>
+        <Link href={qs({ ver: "dia" })} className={view === "dia" ? "on" : ""} aria-current={view === "dia" ? "page" : undefined}>
           <CalendarDays /> Dia
         </Link>
         <Link href={qs({ ver: "semana" })} className={view === "semana" ? "on" : ""} aria-current={view === "semana" ? "page" : undefined}>
           <CalendarRange /> Semana
         </Link>
-        <Link href={qs({ ver: "lista", p: view === "semana" ? "" : undefined })} className={view === "lista" ? "on" : ""} aria-current={view === "lista" ? "page" : undefined}>
+        <Link href={qs({ ver: "lista" })} className={view === "lista" ? "on" : ""} aria-current={view === "lista" ? "page" : undefined}>
           <List /> Lista
         </Link>
       </nav>
@@ -290,13 +303,29 @@ export default async function AgendaPage({ searchParams }: Props) {
       ) : (
       <div className="pn-days">
         {days.map((day) => (
-          <Link key={day} href={href(day)} className={`pn-day pn-card ${day === date ? "sel" : ""}`} aria-current={day === date ? "date" : undefined}>
+          <Link
+            key={day}
+            href={href(day)}
+            className={`pn-day pn-card ${day === date ? "sel" : ""} ${isClosed(day) ? "closed" : ""}`}
+            aria-current={day === date ? "date" : undefined}
+            title={isClosed(day) ? "Fechado" : undefined}
+            data-testid={isClosed(day) ? "day-closed" : undefined}
+          >
             <small>{day === today ? "Hoje" : WEEKDAYS_SHORT[weekdayOf(day)]}</small>
             <b>{Number(day.slice(8))}</b>
             <i className={busyDays.has(day) ? "" : "no"} />
           </Link>
         ))}
       </div>
+      )}
+
+      {view !== "semana" && isClosed(date) && (
+        <div className="ag-closed" data-testid="closed-banner">
+          <CalendarOff />
+          <div>
+            <b>Fechado neste dia.</b> <span>Sem atendimento pelo horário do estabelecimento ou por um bloqueio do dia inteiro.</span>
+          </div>
+        </div>
       )}
 
       {/* Resumo do dia (ou da semana) */}

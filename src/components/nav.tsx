@@ -90,6 +90,7 @@ const MORE_PATHS = [
   "/painel/bloqueios",
   "/painel/agendamentos",
   "/painel/produtos",
+  "/painel/financas",
   "/painel/whatsapp",
   "/painel/configuracoes",
   "/painel/assinatura",

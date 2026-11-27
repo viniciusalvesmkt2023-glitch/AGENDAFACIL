@@ -1,8 +1,16 @@
 // Agendamento rápido: monta os horários (vários serviços seguidos e repetição semanal) e o pagamento.
 
-export const PAYMENT_METHODS = { PIX: "Pix", CASH: "Dinheiro", CARD: "Cartão" } as const;
+/** Formas de pagamento para escolher. ("CARD" = registros antigos, antes de separar débito e crédito.) */
+export const PAYMENT_METHODS = { PIX: "Pix", CASH: "Dinheiro", DEBIT: "Débito", CREDIT: "Crédito" } as const;
 export type PaymentMethod = keyof typeof PAYMENT_METHODS;
 export const isPaymentMethod = (v: unknown): v is PaymentMethod => typeof v === "string" && v in PAYMENT_METHODS;
+
+/** Nome da forma de pagamento (inclusive a antiga "Cartão"). */
+export function methodLabel(m: string | null | undefined): string {
+  if (!m) return "";
+  if (m === "CARD") return "Cartão";
+  return isPaymentMethod(m) ? PAYMENT_METHODS[m] : m;
+}
 
 export type Slot = { date: string; start: number; end: number; item: number };
 
