@@ -50,11 +50,9 @@
 .cf .cf-note .cf-ic { width: 32px; height: 32px; border-radius: 10px; display: grid; place-items: center; color: #fff; }
 .cf .cf-note .cf-ic svg { width: 16px; height: 16px; }
 .cf .cf-note small { display: block; font-size: 11.5px; font-weight: 500; color: rgba(255,255,255,.55); }
-.cf .cf-n1 { left: 4%; top: 24%; }
-.cf .cf-n2 { right: 4%; top: 18%; }
-.cf .cf-n3 { left: 7%; bottom: 16%; }
-.cf .cf-n4 { right: 6%; bottom: 22%; }
-@media (max-width: 1000px) {
+.cf .cf-n1, .cf .cf-n3 { left: 28px; top: 34px; }
+.cf .cf-n2, .cf .cf-n4 { right: 28px; top: 34px; }
+@media (max-width: 1240px) {
 .cf .cf-note { display: none; }
 }
 .cf .cf-foot { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 16px; margin-top: 40px; padding-top: 26px; border-top: 1px solid var(--line); }

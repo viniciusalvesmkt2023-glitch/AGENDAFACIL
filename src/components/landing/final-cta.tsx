@@ -29,7 +29,7 @@ export function FinalCta({ trialDays, year }: { trialDays: number; year: number 
     const notes = Array.from(el.querySelectorAll<HTMLElement>(".cf-note"));
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
       steps.forEach((s) => s.classList.add("cf-on"));
-      notes.forEach((n) => n.classList.add("cf-show"));
+      notes.slice(0, 2).forEach((n) => n.classList.add("cf-show"));
       return;
     }
     let k = 0;
@@ -39,9 +39,10 @@ export function FinalCta({ trialDays, year }: { trialDays: number; year: number 
     }, 1800);
     let j = 0;
     const tick = () => {
+      // um par por vez: um de cada lado, nos cantos de cima (não cobre o conteúdo)
       notes.forEach((n) => n.classList.remove("cf-show"));
-      notes[j % 4].classList.add("cf-show");
-      notes[(j + 2) % 4].classList.add("cf-show");
+      notes[(j % 2) * 2].classList.add("cf-show");
+      notes[(j % 2) * 2 + 1].classList.add("cf-show");
       j++;
     };
     tick();
