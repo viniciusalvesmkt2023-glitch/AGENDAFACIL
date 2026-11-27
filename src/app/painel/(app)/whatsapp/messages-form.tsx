@@ -179,7 +179,7 @@ function MessageEditor({
       </div>
       <div>
         <p className="label">Pré-visualização</p>
-        <div className="rounded-xl bg-[#e7ffdb] p-3 text-sm whitespace-pre-wrap text-zinc-800 shadow-sm">{preview}</div>
+        <div className="wa-bubble rounded-xl p-3 text-sm whitespace-pre-wrap shadow-sm" data-testid="wa-preview">{preview}</div>
       </div>
     </div>
   );

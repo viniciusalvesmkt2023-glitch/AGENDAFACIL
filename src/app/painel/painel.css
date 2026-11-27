@@ -302,3 +302,13 @@ body:has(.pn) { --o-zinc-50: var(--color-zinc-50); --o-zinc-100: var(--color-zin
 @layer components {
 .pn .pn-mais-t { margin: 14px 4px 6px; font-size: 11.5px; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; color: var(--pn-muted); }
 }
+
+/* Mensagem do WhatsApp (pré-visualização): igual ao app em cada tema */
+@layer components {
+.pn .wa-bubble { background: #d9fdd3; color: #111b21; }
+.pn.pn-dark .wa-bubble { background: #005c4b; color: #e9edef; }
+}
+
+/* Tema escuro: caixas e botões com fundo branco fixo ficam escuros (senão a letra clara some).
+   Fora de @layer de propósito, para valer por cima do utilitário bg-white. keep-white = precisa ser branco (QR code, chave). */
+.pn.pn-dark .bg-white:not(.keep-white) { background-color: var(--ui-solid); }

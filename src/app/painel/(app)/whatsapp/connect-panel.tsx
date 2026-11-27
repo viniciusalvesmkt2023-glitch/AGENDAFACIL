@@ -133,7 +133,7 @@ export function ConnectPanel({ connecting, defaultPhone = "" }: { connecting: bo
         )
       ) : qrActive ? (
         <div className="grid gap-6 sm:grid-cols-[280px_1fr] sm:items-center">
-          <div className="mx-auto grid h-[280px] w-[280px] place-items-center rounded-xl border border-zinc-200 bg-white">
+          <div className="mx-auto grid h-[280px] w-[280px] place-items-center rounded-xl border border-zinc-200 bg-white keep-white">
             {status?.qr ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img src={status.qr} alt="QR code para conectar o WhatsApp" className="h-[260px] w-[260px]" />
