@@ -38,6 +38,7 @@ export default async function ProfessionalsPage({ searchParams }: Props) {
                   name: editing.name,
                   phone: editing.phone,
                   serviceIds: editing.services.map((s) => s.serviceId),
+                  imageId: editing.imageId,
                 }
               }
             />
@@ -55,9 +56,14 @@ export default async function ProfessionalsPage({ searchParams }: Props) {
             <ul className="card divide-y divide-zinc-100 overflow-hidden">
               {professionals.map((p) => (
                 <li key={p.id} className={`flex items-center gap-3 px-4 py-3 ${p.active ? "" : "opacity-50"}`}>
-                  <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-navy-900 font-display font-bold text-white">
-                    {p.name.charAt(0).toUpperCase()}
-                  </span>
+                  {p.imageId ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={`/i/${p.imageId}`} alt="" className="h-11 w-11 shrink-0 rounded-full object-cover" />
+                  ) : (
+                    <span className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-navy-900 font-display font-bold text-white">
+                      {p.name.charAt(0).toUpperCase()}
+                    </span>
+                  )}
                   <div className="min-w-0 flex-1">
                     <p className="truncate font-semibold text-navy-900">
                       {p.name} {!p.active && <span className="text-xs font-normal text-zinc-500">(inativo)</span>}

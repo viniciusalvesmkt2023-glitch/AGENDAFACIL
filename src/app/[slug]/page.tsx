@@ -114,6 +114,7 @@ export default async function PublicBookingPage({ params }: Props) {
           professionals={business.professionals.map((p) => ({
             id: p.id,
             name: p.name,
+            imageUrl: p.imageId ? `/i/${p.imageId}` : null,
             serviceIds: p.services.map((s) => s.serviceId),
             openWeekdays: openWeekdays(p, business.workingHours),
             closedDates: closedDatesFor(p.id),

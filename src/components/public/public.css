@@ -297,3 +297,7 @@
   mask-image: radial-gradient(ellipse 90% 70% at 50% 0%, #000 35%, transparent 80%);
 }
 .hb.hb-night .hb-btn-soft { background: rgba(255, 255, 255, 0.08); color: #fafafa; border-color: rgba(255, 255, 255, 0.1); }
+/* Foto do profissional */
+.hb-av-img { display: block; object-fit: cover; padding: 0; }
+.hb-pro.sel .hb-av-img { box-shadow: 0 0 0 3px var(--bg, #fff), 0 0 0 5px var(--b); }
+.hb-bar-thumb.round[style] { background-size: cover; background-position: center; }

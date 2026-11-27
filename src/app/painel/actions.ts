@@ -13,6 +13,7 @@ import { checkSlug } from "@/lib/slug-check";
 import { CANCEL_POLICIES } from "@/lib/policy";
 import { MAX_IMAGE_BYTES, sniffImage } from "@/lib/images";
 import { timeToMinutes } from "@/lib/time";
+import { EMPTY_ADDRESS, parseAddress } from "@/lib/address";
 
 export type ActionState = { error?: string | null; success?: string | null; values?: Record<string, string> } | undefined;
 
@@ -106,6 +107,19 @@ export async function rescheduleByOwner(_: ActionState, formData: FormData): Pro
 
 // ---------- Serviços ----------
 
+type PhotoUpload = { image: { mime: string; data: Uint8Array<ArrayBuffer> } | null } | { error: string };
+
+/** Lê a foto enviada no campo "image" (já reduzida no navegador) e confere se é imagem de verdade. */
+async function readPhoto(formData: FormData): Promise<PhotoUpload> {
+  const file = formData.get("image");
+  if (!(file instanceof Blob) || file.size === 0) return { image: null };
+  if (file.size > MAX_IMAGE_BYTES) return { error: "Foto muito grande. Tente outra." };
+  const bytes = new Uint8Array(await file.arrayBuffer());
+  const mime = sniffImage(bytes);
+  if (!mime) return { error: "Use uma foto JPG, PNG ou WebP." };
+  return { image: { mime, data: bytes } };
+}
+
 export async function saveService(_: ActionState, formData: FormData): Promise<ActionState> {
   const user = await requireActiveUser();
   const schema = z.object({
@@ -128,15 +142,9 @@ export async function saveService(_: ActionState, formData: FormData): Promise<A
   if (!Number.isFinite(priceCents) || priceCents < 0) return { error: "Preço inválido." };
 
   // Foto (opcional): já vem reduzida do navegador
-  const file = formData.get("image");
-  let image: { mime: string; data: Uint8Array<ArrayBuffer> } | null = null;
-  if (file instanceof Blob && file.size > 0) {
-    if (file.size > MAX_IMAGE_BYTES) return { error: "Foto muito grande. Tente outra." };
-    const bytes = new Uint8Array(await file.arrayBuffer());
-    const mime = sniffImage(bytes);
-    if (!mime) return { error: "Use uma foto JPG, PNG ou WebP." };
-    image = { mime, data: bytes };
-  }
+  const photo = await readPhoto(formData);
+  if ("error" in photo) return { error: photo.error };
+  const image = photo.image;
   const removePhoto = formData.get("removeImage") === "1";
 
   let serviceId = id;
@@ -203,16 +211,24 @@ export async function saveProfessional(_: ActionState, formData: FormData): Prom
   });
   const serviceIds = validServices.map((s) => s.id);
 
+  // Foto (opcional): já vem reduzida e quadrada do navegador
+  const photo = await readPhoto(formData);
+  if ("error" in photo) return { error: photo.error };
+  const removePhoto = formData.get("removeImage") === "1";
+
+  let proId = id;
+  let oldImageId: string | null = null;
   if (id) {
     const pro = await db.professional.findFirst({ where: { id, businessId: user.businessId } });
     if (!pro) return { error: "Profissional não encontrado." };
+    oldImageId = pro.imageId;
     await db.$transaction([
       db.professional.update({ where: { id }, data: { name, phone: phone || null } }),
       db.professionalService.deleteMany({ where: { professionalId: id } }),
       db.professionalService.createMany({ data: serviceIds.map((serviceId) => ({ professionalId: id, serviceId })) }),
     ]);
   } else {
-    await db.professional.create({
+    const created = await db.professional.create({
       data: {
         businessId: user.businessId,
         name,
@@ -220,8 +236,17 @@ export async function saveProfessional(_: ActionState, formData: FormData): Prom
         services: { create: serviceIds.map((serviceId) => ({ serviceId })) },
       },
     });
+    proId = created.id;
   }
+
+  if (photo.image || removePhoto) {
+    const img = photo.image ? await db.businessImage.create({ data: { businessId: user.businessId, kind: "PROFESSIONAL", ...photo.image } }) : null;
+    await db.professional.update({ where: { id: proId }, data: { imageId: img?.id ?? null } });
+    if (oldImageId) await db.businessImage.deleteMany({ where: { id: oldImageId, businessId: user.businessId } });
+  }
+
   revalidatePath("/painel/profissionais");
+  revalidatePath(`/${user.business.slug}`);
   return { success: id ? "Profissional atualizado." : "Profissional cadastrado." };
 }
 
@@ -326,7 +351,6 @@ export async function saveSettings(_: ActionState, formData: FormData): Promise<
     name: z.string().trim().min(2, "Informe o nome do estabelecimento."),
     slug: z.string().trim().min(3, "O endereço precisa ter pelo menos 3 caracteres."),
     phone: z.string().trim().optional(),
-    address: z.string().trim().optional(),
     slotInterval: z.coerce.number().int().min(5).max(240),
     minAdvanceMinutes: z.coerce.number().int().min(0).max(10080),
     maxAdvanceDays: z.coerce.number().int().min(1).max(365),
@@ -338,6 +362,9 @@ export async function saveSettings(_: ActionState, formData: FormData): Promise<
   if (!parsed.success) return { error: parsed.error.issues[0].message };
   const d = parsed.data;
 
+  const addr = parseAddress(Object.fromEntries(formData));
+  if (addr.kind === "error") return { error: addr.error };
+
   const check = await checkSlug(d.slug, { businessId: user.businessId });
   if (!check.available) return { error: check.message };
   const slug = check.slug;
@@ -348,7 +375,9 @@ export async function saveSettings(_: ActionState, formData: FormData): Promise<
       name: d.name,
       slug,
       phone: d.phone || null,
-      address: d.address || null,
+      // sem CEP preenchido mantém o endereço antigo (contas de antes do CEP)
+      homeService: addr.kind === "home",
+      ...(addr.kind === "ok" ? { ...addr.parts, address: addr.address } : addr.kind === "home" ? { ...EMPTY_ADDRESS, address: null } : {}),
       slotInterval: d.slotInterval,
       minAdvanceMinutes: d.minAdvanceMinutes,
       maxAdvanceDays: d.maxAdvanceDays,

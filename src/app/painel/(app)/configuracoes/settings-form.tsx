@@ -5,6 +5,7 @@ import { saveSettings } from "@/app/painel/actions";
 import { FormMessage } from "@/components/ui";
 import { SubmitButton } from "@/components/submit-button";
 import { SlugField } from "@/components/slug-field";
+import { AddressFields, type AddressInitial } from "@/components/address-fields";
 import { Switch } from "@/components/switch";
 import { DEADLINE_OPTIONS, deadlineLabel } from "@/lib/policy";
 
@@ -12,7 +13,7 @@ type Business = {
   name: string;
   slug: string;
   phone: string | null;
-  address: string | null;
+  address: AddressInitial;
   description: string | null;
   slotInterval: number;
   minAdvanceMinutes: number;
@@ -49,10 +50,9 @@ export function SettingsForm({ business }: { business: Business }) {
             <label className="label" htmlFor="phone">WhatsApp</label>
             <input className="input" id="phone" name="phone" defaultValue={business.phone ?? ""} placeholder="(11) 99999-9999" />
           </div>
-          <div>
-            <label className="label" htmlFor="address">Endereço</label>
-            <input className="input" id="address" name="address" defaultValue={business.address ?? ""} placeholder="Rua, número - bairro, cidade" />
-          </div>
+        </div>
+        <div className="border-t border-zinc-100 pt-4">
+          <AddressFields initial={business.address} />
         </div>
         <p className="text-sm text-zinc-500">
           Logo, foto de capa, cor e apresentação ficam em{" "}

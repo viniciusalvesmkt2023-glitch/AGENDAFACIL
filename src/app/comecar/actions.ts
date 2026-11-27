@@ -9,6 +9,7 @@ import { parseMoneyToCents } from "@/lib/format";
 import { checkSlug } from "@/lib/slug-check";
 import { BUSINESS_TYPE_IDS } from "@/lib/business-types";
 import { timeToMinutes } from "@/lib/time";
+import { EMPTY_ADDRESS, parseAddress } from "@/lib/address";
 import { LAST_STEP, MAX_DAYS_OPTIONS, MIN_ADVANCE_OPTIONS, SLOT_OPTIONS } from "./config";
 
 export type StepState = { error?: string | null; values?: Record<string, string> } | undefined;
@@ -41,13 +42,14 @@ export async function saveBusinessStep(_: StepState, formData: FormData): Promis
     name: z.string().trim().min(2, "Informe o nome do estabelecimento.").max(80),
     slug: z.string().trim().min(1, "Escolha o link da sua agenda."),
     phone: z.string().trim().optional(),
-    address: z.string().trim().max(200).optional(),
   });
   const parsed = schema.safeParse(Object.fromEntries(formData));
   if (!parsed.success) return { error: parsed.error.issues[0].message, values: keep(formData) };
   const d = parsed.data;
-  const homeService = formData.get("homeService") === "on";
-  if (!homeService && !d.address) return { error: "Informe o endereço ou marque que atende sem endereço fixo.", values: keep(formData) };
+  const addr = parseAddress(Object.fromEntries(formData));
+  if (addr.kind === "empty") return { error: "Digite o CEP do endereço ou marque que atende sem endereço fixo.", values: keep(formData) };
+  if (addr.kind === "error") return { error: addr.error, values: keep(formData) };
+  const homeService = addr.kind === "home";
   const phoneDigits = (d.phone ?? "").replace(/\D/g, "");
   if (phoneDigits && (phoneDigits.length < 10 || phoneDigits.length > 13)) {
     return { error: "WhatsApp inválido. Use DDD + número, ex.: (11) 99999-9999.", values: keep(formData) };
@@ -63,7 +65,7 @@ export async function saveBusinessStep(_: StepState, formData: FormData): Promis
       slug: check.slug,
       phone: d.phone || null,
       homeService,
-      address: homeService ? null : d.address || null,
+      ...(addr.kind === "ok" ? { ...addr.parts, address: addr.address } : { ...EMPTY_ADDRESS, address: null }),
       onboardingStep: done(user.business.onboardingStep, 2),
     },
   });

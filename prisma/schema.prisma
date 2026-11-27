@@ -19,7 +19,16 @@ model Business {
   name              String
   slug              String   @unique
   phone             String?
+  // Endereço montado (rua, número - bairro, cidade - UF), usado na página e no "Como chegar"
   address           String?
+  // Partes do endereço (preenchidas pelo CEP no cadastro e nas configurações)
+  zipCode           String?
+  street            String?
+  addressNumber     String?
+  complement        String?
+  district          String?
+  city              String?
+  state             String?
   description       String?
   // BARBEARIA | SALAO | ESTETICA | UNHAS | SOBRANCELHA | SAUDE | OUTRO
   businessType      String   @default("OUTRO")
@@ -196,6 +205,7 @@ model Professional {
   business   Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
   name       String
   phone      String?
+  imageId    String? // foto do profissional (BusinessImage, kind PROFESSIONAL)
   active     Boolean  @default(true)
   // false = segue o horário do estabelecimento; true = usa ProfessionalHour
   customHours Boolean @default(false)
@@ -321,7 +331,7 @@ model BusinessImage {
   id         String   @id @default(cuid())
   businessId String
   business   Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
-  kind       String // LOGO | COVER | SERVICE
+  kind       String // LOGO | COVER | SERVICE | PROFESSIONAL
   mime       String
   data       Bytes
   createdAt  DateTime @default(now())

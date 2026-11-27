@@ -72,8 +72,17 @@ export default async function OnboardingPage({ searchParams }: Props) {
             slug={b.onboardingStep >= 2 ? b.slug : ""}
             slugSuggestions={await suggestSlugs(b.name, b.businessType, b.id)}
             phone={b.phone ?? ""}
-            address={b.address ?? ""}
-            homeService={b.homeService}
+            address={{
+              address: b.address,
+              homeService: b.homeService,
+              zipCode: b.zipCode,
+              street: b.street,
+              addressNumber: b.addressNumber,
+              complement: b.complement,
+              district: b.district,
+              city: b.city,
+              state: b.state,
+            }}
           />
         </>
       )}

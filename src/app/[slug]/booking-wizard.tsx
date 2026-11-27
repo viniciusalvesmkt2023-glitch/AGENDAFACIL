@@ -9,7 +9,7 @@ import { formatDateLong, WEEKDAYS_SHORT, weekdayOf } from "@/lib/time";
 import { formatDuration, formatMoney } from "@/lib/format";
 
 type Service = { id: string; name: string; description: string | null; durationMinutes: number; priceCents: number; imageUrl?: string | null };
-type Professional = { id: string; name: string; serviceIds: string[]; openWeekdays: number[]; closedDates: string[] };
+type Professional = { id: string; name: string; imageUrl?: string | null; serviceIds: string[]; openWeekdays: number[]; closedDates: string[] };
 
 type Props = {
   slug: string;
@@ -93,7 +93,7 @@ export function BookingWizard({ slug, today, maxAdvanceDays, services, professio
           sub: `${formatMoney(service.priceCents)} · ${formatDuration(service.durationMinutes)}`,
         }
       : step === 1 && professionalId
-        ? { thumb: { text: professionalId === ANY ? "✱" : (pro?.name.charAt(0).toUpperCase() ?? ""), round: true }, title: proLabel ?? "", sub: service?.name ?? "" }
+        ? { thumb: pro?.imageUrl ? { img: pro.imageUrl, round: true } : { text: professionalId === ANY ? "✱" : (pro?.name.charAt(0).toUpperCase() ?? ""), round: true }, title: proLabel ?? "", sub: service?.name ?? "" }
         : step === 2 && date && time !== undefined && slotLabel
           ? { thumb: { icon: true }, title: `${capitalize(SHORT.format(asDate(date)).replace(/\./g, ""))} · ${slotLabel}`, sub: `${service?.name ?? ""}${proLabel ? ` · ${proLabel}` : ""}` }
           : null;
@@ -173,6 +173,7 @@ export function BookingWizard({ slug, today, maxAdvanceDays, services, professio
                 key={p.id}
                 name={p.name}
                 initial={p.name.charAt(0).toUpperCase()}
+                imageUrl={p.imageUrl}
                 selected={professionalId === p.id}
                 onClick={() => {
                   setProfessionalId(p.id);
@@ -266,10 +267,15 @@ function SubmitBooking() {
   );
 }
 
-function ProCard({ name, hint, initial, selected, onClick }: { name: string; hint?: string; initial: string; selected: boolean; onClick: () => void }) {
+function ProCard({ name, hint, initial, imageUrl, selected, onClick }: { name: string; hint?: string; initial: string; imageUrl?: string | null; selected: boolean; onClick: () => void }) {
   return (
     <button type="button" className={`hb-pro ${selected ? "sel" : ""}`} onClick={onClick} aria-pressed={selected}>
-      <span className="hb-av">{initial}</span>
+      {imageUrl ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img className="hb-av hb-av-img" src={imageUrl} alt="" />
+      ) : (
+        <span className="hb-av">{initial}</span>
+      )}
       <span className="hb-pro-n">{name}</span>
       {hint && <span className="hb-pro-d">{hint}</span>}
     </button>
