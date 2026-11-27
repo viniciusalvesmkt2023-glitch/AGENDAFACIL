@@ -130,3 +130,24 @@ export async function ensureStripeSubscriptionExists(business: {
     return false;
   }
 }
+
+/** Bandeira e final do cartão da assinatura (ou null se não der para buscar agora). Nunca espera mais de 3s. */
+export async function cardOnFile(subscriptionId: string | null): Promise<{ brand: string; last4: string } | null> {
+  const stripe = getStripe();
+  if (!stripe || !subscriptionId) return null;
+  const lookup = async () => {
+    const sub = await stripe.subscriptions.retrieve(subscriptionId, { expand: ["default_payment_method", "customer.invoice_settings.default_payment_method"] });
+    const fromCustomer =
+      typeof sub.customer === "object" && !("deleted" in sub.customer && sub.customer.deleted)
+        ? (sub.customer as Stripe.Customer).invoice_settings?.default_payment_method
+        : null;
+    const pm = (typeof sub.default_payment_method === "object" && sub.default_payment_method) || (typeof fromCustomer === "object" && fromCustomer) || null;
+    const card = pm && "card" in pm ? pm.card : null;
+    return card ? { brand: card.brand, last4: card.last4 } : null;
+  };
+  try {
+    return await Promise.race([lookup(), new Promise<null>((r) => setTimeout(() => r(null), 3000))]);
+  } catch {
+    return null;
+  }
+}

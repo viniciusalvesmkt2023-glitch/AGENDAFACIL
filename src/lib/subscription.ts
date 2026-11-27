@@ -49,3 +49,12 @@ export function extendPeriod(currentEnd: Date | null, months: number, now: Date 
   if (base.getUTCDate() < day) base.setUTCDate(0);
   return base;
 }
+
+/** Quanto do período atual já passou (para a barra da tela de Assinatura). */
+export function periodProgress(end: Date, months: number, now: Date = new Date()) {
+  const start = new Date(end);
+  start.setUTCMonth(start.getUTCMonth() - months);
+  const total = end.getTime() - start.getTime();
+  const left = Math.max(0, end.getTime() - now.getTime());
+  return { pct: total > 0 ? Math.min(100, Math.max(0, Math.round(((total - left) / total) * 100))) : 100, daysLeft: Math.ceil(left / DAY) };
+}

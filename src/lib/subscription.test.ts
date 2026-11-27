@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { extendPeriod, getAccessState, hasAccess } from "./subscription";
+import { extendPeriod, getAccessState, hasAccess, periodProgress } from "./subscription";
 import { discountPercent, monthlyEquivalentCents, PLANS } from "./plans";
 
 const now = new Date("2026-11-20T12:00:00Z");
@@ -54,5 +54,16 @@ describe("planos", () => {
     expect(monthlyEquivalentCents(PLANS.ANNUAL)).toBe(2790);
     expect(discountPercent(PLANS.SEMIANNUAL)).toBe(13);
     expect(discountPercent(PLANS.ANNUAL)).toBe(26);
+  });
+});
+
+describe("periodProgress", () => {
+  it("conta quanto do período passou e os dias que faltam", () => {
+    const end = new Date("2026-12-02T12:00:00Z");
+    const r = periodProgress(end, 1, new Date("2026-11-07T12:00:00Z"));
+    expect(r.daysLeft).toBe(25);
+    expect(r.pct).toBeGreaterThan(10);
+    expect(r.pct).toBeLessThan(25);
+    expect(periodProgress(end, 1, new Date("2026-12-10T12:00:00Z"))).toEqual({ pct: 100, daysLeft: 0 });
   });
 });

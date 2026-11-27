@@ -83,17 +83,37 @@ export async function startCardCheckout(_: BillingState, formData: FormData): Pr
   redirect(session.url);
 }
 
-export async function openCardPortal() {
+/**
+ * Abre o portal seguro da Stripe. `flow`: "card" (trocar cartão), "cancel" (cancelar) ou vazio (faturas e dados).
+ * Se o atalho não estiver disponível na conta, abre o portal normal.
+ */
+export async function openCardPortal(formData?: FormData) {
   const user = await requireUser();
+  const b = user.business;
   const stripe = getStripe();
-  if (!stripe || !user.business.stripeCustomerId) redirect("/painel/assinatura");
-  const portal = await stripe.billingPortal.sessions
-    .create({ customer: user.business.stripeCustomerId, return_url: `${appUrl()}/painel/assinatura` })
-    .catch((e) => {
-      console.error("[stripe] erro ao abrir o portal", e);
-      return null;
-    });
-  redirect(portal?.url ?? "/painel/assinatura?erro=portal");
+  if (!stripe || !b.stripeCustomerId) redirect("/painel/assinatura");
+  const flow = String(formData?.get("flow") ?? "");
+  const base = { customer: b.stripeCustomerId, return_url: `${appUrl()}/painel/assinatura` };
+  const flowData =
+    flow === "card"
+      ? { type: "payment_method_update" as const }
+      : flow === "cancel" && b.stripeSubscriptionId
+        ? { type: "subscription_cancel" as const, subscription_cancel: { subscription: b.stripeSubscriptionId } }
+        : null;
+  let url: string | null = null;
+  if (flowData) {
+    url = (await stripe.billingPortal.sessions.create({ ...base, flow_data: flowData }).catch(() => null))?.url ?? null;
+  }
+  if (!url) {
+    url =
+      (
+        await stripe.billingPortal.sessions.create(base).catch((e) => {
+          console.error("[stripe] erro ao abrir o portal", e);
+          return null;
+        })
+      )?.url ?? null;
+  }
+  redirect(url ?? "/painel/assinatura?erro=portal");
 }
 
 // ---------- Pix ----------

@@ -1,12 +1,23 @@
 "use client";
 
 import { useActionState, useState } from "react";
+import { CreditCard, Lock, ShieldCheck, Zap } from "lucide-react";
 import { startCardCheckout, startPixPayment } from "./actions";
 import { FormMessage } from "@/components/ui";
-import { SubmitButton } from "@/components/submit-button";
+import { useFormStatus } from "react-dom";
 
-type PlanView = { id: string; name: string; months: number; price: string; perMonth: string; highlight?: string };
+type PlanView = { id: string; name: string; months: number; price: string; perMonth: string; highlight?: string; savings?: string };
 
+function GoButton({ children, pending }: { children: React.ReactNode; pending: string }) {
+  const { pending: busy } = useFormStatus();
+  return (
+    <button type="submit" className="as-go" disabled={busy}>
+      {busy ? pending : children}
+    </button>
+  );
+}
+
+/** Escolha do plano + forma de pagamento (cartão pela Stripe ou Pix). */
 export function PlanPicker({
   plans,
   cardEnabled,
@@ -14,6 +25,7 @@ export function PlanPicker({
   defaultTaxId,
   defaultPhone,
   pixRecurring = false,
+  currentPlanId,
 }: {
   plans: PlanView[];
   cardEnabled: boolean;
@@ -21,66 +33,58 @@ export function PlanPicker({
   defaultTaxId: string;
   defaultPhone: string;
   pixRecurring?: boolean;
+  currentPlanId?: string | null;
 }) {
   const [plan, setPlan] = useState(plans[plans.length - 1].id);
   const [method, setMethod] = useState<"CARD" | "PIX">(cardEnabled || !pixEnabled ? "CARD" : "PIX");
   const [cardState, cardAction] = useActionState(startCardCheckout, undefined);
   const [pixState, pixAction] = useActionState(startPixPayment, undefined);
+  const chosen = plans.find((p) => p.id === plan)!;
 
   return (
-    <div className="space-y-6">
-      <div className="grid gap-3 pt-2 md:grid-cols-3 md:gap-4">
-        {plans.map((p) => {
-          const selected = p.id === plan;
-          return (
-            <button
-              key={p.id}
-              type="button"
-              onClick={() => setPlan(p.id)}
-              className={`relative rounded-2xl border-2 bg-white p-4 text-left transition md:p-5 ${
-                selected ? "border-brand-600 shadow-md" : "border-zinc-200 hover:border-brand-300"
-              }`}
-            >
-              {p.highlight && (
-                <span className="absolute -top-3 left-4 rounded-full bg-brand-600 px-2 py-0.5 text-xs font-medium text-white">
-                  {p.highlight}
-                </span>
-              )}
-              <p className="font-semibold">{p.name}</p>
-              <p className="mt-2 text-3xl font-bold">{p.perMonth}<span className="text-sm font-normal text-zinc-500">/mês</span></p>
-              <p className="mt-1 text-sm text-zinc-500">
-                {p.months === 1 ? "cobrado todo mês" : `${p.price} a cada ${p.months} meses`}
-              </p>
-            </button>
-          );
-        })}
+    <>
+      <div className="as-plans" role="radiogroup" aria-label="Planos">
+        {plans.map((p) => (
+          <button key={p.id} type="button" role="radio" aria-checked={p.id === plan} className={`as-pl ${p.id === plan ? "on" : ""}`} onClick={() => setPlan(p.id)} data-testid={`plan-${p.id}`}>
+            {p.highlight && <span className="as-hl">{p.highlight}</span>}
+            <div className="as-nm">
+              <span>{p.name}{p.id === currentPlanId && <small>SEU PLANO</small>}</span>
+              <span className="as-rd" />
+            </div>
+            <div className="as-pr">{p.perMonth}<small>/mês</small></div>
+            <div className="as-tt">{p.months === 1 ? "Cobrado todo mês" : p.months === 12 ? `${p.price} por ano` : `${p.price} a cada ${p.months} meses`}</div>
+            {p.savings && <span className="as-sv">Você economiza {p.savings}</span>}
+          </button>
+        ))}
       </div>
 
-      <div className="card p-4 md:p-5">
-        <p className="label">Forma de pagamento</p>
-        <div className="mb-4 grid grid-cols-2 gap-2 sm:flex">
-          <button type="button" onClick={() => setMethod("CARD")} className={method === "CARD" ? "btn-primary" : "btn-secondary"}>
-            Cartão de crédito
+      <div className="as-pay">
+        <div className="as-meth" role="radiogroup" aria-label="Forma de pagamento">
+          <button type="button" role="radio" aria-checked={method === "CARD"} className={method === "CARD" ? "on" : ""} onClick={() => setMethod("CARD")}>
+            <span className="as-mi"><CreditCard /></span>
+            <span><b>Cartão de crédito</b><small>Renova sozinho. Cancele quando quiser.</small></span>
           </button>
-          <button type="button" onClick={() => setMethod("PIX")} className={method === "PIX" ? "btn-primary" : "btn-secondary"}>
-            Pix
+          <button type="button" role="radio" aria-checked={method === "PIX"} className={method === "PIX" ? "on" : ""} onClick={() => setMethod("PIX")}>
+            <span className="as-mi"><Zap /></span>
+            <span><b>Pix</b><small>{pixRecurring ? "QR code na hora. Pode ativar o Pix Automático." : "QR code na hora, liberação automática."}</small></span>
           </button>
         </div>
 
         {method === "CARD" ? (
-          <form action={cardAction} className="space-y-3">
+          <form action={cardAction} style={{ display: "grid", gap: 14 }}>
             <input type="hidden" name="plan" value={plan} />
-            <p className="text-sm text-zinc-600">
-              Renovação automática no cartão. Você será direcionado ao ambiente seguro da Stripe. Cancele quando quiser.
-            </p>
             <FormMessage error={cardState?.error} />
-            <SubmitButton pendingText="Abrindo pagamento..." className="btn-primary w-full sm:w-auto">Assinar com cartão</SubmitButton>
-            {!cardEnabled && <p className="text-xs text-amber-600">Pagamento com cartão em configuração.</p>}
+            {!cardEnabled && <p className="as-note" style={{ color: "#b45309" }}>Pagamento com cartão em configuração.</p>}
+            <div className="as-sum">
+              <div><small>Total</small><b>{chosen.price} · plano {chosen.name}</b></div>
+              <GoButton pending="Abrindo pagamento...">Assinar com cartão →</GoButton>
+            </div>
+            <div className="as-safe"><span><Lock /> Pagamento seguro pela Stripe</span><span><ShieldCheck /> Cancele quando quiser</span></div>
           </form>
         ) : (
-          <form action={pixAction} className="space-y-3">
+          <form action={pixAction} style={{ display: "grid", gap: 14 }}>
             <input type="hidden" name="plan" value={plan} />
-            <div className="grid max-w-xl gap-3 sm:grid-cols-2">
+            <div className="grid gap-3 sm:grid-cols-2">
               <div>
                 <label className="label" htmlFor="taxId">CPF ou CNPJ do pagador</label>
                 <input className="input" id="taxId" name="taxId" defaultValue={defaultTaxId} required inputMode="numeric" placeholder="000.000.000-00" />
@@ -90,23 +94,22 @@ export function PlanPicker({
                 <input className="input" id="phone" name="phone" defaultValue={defaultPhone} required inputMode="tel" placeholder="(11) 99999-9999" />
               </div>
             </div>
-            <p className="text-sm text-zinc-600">
+            <p className="as-note">
               Pague com QR code ou copia e cola. A liberação é automática assim que o pagamento é confirmado.{" "}
-              {pixRecurring ? (
-                <>
-                  A cobrança de cada período é gerada automaticamente. Ao pagar, o seu banco pode oferecer o{" "}
-                  <strong>Pix Automático</strong>: autorizando, as próximas são debitadas sozinhas no vencimento.
-                </>
-              ) : (
-                "No Pix, a renovação não é automática: avisaremos antes do vencimento."
-              )}
+              {pixRecurring
+                ? "A cobrança de cada período é gerada sozinha; ao pagar, seu banco pode oferecer o Pix Automático para as próximas."
+                : "No Pix, a renovação não é automática: avisamos antes do vencimento."}
             </p>
             <FormMessage error={pixState?.error} />
-            <SubmitButton pendingText="Gerando Pix..." className="btn-primary w-full sm:w-auto">Gerar Pix</SubmitButton>
-            {!pixEnabled && <p className="text-xs text-amber-600">Pagamento com Pix em configuração.</p>}
+            {!pixEnabled && <p className="as-note" style={{ color: "#b45309" }}>Pagamento com Pix em configuração.</p>}
+            <div className="as-sum">
+              <div><small>Total</small><b>{chosen.price} · plano {chosen.name}</b></div>
+              <GoButton pending="Gerando Pix...">Gerar Pix →</GoButton>
+            </div>
+            <div className="as-safe"><span><Lock /> Pagamento seguro</span><span><Zap /> Liberação na hora</span></div>
           </form>
         )}
       </div>
-    </div>
+    </>
   );
 }
