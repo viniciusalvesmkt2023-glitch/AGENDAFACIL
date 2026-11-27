@@ -99,6 +99,7 @@ model Business {
   messageLogs   MessageLog[]
   timeBlocks    TimeBlock[]
   images        BusinessImage[]
+  adminActions AdminAction[]
 }
 
 model User {
@@ -333,4 +334,18 @@ model SiteSetting {
   key       String   @id
   value     String
   updatedAt DateTime @updatedAt
+}
+
+/// O que o admin fez na conta de um cliente (estender acesso, ativar plano, cancelar...).
+model AdminAction {
+  id         String   @id @default(cuid())
+  businessId String
+  business   Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  adminEmail String
+  // EXTEND | GRANT_PLAN | CANCEL
+  action     String
+  detail     String
+  createdAt  DateTime @default(now())
+
+  @@index([businessId, createdAt])
 }

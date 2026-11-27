@@ -1,31 +1,32 @@
-import "../painel/painel.css";
+import "./admin.css";
 import Link from "next/link";
-import { ArrowLeft, Settings } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import { requireAdmin } from "@/lib/admin";
+import { db } from "@/lib/db";
 import { BrandIcon } from "@/components/ui";
+import { AdminSideNav, AdminTabs } from "./nav";
 
 export const metadata = { title: "Admin · HoraBoa", robots: { index: false } };
 
 /** Painel admin do HoraBoa (só para os e-mails em ADMIN_EMAILS). */
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const user = await requireAdmin();
+  const pending = await db.payment.count({ where: { status: "PENDING", createdAt: { gte: new Date(Date.now() - 86_400_000) } } });
   return (
-    <div className="pn">
-      <div className="pn-bg" aria-hidden="true"><i /><i /></div>
-      <header className="pn-top pn-glass" style={{ maxWidth: 980, marginInline: "auto" }}>
-        <Link href="/admin" className="flex items-center gap-2" aria-label="Admin">
-          <BrandIcon className="h-9 w-9" />
-        </Link>
-        <div className="pn-top-t">
-          <b>HoraBoa · Admin</b>
-          <small>{user.email}</small>
-        </div>
-        <nav className="flex items-center gap-1.5">
-          <Link href="/admin/configuracoes" className="pn-btn sm soft"><Settings /> <span className="hidden sm:inline">Configurações</span></Link>
-          <Link href="/painel" className="pn-btn sm soft" aria-label="Voltar ao meu painel"><ArrowLeft /> <span className="hidden sm:inline">Meu painel</span></Link>
-        </nav>
-      </header>
-      <main className="mx-auto max-w-[980px] px-4 pb-16 pt-6 sm:px-6">{children}</main>
+    <div className="ad">
+      <div className="ad-app">
+        <aside className="ad-side" aria-label="Menu do admin">
+          <Link href="/admin" className="ad-brand"><BrandIcon className="h-[30px] w-[30px]" />Hora<span>Boa</span><em>ADMIN</em></Link>
+          <AdminSideNav pending={pending} />
+          <div className="ad-me">
+            <span className="ad-av ad-g-brand">{user.name.charAt(0).toUpperCase()}</span>
+            <div className="min-w-0"><b className="truncate">{user.name.split(" ")[0]}</b><span className="block truncate">{user.email}</span></div>
+          </div>
+          <Link href="/painel" className="ad-nav"><span className="ad-ic" style={{ background: "rgba(0,0,0,.05)" }}><ArrowLeft /></span>Meu painel</Link>
+        </aside>
+        <main className="ad-main">{children}</main>
+      </div>
+      <AdminTabs />
     </div>
   );
 }

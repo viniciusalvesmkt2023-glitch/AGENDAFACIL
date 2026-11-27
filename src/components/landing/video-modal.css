@@ -16,11 +16,14 @@
 .lp .vm-modal h2 em { background: linear-gradient(120deg, #ffa766, #fe6e02 50%, #c2410c); -webkit-background-clip: text; background-clip: text; color: transparent; }
 .lp .vm-sub { color: var(--muted); font-size: 15.5px; line-height: 1.55; margin: 10px 0 0; max-width: 640px; }
 .lp .vm-video { position: relative; margin-top: 20px; border-radius: 20px; overflow: hidden; aspect-ratio: 16 / 9; background: radial-gradient(circle at 50% 40%, #2a1a10, #0b0b0d 70%); box-shadow: 0 20px 50px rgba(0, 0, 0, .25); }
-.lp .vm-player, .lp .vm-player iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; pointer-events: none; }
+.lp .vm-player { position: absolute; inset: 0; overflow: hidden; pointer-events: none; }
+/* o player fica 120px mais alto e é cortado: a faixa do YouTube (título, canal, "Mais vídeos") fica fora da área visível */
+.lp .vm-player iframe { position: absolute; left: 0; top: -60px; width: 100%; height: calc(100% + 120px); border: 0; pointer-events: none; }
 .lp .vm-blocker { position: absolute; inset: 0; z-index: 2; cursor: pointer; }
 .lp .vm-loading { position: absolute; inset: 0; display: grid; place-items: center; color: rgba(255, 255, 255, .5); font-size: 13px; }
 .lp .vm-layer { position: absolute; inset: 0; z-index: 3; display: grid; place-items: center; pointer-events: none; }
 .lp .vm-layer > * { pointer-events: auto; }
+.lp .vm-layer.dim { background: rgba(8, 8, 10, .55); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); pointer-events: auto; }
 .lp .vm-sound { display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 20px 32px; border-radius: 22px; border: 2px solid #fff; cursor: pointer; color: #fff;
   background: linear-gradient(135deg, #ffa149, #fe6e02 50%, #d9480f); box-shadow: 0 18px 40px rgba(254, 110, 2, .45); font-family: "Nunito", -apple-system, BlinkMacSystemFont, system-ui, sans-serif; font-weight: 800; font-size: 19px; line-height: 1.2; animation: vm-pulse 2s ease-in-out infinite; }
 @media (max-width: 560px) { .lp .vm-sound { padding: 12px 20px; font-size: 15px; } .lp .vm-sound svg { width: 38px; height: 38px; } }

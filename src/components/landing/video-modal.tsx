@@ -15,6 +15,17 @@ declare global {
 }
 
 let ytReady: Promise<any> | null = null;
+
+/** Nunca mostra legenda (o YouTube liga sozinho se a conta de quem assiste tiver legenda ativada). */
+function noCaptions(p: any) {
+  try {
+    p.unloadModule?.("captions");
+    p.unloadModule?.("cc");
+    p.setOption?.("captions", "track", {});
+  } catch {
+    // sem legenda para desligar
+  }
+}
 /** Carrega a API de vídeo do YouTube uma vez só. */
 function loadYouTube(): Promise<any> {
   if (window.YT?.Player) return Promise.resolve(window.YT);
@@ -90,9 +101,10 @@ function Modal({ videoId, trialDays, onClose }: { videoId: string; trialDays: nu
       if (!alive || !box.current) return;
       player.current = new YT.Player(box.current, {
         videoId,
-        playerVars: { autoplay: 1, controls: 0, mute: 1, rel: 0, modestbranding: 1, fs: 0, playsinline: 1, iv_load_policy: 3, disablekb: 1 },
+        playerVars: { autoplay: 1, controls: 0, mute: 1, rel: 0, modestbranding: 1, fs: 0, playsinline: 1, iv_load_policy: 3, disablekb: 1, cc_load_policy: 0 },
         events: {
           onReady: (e: any) => {
+            noCaptions(e.target);
             e.target.mute();
             e.target.playVideo();
             setReady(true);
@@ -102,7 +114,10 @@ function Modal({ videoId, trialDays, onClose }: { videoId: string; trialDays: nu
               if (d > 0) setProgress(Math.min(100, ((p.getCurrentTime?.() ?? 0) / d) * 100));
             }, 500);
           },
-          onStateChange: (e: any) => setPaused(e.data === YT.PlayerState.PAUSED),
+          onStateChange: (e: any) => {
+            setPaused(e.data === YT.PlayerState.PAUSED);
+            if (e.data === YT.PlayerState.PLAYING) noCaptions(e.target);
+          },
         },
       });
     });
@@ -119,6 +134,7 @@ function Modal({ videoId, trialDays, onClose }: { videoId: string; trialDays: nu
     if (!p) return;
     p.unMute();
     p.setVolume?.(100);
+    noCaptions(p);
     p.seekTo(0, true);
     p.playVideo();
     setMuted(false);
@@ -164,7 +180,7 @@ function Modal({ videoId, trialDays, onClose }: { videoId: string; trialDays: nu
             </div>
           )}
           {ready && !muted && paused && (
-            <div className="vm-layer">
+            <div className="vm-layer dim">
               <button type="button" className="vm-play" onClick={() => player.current?.playVideo()} aria-label="Continuar o vídeo">
                 <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7 4.5v15l13-7.5z" /></svg>
               </button>
