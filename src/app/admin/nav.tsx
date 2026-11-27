@@ -2,12 +2,13 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { ChartLine, CreditCard, SlidersHorizontal, Users, type LucideIcon } from "lucide-react";
+import { ChartLine, CreditCard, GraduationCap, SlidersHorizontal, Users, type LucideIcon } from "lucide-react";
 
 const ITEMS: { href: string; label: string; short: string; icon: LucideIcon; color: string }[] = [
   { href: "/admin", label: "Visão geral", short: "Geral", icon: ChartLine, color: "ad-g-brand" },
   { href: "/admin/clientes", label: "Clientes", short: "Clientes", icon: Users, color: "ad-g-blue" },
   { href: "/admin/pagamentos", label: "Pagamentos", short: "Pagamentos", icon: CreditCard, color: "ad-g-green" },
+  { href: "/admin/aulas", label: "Aulas", short: "Aulas", icon: GraduationCap, color: "ad-g-purple" },
   { href: "/admin/configuracoes", label: "Configurações", short: "Config.", icon: SlidersHorizontal, color: "ad-g-gray" },
 ];
 const active = (path: string, href: string) => (href === "/admin" ? path === "/admin" : path.startsWith(href));

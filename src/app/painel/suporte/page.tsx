@@ -6,6 +6,10 @@ import { getAccessState } from "@/lib/subscription";
 import { whatsappLink } from "@/lib/format";
 import { PageHeader } from "@/components/ui";
 import { CopyButton } from "@/components/copy-button";
+import { db } from "@/lib/db";
+import { isNewLesson } from "@/lib/lessons";
+import { LessonsBoard } from "./lessons-board";
+import "./lessons.css";
 
 const FAQ = [
   {
@@ -22,7 +26,7 @@ const FAQ = [
   },
   {
     q: "Como cadastro profissionais e horários?",
-    a: "Em Mais → Profissionais você cadastra a equipe e escolhe os serviços de cada um. Em Mais → Horários você define os dias e horários de atendimento.",
+    a: "Em Gestão de equipe você cadastra cada profissional, os serviços que ele faz, o horário de trabalho e a comissão. Em Configurações → Horários você define os dias e horários do estabelecimento.",
   },
   {
     q: "Como troco ou cancelo meu plano?",
@@ -48,9 +52,38 @@ export default async function SupportPage() {
     `Data: ${new Date().toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" })}`,
   ].join("\n");
 
+  // Aulas publicadas (módulos sem aula publicada não aparecem) e o que este usuário já assistiu
+  const [lessonModules, views] = await Promise.all([
+    db.lessonModule.findMany({
+      orderBy: [{ position: "asc" }, { createdAt: "asc" }],
+      include: { lessons: { where: { published: true }, orderBy: [{ position: "asc" }, { createdAt: "asc" }] } },
+    }),
+    db.lessonView.findMany({ where: { userId: user.id }, select: { lessonId: true } }),
+  ]);
+  const boardModules = lessonModules
+    .filter((m) => m.lessons.length > 0)
+    .map((m) => ({
+      id: m.id,
+      name: m.name,
+      emoji: m.emoji,
+      lessons: m.lessons.map((l) => ({
+        id: l.id,
+        moduleId: m.id,
+        title: l.title,
+        description: l.description,
+        youtubeId: l.youtubeId,
+        durationSec: l.durationSec,
+        isNew: isNewLesson(l.publishedAt),
+      })),
+    }));
+
   return (
     <>
-      <PageHeader title="Suporte" description="Fale com a gente ou tire suas dúvidas." />
+      <PageHeader
+        title="Suporte"
+        description={boardModules.length ? "Aprenda a usar o HoraBoa com aulas rápidas, ou fale com a gente." : "Fale com a gente ou tire suas dúvidas."}
+      />
+      {boardModules.length > 0 && <LessonsBoard modules={boardModules} watched={views.map((v) => v.lessonId)} />}
       <div className="grid gap-4 md:grid-cols-2 md:items-start">
         <div className="space-y-4">
           <section className="card divide-y divide-zinc-100">

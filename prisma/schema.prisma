@@ -153,6 +153,7 @@ model User {
   createdAt    DateTime @default(now())
 
   passwordResetTokens PasswordResetToken[]
+  lessonViews         LessonView[]
 }
 
 model PasswordResetToken {
@@ -506,4 +507,47 @@ model LoyaltyReward {
   usedOn      Appointment? @relation("RewardUse")
 
   @@index([businessId, clientId])
+}
+
+// ---------- Aulas do HoraBoa (quadro de aulas no Suporte, cadastradas no admin) ----------
+
+model LessonModule {
+  id        String   @id @default(cuid())
+  name      String
+  emoji     String   @default("🎓")
+  position  Int      @default(0)
+  createdAt DateTime @default(now())
+  lessons   Lesson[]
+}
+
+model Lesson {
+  id          String       @id @default(cuid())
+  moduleId    String
+  module      LessonModule @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+  title       String
+  description String?
+  youtubeId   String
+  // duração em segundos (opcional, só para mostrar)
+  durationSec Int?
+  position    Int          @default(0)
+  published   Boolean      @default(false)
+  publishedAt DateTime?
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  views       LessonView[]
+
+  @@index([moduleId, position])
+}
+
+// Quem marcou a aula como assistida
+model LessonView {
+  id        String   @id @default(cuid())
+  lessonId  String
+  lesson    Lesson   @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([lessonId, userId])
+  @@index([userId])
 }
