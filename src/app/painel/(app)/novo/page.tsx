@@ -1,16 +1,16 @@
 import Link from "next/link";
 import { db } from "@/lib/db";
 import { requireActiveUser } from "@/lib/auth";
-import { isValidDate, todayInTimezone } from "@/lib/time";
+import { isValidDate, timeToMinutes, todayInTimezone } from "@/lib/time";
 import { formatDuration, formatMoney } from "@/lib/format";
 import { EmptyState, PageHeader } from "@/components/ui";
 import { ManualBookingForm } from "./manual-booking-form";
 
-type Props = { searchParams: Promise<{ data?: string }> };
+type Props = { searchParams: Promise<{ data?: string; hora?: string; profissional?: string }> };
 
 export default async function NewAppointmentPage({ searchParams }: Props) {
   const user = await requireActiveUser();
-  const { data } = await searchParams;
+  const { data, hora, profissional } = await searchParams;
   const [services, professionals] = await Promise.all([
     db.service.findMany({ where: { businessId: user.businessId, active: true }, orderBy: { name: "asc" } }),
     db.professional.findMany({
@@ -39,6 +39,8 @@ export default async function NewAppointmentPage({ searchParams }: Props) {
             user.business.confirmationEnabled
           }
           initialDate={data && isValidDate(data) ? data : todayInTimezone()}
+          initialTime={hora && /^\d{2}:\d{2}$/.test(hora) ? timeToMinutes(hora) : null}
+          initialProfessional={professionals.some((p) => p.id === profissional) ? profissional! : ""}
           services={services.map((s) => ({
             id: s.id,
             name: s.name,

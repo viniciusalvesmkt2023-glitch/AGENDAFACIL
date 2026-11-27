@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { CalendarDays } from "lucide-react";
 
 /** Botão de calendário que abre o seletor de data nativo do celular. */
-export function DatePickerButton({ date, professional }: { date: string; professional: string }) {
+export function DatePickerButton({ date, professional, view = "dia" }: { date: string; professional: string; view?: string }) {
   const ref = useRef<HTMLInputElement>(null);
   const router = useRouter();
   return (
@@ -19,7 +19,7 @@ export function DatePickerButton({ date, professional }: { date: string; profess
         className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
         onClick={() => ref.current?.showPicker?.()}
         onChange={(e) => {
-          if (e.target.value) router.push(`/painel?data=${e.target.value}${professional ? `&profissional=${professional}` : ""}`);
+          if (e.target.value) router.push(`/painel?data=${e.target.value}${view !== "dia" ? `&ver=${view}` : ""}${professional ? `&profissional=${professional}` : ""}`);
         }}
       />
     </label>

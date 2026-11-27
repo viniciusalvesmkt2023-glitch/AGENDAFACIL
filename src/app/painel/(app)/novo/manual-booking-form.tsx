@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useMemo, useState } from "react";
+import { useActionState, useEffect, useMemo, useState } from "react";
 import { createManualAppointment } from "@/app/painel/actions";
 import { FormMessage } from "@/components/ui";
 import { SubmitButton } from "@/components/submit-button";
@@ -10,17 +10,25 @@ type Props = {
   slug: string;
   canSendWhatsapp: boolean;
   initialDate: string;
+  /** Vindo da agenda (toque num horário vazio): já escolhe o profissional e o horário */
+  initialTime?: number | null;
+  initialProfessional?: string;
   services: { id: string; name: string; label: string }[];
   professionals: { id: string; name: string; serviceIds: string[] }[];
 };
 
-export function ManualBookingForm({ slug, canSendWhatsapp, initialDate, services, professionals }: Props) {
+export function ManualBookingForm({ slug, canSendWhatsapp, initialDate, initialTime = null, initialProfessional = "", services, professionals }: Props) {
   const [state, action] = useActionState(createManualAppointment, undefined);
   const [serviceId, setServiceId] = useState("");
-  const [professionalId, setProfessionalId] = useState("");
+  const [professionalId, setProfessionalId] = useState(initialProfessional);
   const [date, setDate] = useState(initialDate);
   const [time, setTime] = useState<number | null>(null);
   const { slots, loading, message } = useSlots({ slug, serviceId, professionalId, date, painel: true });
+  // Horário escolhido na agenda: marca sozinho assim que os horários livres aparecem
+  const [wanted, setWanted] = useState<number | null>(initialTime);
+  useEffect(() => {
+    if (wanted != null && time == null && slots.some((s) => s.time === wanted)) setTime(wanted);
+  }, [slots, wanted, time]);
 
   const availablePros = useMemo(
     () => professionals.filter((p) => !serviceId || p.serviceIds.includes(serviceId)),
@@ -38,8 +46,10 @@ export function ManualBookingForm({ slug, canSendWhatsapp, initialDate, services
             name="serviceId"
             value={serviceId}
             onChange={(e) => {
-              setServiceId(e.target.value);
-              setProfessionalId("");
+              const next = e.target.value;
+              setServiceId(next);
+              // mantém o profissional se ele faz esse serviço
+              if (!professionals.find((p) => p.id === professionalId)?.serviceIds.includes(next)) setProfessionalId("");
               setTime(null);
             }}
             required
@@ -73,6 +83,7 @@ export function ManualBookingForm({ slug, canSendWhatsapp, initialDate, services
           <input className="input" type="date" id="date" name="date" value={date} onChange={(e) => {
             setDate(e.target.value);
             setTime(null);
+            setWanted(null);
           }} required />
         </div>
         <div className="sm:col-span-2">
@@ -90,7 +101,10 @@ export function ManualBookingForm({ slug, canSendWhatsapp, initialDate, services
                 <button
                   key={s.time}
                   type="button"
-                  onClick={() => setTime(s.time)}
+                  onClick={() => {
+                    setTime(s.time);
+                    setWanted(null);
+                  }}
                   className={`min-h-11 rounded-xl border text-sm font-semibold transition ${
                     time === s.time ? "border-navy-900 bg-navy-900 text-white" : "border-zinc-200 bg-white text-navy-900 active:bg-zinc-50"
                   }`}
