@@ -63,7 +63,11 @@ export function SidebarNav() {
               <div className="pn-nav-sub">
                 {e.children.map((c) => {
                   // "Calendário" (/painel) só fica marcado na própria agenda
-                  const on = c.href === "/painel" ? pathname === "/painel" : pathname.startsWith(c.href);
+                  // o item mais específico ganha (Catálogo não fica marcado dentro de Controle de estoque)
+                  const on =
+                    c.href === "/painel"
+                      ? pathname === "/painel"
+                      : pathname.startsWith(c.href) && !e.children.some((o) => o.href !== c.href && o.href.startsWith(c.href) && pathname.startsWith(o.href));
                   return (
                     <Link key={c.href} href={c.href} className={on ? "on" : ""} aria-current={on ? "page" : undefined}>
                       {c.label}
@@ -85,6 +89,7 @@ const MORE_PATHS = [
   "/painel/horarios",
   "/painel/bloqueios",
   "/painel/agendamentos",
+  "/painel/produtos",
   "/painel/whatsapp",
   "/painel/configuracoes",
   "/painel/assinatura",

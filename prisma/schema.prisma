@@ -108,6 +108,8 @@ model Business {
   messageLogs   MessageLog[]
   timeBlocks    TimeBlock[]
   images        BusinessImage[]
+  products      Product[]
+  stockMoves    StockMove[]
   adminActions AdminAction[]
 }
 
@@ -289,6 +291,7 @@ model Client {
   createdAt  DateTime @default(now())
 
   appointments Appointment[]
+  productSales StockMove[]
 
   @@unique([businessId, phone])
 }
@@ -336,7 +339,7 @@ model BusinessImage {
   id         String   @id @default(cuid())
   businessId String
   business   Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
-  kind       String // LOGO | COVER | SERVICE | PROFESSIONAL
+  kind       String // LOGO | COVER | SERVICE | PROFESSIONAL | PRODUCT
   mime       String
   data       Bytes
   createdAt  DateTime @default(now())
@@ -363,4 +366,48 @@ model AdminAction {
   createdAt  DateTime @default(now())
 
   @@index([businessId, createdAt])
+}
+
+// Produto vendido no estabelecimento (pomada, óleo, acessório...). Estoque em unidades.
+model Product {
+  id          String   @id @default(cuid())
+  businessId  String
+  business    Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  name        String
+  code        String? // código de barras / SKU
+  priceCents  Int
+  costCents   Int?
+  stock       Int      @default(0)
+  minStock    Int? // avisa "estoque baixo" quando chegar nisso
+  description String?
+  imageId     String? // foto (BusinessImage, kind PRODUCT)
+  active      Boolean  @default(true) // false = oculto (não aparece para vender)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  moves StockMove[]
+
+  @@index([businessId, active])
+}
+
+// Movimentação de estoque: entrada, saída (perda/uso) e venda. quantity é com sinal; balance é o saldo depois.
+model StockMove {
+  id            String   @id @default(cuid())
+  businessId    String
+  business      Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  productId     String
+  product       Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  kind          String // IN | OUT | SALE
+  quantity      Int
+  balance       Int
+  note          String?
+  // venda
+  totalCents    Int?
+  paymentMethod String? // PIX | CASH | CARD
+  clientId      String?
+  client        Client?  @relation(fields: [clientId], references: [id], onDelete: SetNull)
+  createdAt     DateTime @default(now())
+
+  @@index([businessId, createdAt])
+  @@index([productId, createdAt])
 }

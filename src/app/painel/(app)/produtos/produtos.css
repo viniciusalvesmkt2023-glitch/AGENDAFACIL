@@ -1,0 +1,38 @@
+/* Produtos (catálogo e estoque). Prefixo pd-. Usa também as classes am- da tela Agendamentos. */
+@layer components {
+.pn .pd-g-teal { background: linear-gradient(135deg, #2dd4bf, #0f766e); color: #fff; }
+.pn .pd-prod { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.pn .pd-thumb { width: 42px; height: 42px; flex-shrink: 0; border-radius: 12px; object-fit: cover; background: var(--pn-raised); border: 1px solid var(--pn-line); }
+.pn .pd-thumb-empty { display: grid; place-items: center; color: var(--pn-faint); }
+.pn .pd-thumb-empty svg { width: 19px; height: 19px; }
+.pn .pd-off td, .pn .am-card.pd-off { opacity: 0.55; }
+.pn .pd-card { grid-template-columns: 46px minmax(0, 1fr) auto; }
+.pn .pd-card .am-r { display: flex; gap: 6px; }
+.pn .pd-search { max-width: 380px; }
+.pn .pd-empty { display: grid; justify-items: center; gap: 6px; padding: 34px 20px; text-align: center; color: var(--pn-fg); }
+.pn .pd-empty > span { width: 48px; height: 48px; border-radius: 16px; display: grid; place-items: center; margin-bottom: 4px; }
+.pn .pd-empty > span svg { width: 24px; height: 24px; }
+.pn .pd-empty p { margin: 0 0 8px; max-width: 380px; font-size: 14px; color: var(--pn-muted); }
+.pn .pd-photo { display: flex; align-items: center; gap: 14px; }
+.pn .pd-photo b { display: block; font-size: 14.5px; }
+.pn .pd-photo small { display: block; font-size: 12.5px; color: var(--pn-muted); }
+.pn .pd-photo-acts { display: flex; gap: 6px; margin-top: 6px; }
+.pn .pd-photo-acts svg { width: 15px; height: 15px; }
+.pn .pd-ph { width: 84px; height: 84px; flex-shrink: 0; overflow: hidden; border-radius: 18px; display: grid; place-items: center; border: 2px dashed var(--pn-line2); color: var(--pn-faint); background: var(--pn-raised); }
+.pn .pd-ph img { width: 100%; height: 100%; object-fit: cover; }
+.pn .pd-ph svg { width: 26px; height: 26px; }
+.pn .pd-stocknow { margin: 0; height: 44px; display: flex; align-items: center; gap: 4px; font-size: 14px; }
+.pn .pd-stocknow b { font-size: 18px; }
+.pn .pd-stocknow small { color: var(--pn-muted); font-size: 12px; }
+.pn .pd-qty { display: grid; grid-template-columns: 44px minmax(0, 1fr) 44px; gap: 6px; }
+.pn .pd-qty .qb-in { text-align: center; font-weight: 800; }
+.pn .pd-qty button { height: 44px; border-radius: 13px; display: grid; place-items: center; border: 1px solid var(--pn-line2); background: var(--ui-solid); color: var(--pn-fg); }
+.pn .pd-qty button svg { width: 17px; height: 17px; }
+.pn .pd-back { display: inline-flex; align-items: center; gap: 4px; font-size: 13.5px; font-weight: 600; color: var(--pn-muted); }
+.pn .pd-back svg { width: 16px; height: 16px; }
+.pn .pd-filters { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 10px; max-width: 560px; }
+.pn .pd-q { font-weight: 800; }
+.pn .pd-q.in { color: #16a34a; }
+.pn .pd-q.out { color: #ef4444; }
+.pn .pn-btn svg { flex-shrink: 0; }
+}
