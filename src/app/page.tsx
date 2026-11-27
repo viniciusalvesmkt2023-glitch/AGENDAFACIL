@@ -12,12 +12,9 @@ import {
   Image as ImageIcon,
   Lock,
   LockOpen,
-  MessageCircle,
   Moon,
-  Navigation,
   Palette,
   Pencil,
-  Phone,
   Plus,
   RefreshCw,
   ShieldCheck,
@@ -28,6 +25,7 @@ import {
 import { RevealOnScroll } from "@/components/landing/reveal";
 import { LandingHeader } from "@/components/landing/header";
 import { Cta } from "@/components/landing/cta";
+import { HeroDemo } from "@/components/landing/hero-demo";
 import { formatMoney } from "@/lib/format";
 import { discountPercent, monthlyEquivalentCents, PLANS, TRIAL_DAYS, type Plan } from "@/lib/plans";
 
@@ -110,22 +108,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ c
             <span><Smartphone className="i" /> Feito para o celular</span>
           </div>
 
-          <div className="stage" aria-hidden="true">
-            <div className="phone ph-a"><div className="scr"><ClientMock /></div></div>
-            <div className="phone ph-b"><div className="scr"><PanelMock /></div></div>
-            <div className="lp-float f1 lp-glass">
-              <span className="ic g-green"><Check className="i" /></span>
-              <div>Novo agendamento<small>Lia · hoje às 14:30</small></div>
-            </div>
-            <div className="lp-float f2 lp-glass">
-              <span className="ic g-wa"><MessageCircle className="i" /></span>
-              <div>Lembrete enviado<small>pelo seu WhatsApp</small></div>
-            </div>
-            <div className="lp-float f3 lp-glass">
-              <span className="ic g-brand"><Moon className="i" /></span>
-              <div>Funciona 24 horas<small>até enquanto você dorme</small></div>
-            </div>
-          </div>
+          <HeroDemo />
         </div>
       </section>
 
@@ -358,105 +341,8 @@ function PixIcon() {
   );
 }
 
-function InstagramIcon() {
-  return (
-    <svg className="i" viewBox="0 0 24 24" aria-hidden="true">
-      <rect x="2.5" y="2.5" width="19" height="19" rx="5.5" />
-      <circle cx="12" cy="12" r="4.2" />
-    </svg>
-  );
-}
-
 /* ---------- Telas de exemplo dentro dos celulares (só ilustração) ---------- */
 
-const SERVICES = [
-  { name: "Corte masculino", price: "R$ 40", bg: "linear-gradient(135deg,#3f3f46,#18181b)", mark: "✂", sel: true },
-  { name: "Barba", price: "R$ 30", bg: "linear-gradient(135deg,#92400e,#451a03)", mark: "B" },
-  { name: "Corte + barba", price: "R$ 60", bg: "linear-gradient(135deg,#1e3a8a,#0f172a)", mark: "C" },
-  { name: "Sobrancelha", price: "R$ 15", bg: "linear-gradient(135deg,#065f46,#022c22)", mark: "S" },
-];
-
-function ClientMock() {
-  return (
-    <div className="cli">
-      <div className="cover" />
-      <div className="head">
-        <div className="lg"><span>B</span></div>
-        <h4>Barbearia do João</h4>
-        <span className="open"><i /> Aberto agora · até 19h</span>
-        <div className="pills">
-          <span className="g-wa"><MessageCircle className="i" />WhatsApp</span>
-          <span className="ig"><InstagramIcon />Instagram</span>
-          <span className="g-blue"><Navigation className="i" />Como chegar</span>
-        </div>
-      </div>
-      <div className="mcard">
-        <div className="prog"><i className="on" /><i /><i /><i /></div>
-        <h5>Escolha o serviço</h5>
-        <div className="svcs">
-          {SERVICES.map((s) => (
-            <div key={s.name} className={`svc ${s.sel ? "sel" : ""}`}>
-              <div className="im" style={{ background: s.bg }}>{s.mark}</div>
-              <div className="bd"><b>{s.name}</b><small>{s.price}</small></div>
-            </div>
-          ))}
-        </div>
-      </div>
-      <div className="cbar lp-glass">
-        <div className="t"><b>Corte masculino</b><span>R$ 40 · 30 min</span></div>
-        <span className="go g-brand">Continuar</span>
-      </div>
-    </div>
-  );
-}
-
-function PanelMock() {
-  const rows = [
-    ["15:00", "Rafael", "Barba · R$ 30"],
-    ["16:00", "Bruno", "Corte + barba · R$ 60"],
-    ["17:00", "Diego", "Corte · R$ 40"],
-  ];
-  return (
-    <div className="pnl">
-      <p className="hi">Boa tarde, João 👋</p>
-      <h6>Hoje, <em>26 de nov.</em></h6>
-      <div className="pdays">
-        <span className="dk">QUA<b>25</b></span>
-        <span className="sel">HOJE<b>26</b></span>
-        <span className="dk">SEX<b>27</b></span>
-        <span className="dk">SÁB<b>28</b></span>
-        <span className="dk">DOM<b>29</b></span>
-      </div>
-      <div className="pstats">
-        <div className="dk"><i className="g-green" /><b>8</b><small>Agendados</small></div>
-        <div className="dk"><i className="g-blue" /><b>R$ 420</b><small>Previsto</small></div>
-        <div className="dk"><i className="g-amber" /><b>0</b><small>Faltas</small></div>
-      </div>
-      <div className="pnext">
-        <span className="pl">● Às 14:30</span>
-        <div className="r">
-          <div className="av">L</div>
-          <div><b>Lia Souza</b><small>Corte masculino · João</small></div>
-        </div>
-        <div className="acts">
-          <span className="g-green">Concluir</span>
-          <span className="g-wa"><MessageCircle className="i" /></span>
-          <span className="g-blue"><Phone className="i" /></span>
-        </div>
-      </div>
-      {rows.map(([tm, name, sub]) => (
-        <div key={tm} className="prow">
-          <div className="tm">{tm}</div>
-          <div className="c dk" style={{ ["--c" as string]: "#22c55e" }}>
-            <b>{name} <em>Confirmado</em></b>
-            <small>{sub}</small>
-          </div>
-        </div>
-      ))}
-      <div className="ptabs"><i /><i /><span className="fab">+</span><i /><i /></div>
-    </div>
-  );
-}
 
 function TimeMock() {
   const slot = { border: "1px solid rgba(0,0,0,.08)", borderRadius: 8, padding: "6px 0" };
