@@ -2,24 +2,16 @@ import "./vendas.css";
 import Link from "next/link";
 import {
   Bell,
-  CalendarDays,
-  ChartLine,
   Check,
   CirclePlay,
   Clock,
-  CreditCard,
-  Heart,
   Image as ImageIcon,
-  Lock,
   LockOpen,
-  Moon,
   Palette,
   Pencil,
   Plus,
   RefreshCw,
-  ShieldCheck,
   Smartphone,
-  Users,
   Zap,
 } from "lucide-react";
 import { RevealOnScroll } from "@/components/landing/reveal";
@@ -28,6 +20,8 @@ import { Cta } from "@/components/landing/cta";
 import { HeroDemo } from "@/components/landing/hero-demo";
 import { PageEditorDemo } from "@/components/landing/page-editor-demo";
 import { WhatsAppDemo } from "@/components/landing/whatsapp-demo";
+import { FeaturesBento } from "@/components/landing/features-bento";
+import { Pricing, type PricingPlan } from "@/components/landing/pricing";
 import { formatMoney } from "@/lib/format";
 import { discountPercent, monthlyEquivalentCents, PLANS, TRIAL_DAYS, type Plan } from "@/lib/plans";
 
@@ -42,14 +36,6 @@ const TYPES = [
   ["🩺", "Clínicas"],
 ];
 
-const FEATURES = [
-  { icon: CalendarDays, color: "g-brand", title: "Agenda do dia na palma da mão", text: "Próximo cliente em destaque, concluir, marcar falta e remarcar com um toque." },
-  { icon: Users, color: "g-indigo", title: "Equipe com horários próprios", text: "Cada profissional com seus serviços, dias e horários de trabalho." },
-  { icon: Lock, color: "g-amber", title: "Folgas e bloqueios", text: "Feriado, férias ou um compromisso: bloqueie e o horário some do link." },
-  { icon: Heart, color: "g-blue", title: "Clientes organizados", text: "Histórico de visitas e quanto cada cliente já gastou, montado sozinho." },
-  { icon: ChartLine, color: "g-teal", title: "Resumo do dia", text: "Quantos atendimentos, quanto vai entrar e quantas faltas — sem planilha." },
-  { icon: Moon, color: "g-purple", title: "Modo claro e escuro", text: "No painel e na sua página. Escolha o que combina com você." },
-];
 
 const FAQ = [
   ["Preciso de cartão para testar?", `Não. Você usa tudo por ${TRIAL_DAYS} dias grátis e só assina se gostar. Sem cartão e sem compromisso.`],
@@ -59,8 +45,28 @@ const FAQ = [
   ["Posso cancelar quando quiser?", "Pode. Não tem fidelidade nem multa: é só cancelar no painel."],
 ];
 
-// Anual no meio, em destaque
-const PLAN_ORDER: Plan[] = [PLANS.MONTHLY, PLANS.ANNUAL, PLANS.SEMIANNUAL];
+
+const brl = (cents: number) => formatMoney(cents);
+/** Dados dos planos para a seção de preços (tudo calculado a partir de lib/plans). */
+function pricingPlans(): PricingPlan[] {
+  const monthly = PLANS.MONTHLY;
+  return [PLANS.MONTHLY, PLANS.SEMIANNUAL, PLANS.ANNUAL].map((p) => {
+    const perMonth = monthlyEquivalentCents(p);
+    const saved = monthly.priceCents * p.months - p.priceCents;
+    const period = p.months === 12 ? "por ano" : p.months === 6 ? "por semestre" : "";
+    return {
+      id: p.id,
+      name: p.name,
+      short: p.name,
+      price: brl(perMonth).replace("R$", "").trim(),
+      old: p.id === "MONTHLY" ? "" : `${brl(monthly.priceCents)}/mês`,
+      save: saved > 0 ? `Economize ${brl(saved)} ${period}`.trim() : "",
+      bill: p.months === 1 ? "cobrado todo mês" : `${brl(p.priceCents)} cobrado a cada ${p.months} meses`,
+      day: `${brl(Math.round(perMonth / 30))} por dia`,
+      off: discountPercent(p),
+    };
+  });
+}
 
 export default async function Home({ searchParams }: { searchParams: Promise<{ conta?: string }> }) {
   const deleted = (await searchParams).conta === "excluida";
@@ -201,14 +207,9 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ c
         <div className="lp-wrap">
           <span className="eyebrow">Tudo em um só lugar</span>
           <h2 className="lp-disp">Tudo o que seu negócio precisa</h2>
-          <div className="feats" style={{ textAlign: "left" }}>
-            {FEATURES.map(({ icon: Icon, color, title, text }) => (
-              <div key={title} className="feat lp-glass lp-rv">
-                <span className={`ic ${color}`}><Icon className="i" /></span>
-                <h3 className="lp-disp">{title}</h3>
-                <p>{text}</p>
-              </div>
-            ))}
+          <p className="lead">Cada recurso com uma mini demonstração de como ele aparece no seu painel.</p>
+          <div style={{ textAlign: "left", marginTop: 40 }}>
+            <FeaturesBento />
           </div>
         </div>
       </section>
@@ -219,41 +220,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ c
           <span className="eyebrow">Preços</span>
           <h2 className="lp-disp">Preço simples, <em>sem surpresa</em></h2>
           <p className="lead">Todos os recursos em todos os planos. Teste {TRIAL_DAYS} dias grátis, sem cartão.</p>
-          <div className="plans" style={{ textAlign: "left" }}>
-            {PLAN_ORDER.map((p) => {
-              const best = p.id === "ANNUAL";
-              const off = discountPercent(p);
-              const saved = PLANS.MONTHLY.priceCents * p.months - p.priceCents;
-              return (
-                <div key={p.id} className={`plan lp-rv ${best ? "best" : "lp-glass"}`}>
-                  <p className="nm lp-disp">
-                    {p.name}
-                    {off > 0 && <span className="tag">{best ? `Melhor preço · −${off}%` : `−${off}%`}</span>}
-                  </p>
-                  <p className="pr">
-                    <b className="lp-disp">{formatMoney(monthlyEquivalentCents(p))}</b>
-                    <small>/mês</small>
-                  </p>
-                  <p className="bill">{p.months === 1 ? "cobrado todo mês" : `${formatMoney(p.priceCents)} a cada ${p.months} meses`}</p>
-                  <ul>
-                    {["Agendamentos ilimitados", "Lembretes no WhatsApp", "Profissionais ilimitados", saved > 0 ? `Economize ${formatMoney(saved)}` : "Cancele quando quiser"].map((f) => (
-                      <li key={f}><Check className="i" />{f}</li>
-                    ))}
-                  </ul>
-                  {best ? (
-                    <Cta href="/cadastro">Começar grátis</Cta>
-                  ) : (
-                    <Link className="lp-btn ghost lp-shape" href="/cadastro">Começar grátis</Link>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-          <div className="pay">
-            <span><PixIcon /> Pix com renovação automática</span>
-            <span><CreditCard className="i" /> Cartão de crédito</span>
-            <span><ShieldCheck className="i" /> Pagamento seguro</span>
-          </div>
+          <Pricing plans={pricingPlans()} trialDays={TRIAL_DAYS} initial="ANNUAL" />
         </div>
       </section>
 
@@ -314,10 +281,3 @@ function CheckItem({ k, icon, color, title, text }: { k?: string; icon: React.Re
   );
 }
 
-function PixIcon() {
-  return (
-    <svg className="i" viewBox="0 0 24 24" aria-hidden="true">
-      <path d="m12 2 4.5 4.5L12 11 7.5 6.5zM12 13l4.5 4.5L12 22l-4.5-4.5zM2 12l4.5-4.5L11 12l-4.5 4.5zM13 12l4.5-4.5L22 12l-4.5 4.5z" />
-    </svg>
-  );
-}
