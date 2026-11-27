@@ -24,6 +24,9 @@ import { Faq, type FaqItem } from "@/components/landing/faq";
 import { FinalCta } from "@/components/landing/final-cta";
 import { HowItWorks } from "@/components/landing/how-it-works";
 import { SUPPORT_EMAIL } from "@/lib/brand";
+import { VideoModal } from "@/components/landing/video-modal";
+import { getSetting } from "@/lib/site-settings";
+import { youtubeId } from "@/lib/youtube";
 import { formatMoney, whatsappLink } from "@/lib/format";
 import { discountPercent, monthlyEquivalentCents, PLANS, TRIAL_DAYS, type Plan } from "@/lib/plans";
 
@@ -83,6 +86,8 @@ function pricingPlans(): PricingPlan[] {
 
 export default async function Home({ searchParams }: { searchParams: Promise<{ conta?: string }> }) {
   const deleted = (await searchParams).conta === "excluida";
+  // vídeo do popup "Ver como funciona" (link configurado no painel admin)
+  const videoId = youtubeId(await getSetting("howItWorksVideo"));
   // WhatsApp do suporte (opcional): sem ele, só aparece o e-mail
   const supportWhatsapp = process.env.SUPPORT_WHATSAPP ? whatsappLink(process.env.SUPPORT_WHATSAPP, "Olá! Tenho uma dúvida sobre o HoraBoa.") : null;
   return (
@@ -121,9 +126,13 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ c
           </p>
           <div className="ctas">
             <Cta href="/cadastro">Começar meus {TRIAL_DAYS} dias grátis</Cta>
-            <a className="lp-btn ghost lp-shape" href="#como">
-              <CirclePlay className="i" /> Ver como funciona
-            </a>
+            {videoId ? (
+              <VideoModal videoId={videoId} trialDays={TRIAL_DAYS} />
+            ) : (
+              <a className="lp-btn ghost lp-shape" href="#como">
+                <CirclePlay className="i" /> Ver como funciona
+              </a>
+            )}
           </div>
           <div className="lp-perks">
             <span><Zap className="i" /> Pronto em 5 minutos</span>

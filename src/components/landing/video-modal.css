@@ -1,0 +1,40 @@
+/* Popup "Ver como funciona" da página de vendas: vídeo do YouTube que começa sozinho (sem som). Prefixo vm-. */
+@layer components {
+.lp .vm-shade { position: fixed; inset: 0; z-index: 100; display: grid; place-items: center; padding: 16px; background: rgba(12, 12, 14, .58);
+  -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); animation: vm-fade .25s ease; }
+@keyframes vm-fade { from { opacity: 0; } }
+.lp .vm-modal { position: relative; width: min(780px, 100%); max-height: calc(100dvh - 32px); overflow: auto; border-radius: 28px; background: #fff; padding: 30px 30px 26px; text-align: left;
+  box-shadow: 0 40px 100px rgba(0, 0, 0, .35); animation: vm-up .4s cubic-bezier(.3, 1.3, .5, 1); }
+@keyframes vm-up { from { opacity: 0; transform: translateY(20px) scale(.97); } }
+@media (max-width: 560px) { .lp .vm-modal { padding: 22px 16px 20px; border-radius: 24px; } }
+.lp .vm-x { position: absolute; right: 14px; top: 14px; width: 40px; height: 40px; border-radius: 12px; border: 0; background: #f4f4f5; color: var(--navy); display: grid; place-items: center; cursor: pointer; transition: background .2s; }
+.lp .vm-x:hover { background: #e9e9eb; }
+.lp .vm-x svg { width: 20px; height: 20px; }
+.lp .vm-x:focus-visible, .lp .vm-sound:focus-visible, .lp .vm-play:focus-visible { outline: 3px solid rgba(254, 110, 2, .5); outline-offset: 2px; }
+.lp .vm-eyebrow { font-size: 12.5px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; color: var(--b); }
+.lp .vm-modal h2 { font-size: clamp(26px, 4vw, 36px); margin: 8px 48px 0 0; }
+.lp .vm-modal h2 em { background: linear-gradient(120deg, #ffa766, #fe6e02 50%, #c2410c); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.lp .vm-sub { color: var(--muted); font-size: 15.5px; line-height: 1.55; margin: 10px 0 0; max-width: 640px; }
+.lp .vm-video { position: relative; margin-top: 20px; border-radius: 20px; overflow: hidden; aspect-ratio: 16 / 9; background: radial-gradient(circle at 50% 40%, #2a1a10, #0b0b0d 70%); box-shadow: 0 20px 50px rgba(0, 0, 0, .25); }
+.lp .vm-player, .lp .vm-player iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; pointer-events: none; }
+.lp .vm-blocker { position: absolute; inset: 0; z-index: 2; cursor: pointer; }
+.lp .vm-loading { position: absolute; inset: 0; display: grid; place-items: center; color: rgba(255, 255, 255, .5); font-size: 13px; }
+.lp .vm-layer { position: absolute; inset: 0; z-index: 3; display: grid; place-items: center; pointer-events: none; }
+.lp .vm-layer > * { pointer-events: auto; }
+.lp .vm-sound { display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 20px 32px; border-radius: 22px; border: 2px solid #fff; cursor: pointer; color: #fff;
+  background: linear-gradient(135deg, #ffa149, #fe6e02 50%, #d9480f); box-shadow: 0 18px 40px rgba(254, 110, 2, .45); font-family: "Nunito", -apple-system, BlinkMacSystemFont, system-ui, sans-serif; font-weight: 800; font-size: 19px; line-height: 1.2; animation: vm-pulse 2s ease-in-out infinite; }
+@media (max-width: 560px) { .lp .vm-sound { padding: 12px 20px; font-size: 15px; } .lp .vm-sound svg { width: 38px; height: 38px; } }
+@keyframes vm-pulse { 50% { transform: scale(1.04); box-shadow: 0 22px 50px rgba(254, 110, 2, .6); } }
+.lp .vm-sound svg { width: 52px; height: 52px; }
+.lp .vm-sound .w1, .lp .vm-sound .w2 { animation: vm-wave 1.2s ease-in-out infinite; } .lp .vm-sound .w2 { animation-delay: .2s; }
+@keyframes vm-wave { 50% { opacity: .25; } }
+.lp .vm-play { width: 84px; height: 84px; border-radius: 50%; border: 0; display: grid; place-items: center; color: #fff; cursor: pointer;
+  background: linear-gradient(135deg, #ffa149, #fe6e02 55%, #d9480f); box-shadow: 0 14px 34px rgba(254, 110, 2, .5); transition: transform .2s; }
+.lp .vm-play:hover { transform: scale(1.06); }
+.lp .vm-play svg { width: 34px; height: 34px; margin-left: 4px; }
+.lp .vm-bar { position: absolute; left: 0; bottom: 0; z-index: 4; height: 5px; width: 0; background: linear-gradient(90deg, #ffa149, #fe6e02); transition: width .4s linear; }
+.lp .vm-cta { margin-top: 20px; text-align: center; }
+.lp .vm-cta .lp-cta { width: 100%; }
+.lp .vm-modal .lp-perks { margin-top: 16px; }
+@media (prefers-reduced-motion: reduce) { .lp .vm-sound, .lp .vm-sound .w1, .lp .vm-sound .w2 { animation: none; } }
+}

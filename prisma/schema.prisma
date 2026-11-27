@@ -327,3 +327,10 @@ model BusinessImage {
 
   @@index([businessId])
 }
+
+/// Configurações gerais do site (editadas no painel admin). Ex.: link do vídeo "Como funciona".
+model SiteSetting {
+  key       String   @id
+  value     String
+  updatedAt DateTime @updatedAt
+}
