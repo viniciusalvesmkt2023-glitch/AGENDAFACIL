@@ -5,8 +5,11 @@ import { formatPhone } from "@/lib/format";
 import { EmptyState, PageHeader } from "@/components/ui";
 import { FormPanel } from "@/components/form-panel";
 import { Clock, Pencil, Power, UserRound } from "lucide-react";
+
 import { toggleProfessional } from "@/app/painel/actions";
 import { ProfessionalForm } from "./professional-form";
+import { summarizeWeek } from "@/lib/pro-hours";
+import "./pro-hours.css";
 
 type Props = { searchParams: Promise<{ editar?: string }> };
 
@@ -16,11 +19,20 @@ export default async function ProfessionalsPage({ searchParams }: Props) {
   const [professionals, services] = await Promise.all([
     db.professional.findMany({
       where: { businessId: user.businessId },
-      include: { services: { include: { service: true } } },
+      include: { services: { include: { service: true } }, hours: true },
       orderBy: [{ active: "desc" }, { name: "asc" }],
     }),
     db.service.findMany({ where: { businessId: user.businessId, active: true }, orderBy: { name: "asc" } }),
   ]);
+  const businessHours = await db.workingHour.findMany({ where: { businessId: user.businessId } });
+  const pick = <T extends { weekday: number; isOpen: boolean; startMinutes: number; endMinutes: number; breakStart: number | null; breakEnd: number | null }>(h: T) => ({
+    weekday: h.weekday,
+    isOpen: h.isOpen,
+    startMinutes: h.startMinutes,
+    endMinutes: h.endMinutes,
+    breakStart: h.breakStart,
+    breakEnd: h.breakEnd,
+  });
   const editing = params.editar ? professionals.find((p) => p.id === params.editar) : undefined;
 
   return (
@@ -32,6 +44,7 @@ export default async function ProfessionalsPage({ searchParams }: Props) {
             <ProfessionalForm
               key={editing?.id ?? "new"}
               services={services}
+              businessHours={businessHours.map(pick)}
               professional={
                 editing && {
                   id: editing.id,
@@ -39,6 +52,8 @@ export default async function ProfessionalsPage({ searchParams }: Props) {
                   phone: editing.phone,
                   serviceIds: editing.services.map((s) => s.serviceId),
                   imageId: editing.imageId,
+                  customHours: editing.customHours,
+                  hours: editing.hours.map(pick),
                 }
               }
             />
@@ -71,14 +86,27 @@ export default async function ProfessionalsPage({ searchParams }: Props) {
                     <p className="truncate text-sm text-zinc-500">
                       {p.services.length ? `${p.services.length} serviço${p.services.length === 1 ? "" : "s"}: ${p.services.map((s) => s.service.name).join(", ")}` : "Nenhum serviço"}
                     </p>
-                    <p className="truncate text-xs text-zinc-400">
-                      {p.customHours ? "Horário próprio" : "Horário do estabelecimento"}
-                      {p.phone && ` · ${formatPhone(p.phone)}`}
-                    </p>
+                    {(() => {
+                      const rows = p.customHours ? p.hours : businessHours;
+                      const on = new Set(rows.filter((h) => h.isOpen).map((h) => h.weekday));
+                      return (
+                        <>
+                          <span className={`pr-sum ${p.customHours ? "" : "same"}`} data-testid="pro-hours-summary">
+                            <Clock />
+                            <span>{p.customHours ? summarizeWeek(rows) : "Horário do estabelecimento"}</span>
+                          </span>
+                          {p.customHours && (
+                            <span className="pr-mini" aria-hidden="true">
+                              {[1, 2, 3, 4, 5, 6, 0].map((wd) => (
+                                <i key={wd} className={on.has(wd) ? "on" : ""} />
+                              ))}
+                            </span>
+                          )}
+                          {p.phone && <p className="truncate text-xs text-zinc-400">{formatPhone(p.phone)}</p>}
+                        </>
+                      );
+                    })()}
                   </div>
-                  <Link href={`/painel/profissionais/${p.id}/horarios`} className="btn-icon" aria-label={`Horário de ${p.name}`} title="Horário">
-                    <Clock className="h-4 w-4" />
-                  </Link>
                   <Link href={`/painel/profissionais?editar=${p.id}`} className="btn-icon" aria-label={`Editar ${p.name}`}>
                     <Pencil className="h-4 w-4" />
                   </Link>

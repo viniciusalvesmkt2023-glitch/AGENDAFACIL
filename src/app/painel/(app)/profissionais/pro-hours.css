@@ -1,0 +1,50 @@
+/* Horário de trabalho no cadastro do profissional. Prefixo pr-. Cores do painel (claro e escuro). */
+@layer components {
+.pn .pr-hours { border-top: 1px solid var(--pn-line); padding-top: 16px; }
+.pn .pr-hours h3 { display: flex; align-items: center; gap: 8px; margin: 0; font-size: 16px; font-weight: 800; color: var(--pn-fg); }
+.pn .pr-hours h3 svg { width: 18px; height: 18px; color: var(--b); }
+.pn .pr-d { margin: 4px 0 12px; font-size: 13px; color: var(--pn-muted); }
+.pn .pr-seg { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; padding: 4px; border-radius: 15px; background: var(--pn-raised); border: 1px solid var(--pn-line); }
+.pn .pr-seg button { border-radius: 11px; padding: 9px 8px; font-weight: 700; font-size: 13.5px; line-height: 1.25; color: var(--pn-muted); text-align: center; }
+.pn .pr-seg button small { display: block; margin-top: 2px; font-weight: 500; font-size: 11.5px; color: var(--pn-faint); }
+.pn .pr-seg button.on { background: var(--ui-solid); color: var(--pn-fg); box-shadow: 0 1px 3px rgba(0, 0, 0, 0.18); }
+.pn .pr-seg button.on small { color: var(--pn-muted); }
+.pn .pr-same { margin: 10px 0 0; padding: 12px 14px; border-radius: 14px; background: var(--pn-raised); font-size: 13.5px; line-height: 1.5; color: var(--pn-muted); }
+.pn .pr-same b { color: var(--pn-fg); }
+.pn .pr-plabel { margin: 14px 0 0; font-weight: 700; font-size: 13.5px; color: var(--pn-fg); }
+.pn .pr-plabel span { font-weight: 500; color: var(--pn-muted); }
+.pn .pr-periods { display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0 4px; }
+.pn .pr-periods button { height: 38px; padding: 0 12px; border-radius: 999px; display: inline-flex; align-items: center; gap: 5px; font-weight: 700; font-size: 13px;
+  color: var(--pn-fg); background: var(--ui-solid); border: 1px solid var(--pn-line2); }
+.pn .pr-periods button small { font-weight: 600; font-size: 11.5px; color: var(--pn-muted); }
+.pn .pr-periods button.on { border-color: color-mix(in srgb, var(--b) 60%, transparent); background: color-mix(in srgb, var(--b) 14%, transparent); }
+.pn .pr-periods i { width: 18px; height: 18px; border-radius: 50%; display: grid; place-items: center; background: var(--b); color: #fff; }
+.pn .pr-periods i svg { width: 12px; height: 12px; stroke-width: 3; }
+.pn .pr-copy { display: inline-flex; align-items: center; gap: 5px; padding: 6px 0 10px; font-weight: 700; font-size: 13px; color: var(--b); }
+.pn .pr-copy svg { width: 14px; height: 14px; }
+.pn .pr-days { display: grid; gap: 6px; }
+.pn .pr-day { display: grid; grid-template-columns: 56px minmax(0, 1fr); gap: 6px 8px; align-items: center; padding: 8px 10px; border-radius: 14px; border: 1px solid var(--pn-line); background: var(--ui-solid); }
+.pn .pr-dn { height: 34px; border-radius: 10px; font-weight: 800; font-size: 13px; color: #fff; background: linear-gradient(145deg, var(--bl), var(--b) 45%, var(--bd)); }
+.pn .pr-day.off .pr-dn { background: var(--pn-raised); color: var(--pn-faint); }
+.pn .pr-tt { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; min-width: 0; font-size: 13px; color: var(--pn-muted); }
+.pn .pr-time { height: 34px; width: 84px; padding: 0 6px; border-radius: 10px; border: 1px solid var(--pn-line2); background: var(--ui-solid); color: var(--pn-fg); font-size: 14px; font-variant-numeric: tabular-nums; }
+.pn .pr-time.sm { width: 78px; height: 30px; font-size: 13px; }
+.pn .pr-addl { font-weight: 700; font-size: 12px; color: var(--b); }
+.pn .pr-folga { color: var(--pn-faint); }
+.pn .pr-lunch { grid-column: 1 / -1; display: flex; align-items: center; gap: 6px; padding-left: 64px; font-size: 12px; color: var(--pn-muted); }
+.pn .pr-lunch > svg { width: 14px; height: 14px; }
+@media (max-width: 400px) { .pn .pr-lunch { padding-left: 0; } }
+.pn .pr-rm { width: 28px; height: 28px; border-radius: 9px; display: grid; place-items: center; border: 1px solid var(--pn-line2); color: var(--pn-muted); }
+.pn .pr-rm svg { width: 13px; height: 13px; }
+.pn .pr-tip { margin: 10px 0 0; font-size: 12.5px; color: var(--pn-muted); }
+/* resumo na lista */
+.pn .pr-sum { display: inline-flex; align-items: center; gap: 5px; margin-top: 5px; max-width: 100%; padding: 2px 9px; border-radius: 999px; font-size: 12px; font-weight: 700;
+  background: color-mix(in srgb, var(--b) 13%, transparent); color: var(--bd); }
+.pn.pn-dark .pr-sum { color: var(--bl); }
+.pn .pr-sum.same { background: var(--pn-raised); color: var(--pn-muted); }
+.pn .pr-sum svg { width: 12px; height: 12px; flex-shrink: 0; }
+.pn .pr-sum span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pn .pr-mini { display: grid; grid-template-columns: repeat(7, 1fr); gap: 3px; width: 140px; margin-top: 6px; }
+.pn .pr-mini i { height: 5px; border-radius: 3px; background: var(--pn-line2); }
+.pn .pr-mini i.on { background: var(--b); }
+}

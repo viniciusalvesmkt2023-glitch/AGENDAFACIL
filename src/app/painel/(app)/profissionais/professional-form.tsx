@@ -4,17 +4,20 @@ import { useActionState, useEffect, useRef, useState } from "react";
 import { Camera, Loader2, Trash2 } from "lucide-react";
 import { saveProfessional } from "@/app/painel/actions";
 import { resizeImage } from "@/lib/resize-image";
+import { ProHoursFields, type HourRow } from "./pro-hours-fields";
 import { FormMessage } from "@/components/ui";
 import { SubmitButton } from "@/components/submit-button";
 
-type Professional = { id: string; name: string; phone: string | null; serviceIds: string[]; imageId?: string | null };
+type Professional = { id: string; name: string; phone: string | null; serviceIds: string[]; imageId?: string | null; customHours?: boolean; hours?: HourRow[] };
 
 export function ProfessionalForm({
   professional,
   services,
+  businessHours,
 }: {
   professional?: Professional;
   services: { id: string; name: string }[];
+  businessHours: HourRow[];
 }) {
   const [state, action] = useActionState(saveProfessional, undefined);
   const formRef = useRef<HTMLFormElement>(null);
@@ -24,6 +27,8 @@ export function ProfessionalForm({
   const [removed, setRemoved] = useState(false);
   const [busy, setBusy] = useState(false);
   const [photoError, setPhotoError] = useState<string | null>(null);
+  // Depois de cadastrar um novo, o bloco de horário volta ao padrão
+  const [hoursKey, setHoursKey] = useState(0);
   // Foto escolhida (já reduzida). Vai junto no envio; fica guardada se o formulário der erro.
   const pending = useRef<File | null>(null);
   const submit = (formData: FormData) => {
@@ -36,6 +41,7 @@ export function ProfessionalForm({
       formRef.current?.reset();
       setPhoto(null);
       setRemoved(false);
+      setHoursKey((k) => k + 1);
     }
     if (state?.success) pending.current = null;
   }, [state, professional]);
@@ -128,6 +134,13 @@ export function ProfessionalForm({
         <label className="label" htmlFor="phone">WhatsApp (opcional)</label>
         <input className="input" id="phone" name="phone" defaultValue={professional?.phone ?? ""} placeholder="(11) 99999-9999" />
       </div>
+      <ProHoursFields
+        key={hoursKey}
+        name={professional?.name ?? ""}
+        business={businessHours}
+        own={professional?.hours ?? []}
+        initialCustom={professional?.customHours ?? false}
+      />
       <fieldset>
         <legend className="label">Serviços que realiza</legend>
         {services.length === 0 ? (

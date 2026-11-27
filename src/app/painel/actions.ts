@@ -204,6 +204,16 @@ export async function saveProfessional(_: ActionState, formData: FormData): Prom
   if (!parsed.success) return { error: parsed.error.issues[0].message };
   const { id, name, phone } = parsed.data;
 
+  // Horário de trabalho (vem junto no cadastro): igual ao do estabelecimento ou próprio
+  const hoursMode = formData.get("hoursMode");
+  let week: WeekRow[] | null = null;
+  if (hoursMode === "own") {
+    const parsedWeek = parseWeek(formData);
+    if ("error" in parsedWeek) return { error: parsedWeek.error };
+    if (!parsedWeek.rows.some((r) => r.isOpen)) return { error: "Marque pelo menos um dia de trabalho." };
+    week = parsedWeek.rows;
+  }
+
   const requested = formData.getAll("serviceIds").map(String);
   const validServices = await db.service.findMany({
     where: { businessId: user.businessId, id: { in: requested } },
@@ -237,6 +247,22 @@ export async function saveProfessional(_: ActionState, formData: FormData): Prom
       },
     });
     proId = created.id;
+  }
+
+  if (hoursMode === "own" && week && proId) {
+    const pid = proId;
+    await db.$transaction([
+      db.professional.update({ where: { id: pid }, data: { customHours: true } }),
+      ...week.map(({ weekday, ...data }) =>
+        db.professionalHour.upsert({
+          where: { professionalId_weekday: { professionalId: pid, weekday } },
+          update: data,
+          create: { professionalId: pid, weekday, ...data },
+        }),
+      ),
+    ]);
+  } else if (hoursMode === "same" && proId) {
+    await db.professional.update({ where: { id: proId }, data: { customHours: false } });
   }
 
   if (photo.image || removePhoto) {
