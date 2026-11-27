@@ -42,7 +42,9 @@ export function HeroDemo() {
     const confirm = q<HTMLElement>(".hd-confirm");
     const fName = q<HTMLElement>("[data-name]");
     const fPhone = q<HTMLElement>("[data-phone]");
-    const next = q<HTMLElement>(".hd-pnext");
+    const next = q<HTMLElement>(".hd-bw-new");
+    const dot = q<HTMLElement>(".hd-beam-dot");
+    const beam = q<HTMLElement>(".hd-beam");
     const sN = q<HTMLElement>("[data-n]");
     const sV = q<HTMLElement>("[data-v]");
     const f1 = q<HTMLElement>(".hd-f1");
@@ -200,6 +202,12 @@ export function HeroDemo() {
         tap.classList.remove("on");
       });
       later(10500, () => {
+        // o agendamento "voa" do celular até o painel
+        beam.classList.add("on");
+        dot.classList.remove("go");
+        void dot.offsetWidth;
+        dot.classList.add("go");
+        later(1200, () => beam.classList.remove("on"));
         f1.classList.add("show");
         next.classList.remove("hide");
         next.classList.add("glow");
@@ -243,6 +251,7 @@ export function HeroDemo() {
         <div className="hd-phone hd-ph-a">
           <div className="hd-scr">
             <div className="hd-cli">
+              <div className="hd-sbar"><span>9:41</span><span className="hd-cam" /><span className="hd-sig"><i /><i /><i /><i /></span></div>
               <div className="hd-cli-head">
                 <div className="hd-lg"><span>B</span></div>
                 <div>
@@ -326,54 +335,46 @@ export function HeroDemo() {
           </div>
         </div>
 
-        {/* Painel do barbeiro recebendo */}
-        <div className="hd-phone hd-ph-b">
-          <div className="hd-scr">
-            <div className="hd-pnl">
-              <p className="hd-hi">Boa tarde, João 👋</p>
-              <h6>Hoje, <em>26 de nov.</em></h6>
-              <div className="hd-pdays">
-                <span className="hd-dk">QUA<b>25</b></span>
-                <span className="hd-sel2">HOJE<b>26</b></span>
-                <span className="hd-dk">SEX<b>27</b></span>
-                <span className="hd-dk">SÁB<b>28</b></span>
-                <span className="hd-dk">DOM<b>29</b></span>
+        {/* Painel no computador recebendo */}
+        <div className="hd-bw">
+          <div className="hd-bw-bar">
+            <span className="hd-dots"><i /><i /><i /></span>
+            <span className="hd-url">
+              <svg className="hd-i" viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="10" rx="2" /><path d="M8 11V7a4 4 0 0 1 8 0v4" /></svg>
+              horaboa.com/painel
+            </span>
+          </div>
+          <div className="hd-bw-body">
+            <aside className="hd-bw-side">
+              <span className="hd-bw-logo">B</span>
+              <span className="on"><svg className="hd-i" viewBox="0 0 24 24" dangerouslySetInnerHTML={{ __html: '<rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/>' }} /></span>
+              <span className=""><svg className="hd-i" viewBox="0 0 24 24" dangerouslySetInnerHTML={{ __html: '<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/>' }} /></span>
+              <span className=""><svg className="hd-i" viewBox="0 0 24 24" dangerouslySetInnerHTML={{ __html: '<circle cx="6" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><path d="M20 4 8.12 15.88M14.47 14.48 20 20M8.12 8.12 12 12"/>' }} /></span>
+              <span className=""><svg className="hd-i" viewBox="0 0 24 24" dangerouslySetInnerHTML={{ __html: '<path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-3 3"/>' }} /></span>
+              <span className=""><svg className="hd-i" viewBox="0 0 24 24" dangerouslySetInnerHTML={{ __html: '<path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/>' }} /></span>
+            </aside>
+            <div className="hd-bw-main">
+              <div className="hd-bw-hd">
+                <div><small>Boa tarde, João 👋</small><b>Agenda de hoje</b></div>
+                <span className="hd-bw-live"><i />ao vivo</span>
+                <span className="hd-bw-new-btn">+ Novo</span>
               </div>
-              <div className="hd-pstats">
-                <div className="hd-dk"><i className="hd-g-green" /><b data-n="">8</b><small>Agendados</small></div>
-                <div className="hd-dk"><i className="hd-g-blue" /><b data-v="">R$ 420</b><small>Previsto</small></div>
-                <div className="hd-dk"><i className="hd-g-amber" /><b>0</b><small>Faltas</small></div>
+              <div className="hd-bw-stats">
+                <div><span className="hd-dot hd-g-green" /><small>Agendados</small><b data-n="">8</b></div>
+                <div><span className="hd-dot hd-g-blue" /><small>Previsto</small><b data-v="">R$ 420</b></div>
+                <div><span className="hd-dot hd-g-amber" /><small>Faltas</small><b>0</b></div>
               </div>
-              <div className="hd-pnext hide">
-                <span className="hd-pl">● Novo · às 14:30</span>
-                <div className="hd-r">
-                  <div className="hd-av">L</div>
-                  <div><b>Lia Souza</b><small>Corte masculino · João</small></div>
-                </div>
-                <div className="hd-acts">
-                  <span className="hd-g-green">Concluir</span>
-                  <span className="hd-g-wa"><Whats /></span>
-                  <span className="hd-g-blue">
-                    <svg className="hd-i" viewBox="0 0 24 24" aria-hidden="true">
-                      <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.13.96.36 1.9.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.91.34 1.85.57 2.81.7A2 2 0 0 1 22 16.92z" />
-                    </svg>
-                  </span>
-                </div>
+              <div className="hd-bw-list">
+                <div className="hd-bw-row hd-bw-new hide"><span className="hd-bw-tm">14:30</span><span className="hd-bw-av hd-lia">L</span><div className="hd-bw-t"><b>Lia Souza</b><small>Corte masculino · João</small></div><span className="hd-bw-tag">Novo</span></div>
+                <div className="hd-bw-row"><span className="hd-bw-tm">15:00</span><span className="hd-bw-av hd-g-blue">R</span><div className="hd-bw-t"><b>Rafael</b><small>Barba · Pedro</small></div><span className="hd-bw-ok">Confirmado</span></div>
+                <div className="hd-bw-row"><span className="hd-bw-tm">16:00</span><span className="hd-bw-av hd-g-purple">B</span><div className="hd-bw-t"><b>Bruno</b><small>Corte + barba · João</small></div><span className="hd-bw-ok">Confirmado</span></div>
+                <div className="hd-bw-row"><span className="hd-bw-tm">17:00</span><span className="hd-bw-av hd-g-green">D</span><div className="hd-bw-t"><b>Diego</b><small>Corte · João</small></div><span className="hd-bw-ok">Confirmado</span></div>
               </div>
-              {[
-                ["15:00", "Rafael", "Barba · R$ 30"],
-                ["16:00", "Bruno", "Corte + barba · R$ 60"],
-                ["17:00", "Diego", "Corte · R$ 40"],
-              ].map(([tm, name, sub]) => (
-                <div key={tm} className="hd-prow">
-                  <div className="hd-tm">{tm}</div>
-                  <div className="hd-c hd-dk"><b>{name} <em>Confirmado</em></b><small>{sub}</small></div>
-                </div>
-              ))}
-              <div className="hd-ptabs"><i /><i /><span className="hd-fab hd-g-brand">+</span><i /><i /></div>
             </div>
           </div>
         </div>
+        <svg className="hd-beam" viewBox="0 0 920 640" preserveAspectRatio="none"><path d="M300 400 C 410 430, 400 250, 500 248" /></svg>
+        <span className="hd-beam-dot" />
 
         <div className="hd-float hd-f1">
           <span className="hd-ic hd-g-green"><Check /></span>
@@ -382,12 +383,6 @@ export function HeroDemo() {
         <div className="hd-float hd-f2">
           <span className="hd-ic hd-g-wa"><Whats /></span>
           <div>Confirmação enviada<small>pelo seu WhatsApp</small></div>
-        </div>
-        <div className="hd-float hd-f3 show">
-          <span className="hd-ic hd-g-brand">
-            <svg className="hd-i" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z" /></svg>
-          </span>
-          <div>Funciona 24 horas<small>até enquanto você dorme</small></div>
         </div>
       </div>
     </div>
