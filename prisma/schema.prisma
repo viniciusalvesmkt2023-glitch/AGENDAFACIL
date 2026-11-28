@@ -145,6 +145,9 @@ model User {
   termsAcceptedAt DateTime?
   // Aumenta quando a senha muda: derruba o login salvo nos outros aparelhos
   sessionVersion Int      @default(0)
+  // Proteção contra chute de senha: após várias tentativas erradas, o login fica travado por alguns minutos
+  failedLogins   Int       @default(0)
+  lockedUntil    DateTime?
   panelTheme   String   @default("LIGHT") // tema do painel: LIGHT | DARK (chave no topo do painel)
   // Como a agenda abre (fica salvo na conta): DIA | SEMANA | LISTA, profissional (null = todos) e cancelados
   agendaView         String   @default("dia")

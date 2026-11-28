@@ -27,6 +27,9 @@ export async function startCardCheckout(_: BillingState, formData: FormData): Pr
   if (!stripe) return { error: "Pagamento com cartão ainda não está disponível. Tente o Pix ou fale com o suporte." };
 
   // Já tem assinatura no cartão ativa: gerencia pelo portal em vez de criar outra
+  if (business.paymentMethod === "CARD" && business.stripeSubscriptionId && business.subscriptionStatus === "PAST_DUE") {
+    return { error: "A última cobrança no seu cartão não passou. Use “Trocar cartão” para atualizar e a assinatura continua normalmente." };
+  }
   if (business.paymentMethod === "CARD" && business.stripeSubscriptionId && business.subscriptionStatus === "ACTIVE") {
     return { error: "Você já tem uma assinatura no cartão. Use “Gerenciar cartão” para alterar ou cancelar." };
   }

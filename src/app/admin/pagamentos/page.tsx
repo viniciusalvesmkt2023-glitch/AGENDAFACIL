@@ -1,3 +1,4 @@
+import { requireAdmin } from "@/lib/admin";
 import Link from "next/link";
 import { AlertTriangle, CircleDollarSign, Clock, Receipt } from "lucide-react";
 import { db } from "@/lib/db";
@@ -23,6 +24,7 @@ const METHOD: Record<string, string> = { PIX: "Pix", CARD: "Cartão", OTHER: "Ma
 const fmt = (d: Date) => new Intl.DateTimeFormat("pt-BR", { day: "2-digit", month: "2-digit", year: "2-digit", hour: "2-digit", minute: "2-digit", timeZone: "America/Sao_Paulo" }).format(d);
 
 export default async function AdminPayments({ searchParams }: Props) {
+  await requireAdmin(); // checa em cada página (o layout sozinho não protege as navegações internas)
   const p = await searchParams;
   const filter = isFilter(p.f) ? p.f : "TODOS";
   const monthStart = localToUtc(`${todayInTimezone().slice(0, 7)}-01`, 0);

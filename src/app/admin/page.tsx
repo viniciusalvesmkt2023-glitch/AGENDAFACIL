@@ -1,3 +1,4 @@
+import { requireAdmin } from "@/lib/admin";
 import Link from "next/link";
 import { AlertTriangle, CircleDollarSign, Gift, MessageCircle, RefreshCw, Users, WifiOff, CreditCard } from "lucide-react";
 import { isPeriod, overview, PERIODS, salesSeries, type Period } from "@/lib/admin-stats";
@@ -25,6 +26,7 @@ function ago(d: Date) {
 const pct = (a: number, b: number) => (b ? Math.round((a / b) * 100) : 0);
 
 export default async function AdminOverview({ searchParams }: Props) {
+  await requireAdmin(); // checa em cada página (o layout sozinho não protege as navegações internas)
   const { periodo } = await searchParams;
   const period: Period = isPeriod(periodo) ? periodo : "hoje";
   const [s, o] = await Promise.all([salesSeries(period), overview()]);

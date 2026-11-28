@@ -16,8 +16,8 @@ const schema = z.object({
   professionalId: z.string().optional(),
   date: z.string().min(1, "Escolha uma data."),
   time: z.coerce.number().int().min(0, "Escolha um horário."),
-  clientName: z.string().trim().min(2, "Informe seu nome."),
-  clientPhone: z.string().trim().min(10, "Informe seu WhatsApp com DDD."),
+  clientName: z.string().trim().min(2, "Informe seu nome.").max(80, "Nome muito longo."),
+  clientPhone: z.string().trim().min(10, "Informe seu WhatsApp com DDD.").max(30),
   notes: z.string().trim().max(500).optional(),
 });
 

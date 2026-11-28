@@ -1,12 +1,14 @@
 "use client";
 
-import { useActionState, useEffect, useRef } from "react";
+import { useActionState, useEffect, useRef, useState } from "react";
 import { changePassword, deleteAccount, updateProfile } from "./actions";
 import { FormMessage } from "@/components/ui";
 import { SubmitButton } from "@/components/submit-button";
 
 export function ProfileForm({ name, email }: { name: string; email: string }) {
   const [state, action] = useActionState(updateProfile, undefined);
+  const [newEmail, setNewEmail] = useState(email);
+  const changing = newEmail.trim().toLowerCase() !== email.toLowerCase();
   return (
     <form action={action} className="space-y-4">
       <div>
@@ -15,8 +17,14 @@ export function ProfileForm({ name, email }: { name: string; email: string }) {
       </div>
       <div>
         <label className="label" htmlFor="email">E-mail de acesso</label>
-        <input className="input" id="email" name="email" type="email" defaultValue={email} required autoComplete="email" />
+        <input className="input" id="email" name="email" type="email" value={newEmail} onChange={(e) => setNewEmail(e.target.value)} required autoComplete="email" />
       </div>
+      {changing && (
+        <div>
+          <label className="label" htmlFor="profileCurrent">Senha atual (para trocar o e-mail)</label>
+          <input className="input" id="profileCurrent" name="current" type="password" required autoComplete="current-password" />
+        </div>
+      )}
       <FormMessage error={state?.error} success={state?.success} />
       <SubmitButton className="btn-primary w-full md:w-auto">Salvar dados</SubmitButton>
     </form>

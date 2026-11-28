@@ -1,3 +1,4 @@
+import { requireAdmin } from "@/lib/admin";
 import Link from "next/link";
 import { ArrowDown, ArrowUp, Eye, EyeOff, GraduationCap, Pencil, Plus, Trash2 } from "lucide-react";
 import { db } from "@/lib/db";
@@ -17,6 +18,7 @@ const SAVED: Record<string, string> = {
 
 /** Quadro de aulas: cadastre os vídeos do YouTube que aparecem no Suporte do painel. */
 export default async function AdminLessonsPage({ searchParams }: Props) {
+  await requireAdmin(); // checa em cada página (o layout sozinho não protege as navegações internas)
   const { editar, salvo } = await searchParams;
   const modules = await db.lessonModule.findMany({
     orderBy: [{ position: "asc" }, { createdAt: "asc" }],

@@ -1,3 +1,4 @@
+import { requireAdmin } from "@/lib/admin";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft, ExternalLink, MessageCircle } from "lucide-react";
@@ -19,6 +20,7 @@ const fmt = (d: Date, time = false) =>
   new Intl.DateTimeFormat("pt-BR", { day: "2-digit", month: "2-digit", year: "numeric", ...(time ? { hour: "2-digit", minute: "2-digit" } : {}), timeZone: "America/Sao_Paulo" }).format(d);
 
 export default async function AdminClient({ params }: Props) {
+  await requireAdmin(); // checa em cada página (o layout sozinho não protege as navegações internas)
   const { id } = await params;
   const b = await db.business.findUnique({
     where: { id },

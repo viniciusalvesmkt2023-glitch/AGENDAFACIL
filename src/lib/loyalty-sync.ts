@@ -103,8 +103,15 @@ function notify(b: Biz, client: { name: string; phone: string }, appointmentId: 
  * Cancelado pelo cliente ou pelo profissional e falta não contam; 1 selo por dia por cliente.
  */
 export async function syncLoyaltyStamp(appointmentId: string) {
-  const a = await db.appointment.findUnique({ where: { id: appointmentId }, include: { business: true, loyaltyStamp: true, client: true } });
+  const a = await db.appointment.findUnique({ where: { id: appointmentId }, include: { business: true, loyaltyStamp: true, client: true, service: true } });
   if (!a) return;
+  // cancelado ou falta: o prêmio usado neste atendimento volta para o cliente
+  if ((a.status === "CANCELED" || a.status === "NO_SHOW") && a.loyaltyRewardId) {
+    await db.$transaction([
+      db.loyaltyReward.update({ where: { id: a.loyaltyRewardId }, data: { usedAt: null } }),
+      db.appointment.update({ where: { id: a.id }, data: { loyaltyRewardId: null, priceCents: a.service.priceCents } }),
+    ]);
+  }
   const b = a.business;
   const today = nowInTimezone().date;
   if (a.loyaltyStamp) {

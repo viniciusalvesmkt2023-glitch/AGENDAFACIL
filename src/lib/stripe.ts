@@ -56,7 +56,9 @@ export async function syncStripeSubscription(sub: Stripe.Subscription) {
       stripeCustomerId: customerId,
       stripeSubscriptionId: sub.id,
       ...(status ? { subscriptionStatus: status } : {}),
-      ...(status && status !== "CANCELED" ? { paymentMethod: "CARD", currentPeriodEnd: periodEnd(sub) } : {}),
+      ...(status && status !== "CANCELED" ? { paymentMethod: "CARD" } : {}),
+      // só avança a validade quando a cobrança deu certo (cartão recusado fica na tolerância a partir do vencimento antigo)
+      ...(status === "ACTIVE" ? { currentPeriodEnd: periodEnd(sub) } : {}),
       ...(isPlanId(plan) ? { plan } : {}),
     },
   });

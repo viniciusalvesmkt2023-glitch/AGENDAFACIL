@@ -87,11 +87,11 @@ export function parseTime(v: unknown): number | null {
 
 /** "R$ 45,00", "45", "45.5" → centavos (vazio = null). */
 export function parseMoney(v: unknown): number | null {
-  if (typeof v === "number") return Math.round(v * 100);
+  if (typeof v === "number") return Number.isFinite(v) && v >= 0 && v <= 1_000_000 ? Math.round(v * 100) : null;
   const s = String(v ?? "").replace(/[^\d,.-]/g, "");
   if (!s) return null;
   const n = Number(s.includes(",") ? s.replace(/\./g, "").replace(",", ".") : s);
-  return Number.isFinite(n) && n >= 0 ? Math.round(n * 100) : null;
+  return Number.isFinite(n) && n >= 0 && n <= 1_000_000 ? Math.round(n * 100) : null;
 }
 
 /** "sim", "pago", "pix", "dinheiro", "cartão" → forma de pagamento (ou null = a receber). */

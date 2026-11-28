@@ -1,3 +1,4 @@
+import { requireAdmin } from "@/lib/admin";
 import Link from "next/link";
 import { Download, Search } from "lucide-react";
 import { FILTERS, isFilter, listClients } from "@/lib/admin-clients";
@@ -13,6 +14,7 @@ const PILL: Record<string, string> = { TESTE: "ad-p-trial", ATIVO: "ad-p-ok", VE
 const fmtDate = (d: Date) => new Intl.DateTimeFormat("pt-BR", { day: "numeric", month: "short", year: "numeric", timeZone: "America/Sao_Paulo" }).format(d).replace(" de ", " ").replace(".", "");
 
 export default async function AdminClients({ searchParams }: Props) {
+  await requireAdmin(); // checa em cada página (o layout sozinho não protege as navegações internas)
   const p = await searchParams;
   const filter = isFilter(p.f) ? p.f : "TODOS";
   const q = p.q ?? "";

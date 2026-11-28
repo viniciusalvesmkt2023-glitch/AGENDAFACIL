@@ -1,8 +1,10 @@
+import { requireAdmin } from "@/lib/admin";
 import { ExternalLink, Video } from "lucide-react";
 import { getSetting } from "@/lib/site-settings";
 import { VideoForm } from "./video-form";
 
 export default async function AdminSettingsPage() {
+  await requireAdmin(); // checa em cada página (o layout sozinho não protege as navegações internas)
   const video = await getSetting("howItWorksVideo");
   return (
     <section className="ad-view on">

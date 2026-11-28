@@ -9,7 +9,11 @@ export async function GET(req: Request) {
   const url = new URL(req.url);
   const f = url.searchParams.get("f");
   const { rows } = await listClients({ filter: isFilter(f) ? f : "TODOS", q: url.searchParams.get("q") ?? "" });
-  const cell = (v: string | number) => `"${String(v).replace(/"/g, '""')}"`;
+  // célula que começa com = + - @ viraria fórmula no Excel: prefixa com ' para ficar só texto
+  const cell = (v: string | number) => {
+    const s = typeof v === "string" && /^[=+\-@\t\r]/.test(v) ? `'${v}` : String(v);
+    return `"${s.replace(/"/g, '""')}"`;
+  };
   const head = ["Estabelecimento", "Link", "Dono", "E-mail", "Telefone", "Plano", "Situação", "Cliente desde", "Agendamentos (30 dias)", "Total pago (R$)", "WhatsApp"];
   const lines = rows.map((c) =>
     [c.name, `horaboa.com/${c.slug}`, c.owner, c.email, c.phone ?? "", isPlanId(c.plan) ? PLANS[c.plan].name : "", STATUS_LABEL[c.status],

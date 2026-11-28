@@ -3,6 +3,7 @@ import { revalidatePath } from "next/cache";
 import { db } from "@/lib/db";
 import { getSession } from "@/lib/auth";
 import { MAX_IMAGE_BYTES, sniffImage } from "@/lib/images";
+import { hasAccess } from "@/lib/subscription";
 
 const KINDS = { logo: "LOGO", capa: "COVER" } as const;
 
@@ -23,8 +24,9 @@ export async function POST(req: Request) {
 
   const kind = KINDS[kindKey];
   const field = kind === "LOGO" ? "logoImageId" : "coverImageId";
-  const business = await db.business.findUnique({ where: { id: session.businessId }, select: { id: true, slug: true, logoImageId: true, coverImageId: true } });
+  const business = await db.business.findUnique({ where: { id: session.businessId } });
   if (!business) return NextResponse.json({ error: "Estabelecimento não encontrado." }, { status: 404 });
+  if (!hasAccess(business)) return NextResponse.json({ error: "Sua assinatura não está ativa." }, { status: 403 });
 
   const img = await db.businessImage.create({ data: { businessId: business.id, kind, mime, data: Buffer.from(bytes) } });
   await db.business.update({ where: { id: business.id }, data: { [field]: img.id } });

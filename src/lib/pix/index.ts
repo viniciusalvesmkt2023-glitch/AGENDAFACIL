@@ -13,7 +13,7 @@ export type { PixProvider } from "./types";
 export function getPixProvider(): PixProvider | null {
   const name = process.env.PIX_PROVIDER?.toLowerCase();
   // O provedor de teste nunca roda na Vercel (só no computador local)
-  if (name === "mock" && !process.env.VERCEL) return mockPixProvider;
+  if (name === "mock" && !process.env.VERCEL && process.env.NODE_ENV !== "production") return mockPixProvider;
   if (asaasConfigured()) return asaasProvider;
   if (process.env.SYNCPAY_CLIENT_ID && process.env.SYNCPAY_CLIENT_SECRET && process.env.SYNCPAY_WEBHOOK_SECRET) {
     return syncPayProvider;
@@ -28,10 +28,10 @@ export function getPixProvider(): PixProvider | null {
 export async function confirmPixPayment(externalId: string) {
   return db.$transaction(async (tx) => {
     const payment = await tx.payment.findUnique({ where: { externalId } });
-    if (!payment || payment.status === "PAID") return payment;
+    if (!payment || payment.status === "PAID" || payment.status === "REFUNDED") return payment;
 
     const marked = await tx.payment.updateMany({
-      where: { id: payment.id, status: { not: "PAID" } },
+      where: { id: payment.id, status: { in: ["PENDING", "EXPIRED", "FAILED"] } },
       data: { status: "PAID", paidAt: new Date() },
     });
     if (marked.count === 0) return payment;

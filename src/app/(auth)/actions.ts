@@ -81,6 +81,9 @@ export async function signup(_: FormState, formData: FormData): Promise<FormStat
   redirect("/comecar");
 }
 
+const MAX_FAILED_LOGINS = 8;
+const LOCK_MINUTES = 15;
+
 const loginSchema = z.object({
   email: z.string().trim().toLowerCase().email("E-mail inválido."),
   password: z.string().min(1, "Informe sua senha."),
@@ -91,9 +94,22 @@ export async function login(_: FormState, formData: FormData): Promise<FormState
   if (!parsed.success) return { error: parsed.error.issues[0].message, values: keep(formData) };
 
   const user = await db.user.findUnique({ where: { email: parsed.data.email } });
+  if (user?.lockedUntil && user.lockedUntil > new Date()) {
+    const min = Math.ceil((user.lockedUntil.getTime() - Date.now()) / 60_000);
+    return { error: `Muitas tentativas erradas. Tente de novo em ${min} minuto${min === 1 ? "" : "s"} ou use “Esqueci minha senha”.`, values: keep(formData) };
+  }
   if (!user || !(await bcrypt.compare(parsed.data.password, user.passwordHash))) {
+    if (user) {
+      // a cada 8 erros seguidos, trava por 15 minutos
+      const failed = user.failedLogins + 1;
+      await db.user.update({
+        where: { id: user.id },
+        data: failed >= MAX_FAILED_LOGINS ? { failedLogins: 0, lockedUntil: new Date(Date.now() + LOCK_MINUTES * 60_000) } : { failedLogins: failed },
+      });
+    }
     return { error: "E-mail ou senha incorretos.", values: keep(formData) };
   }
+  if (user.failedLogins || user.lockedUntil) await db.user.update({ where: { id: user.id }, data: { failedLogins: 0, lockedUntil: null } });
 
   // "Manter conectado neste aparelho" vem marcado; desmarcado, o login some ao fechar o navegador
   const remember = formData.get("remember") === "on";

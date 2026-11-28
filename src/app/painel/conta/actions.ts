@@ -1,4 +1,5 @@
 "use server";
+import { isAdminEmail } from "@/lib/admin";
 
 import bcrypt from "bcryptjs";
 import { revalidatePath } from "next/cache";
@@ -22,8 +23,14 @@ export async function updateProfile(_: AccountState, formData: FormData): Promis
     .safeParse(Object.fromEntries(formData));
   if (!parsed.success) return { error: parsed.error.issues[0].message };
   const { name, email } = parsed.data;
-  if (email !== user.email && (await db.user.findUnique({ where: { email } }))) {
-    return { error: "Já existe uma conta com este e-mail." };
+  if (email !== user.email) {
+    // trocar o e-mail de acesso pede a senha atual
+    if (!(await bcrypt.compare(String(formData.get("current") ?? ""), user.passwordHash))) {
+      return { error: "Para trocar o e-mail, informe sua senha atual." };
+    }
+    if (isAdminEmail(email) || (await db.user.findUnique({ where: { email } }))) {
+      return { error: "Já existe uma conta com este e-mail." };
+    }
   }
   await db.user.update({ where: { id: user.id }, data: { name, email } });
   revalidatePath("/painel", "layout");

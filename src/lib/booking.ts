@@ -1,9 +1,10 @@
 import "server-only";
+import { generateToken } from "./tokens";
 import { db } from "./db";
 import { computeAvailableSlots, isSlotFree, type BusyInterval, type DayHours } from "./availability";
 import { blockIntervals, closedPeriods, effectiveHours, emptyDayReason, type EmptyReason } from "./schedule";
 import type { Prisma } from "@prisma/client";
-import { diffDays, isValidDate, nowInTimezone, weekdayOf } from "./time";
+import { diffDays, isValidDate, nowInTimezone, todayInTimezone, weekdayOf } from "./time";
 import { normalizePhone } from "./format";
 
 const ACTIVE_STATUSES = ["SCHEDULED", "CONFIRMED", "COMPLETED"];
@@ -174,6 +175,8 @@ export async function createAppointment(input: {
   if (phone.length < 12) throw new BookingError("Informe um telefone válido com DDD.");
 
   return db.$transaction(async (tx) => {
+    // trava a agenda desse dia enquanto confere e grava (evita 2 clientes no mesmo horário ao mesmo tempo)
+    await tx.$queryRaw`SELECT 1 AS ok FROM pg_advisory_xact_lock(hashtext(${`${business.id}:${input.date}`}))`;
     const service = await tx.service.findFirst({
       where: { id: input.serviceId, businessId: business.id, active: true },
     });
@@ -184,6 +187,8 @@ export async function createAppointment(input: {
 
     // Escolhe o primeiro profissional livre nesse horário
     const chosen = pros.find((p) =>
+      // online: só horários da grade (ex.: de 30 em 30 min), como aparecem na página
+      (input.source !== "ONLINE" || (p.hours != null && (input.startMinutes - p.hours.startMinutes) % business.slotInterval === 0)) &&
       isSlotFree({
         hours: p.hours,
         durationMinutes: service.durationMinutes,
@@ -196,11 +201,19 @@ export async function createAppointment(input: {
     );
     if (!chosen) throw new BookingError("Este horário acabou de ser ocupado. Escolha outro horário.");
 
+    // agendamento online não renomeia um cliente que já existe (só o dono muda o nome)
     const client = await tx.client.upsert({
       where: { businessId_phone: { businessId: business.id, phone } },
-      update: { name: input.clientName },
+      update: input.source === "ONLINE" ? {} : { name: input.clientName },
       create: { businessId: business.id, name: input.clientName, phone },
     });
+    if (input.source === "ONLINE") {
+      // limite contra abuso: no máximo 5 horários futuros marcados pelo mesmo telefone
+      const open = await tx.appointment.count({
+        where: { businessId: business.id, clientId: client.id, status: { in: ["SCHEDULED", "CONFIRMED"] }, date: { gte: todayInTimezone() } },
+      });
+      if (open >= 5) throw new BookingError("Você já tem vários horários marcados. Para marcar mais, fale direto com o estabelecimento.");
+    }
 
     return tx.appointment.create({
       data: {
@@ -214,6 +227,7 @@ export async function createAppointment(input: {
         priceCents: service.priceCents,
         notes: input.notes || null,
         source: input.source,
+        cancelToken: generateToken(),
         status: input.source === "ONLINE" && business.autoConfirm === false ? "SCHEDULED" : "CONFIRMED",
       },
       include: { service: true, professional: true, client: true },
@@ -240,6 +254,8 @@ export async function rescheduleAppointment(input: {
   if (earliestStart === null) throw new BookingError("Data fora do período permitido para agendamento.");
 
   return db.$transaction(async (tx) => {
+    // trava a agenda desse dia enquanto confere e grava (evita 2 clientes no mesmo horário ao mesmo tempo)
+    await tx.$queryRaw`SELECT 1 AS ok FROM pg_advisory_xact_lock(hashtext(${`${business.id}:${input.date}`}))`;
     const appt = await tx.appointment.findFirst({
       where: { id: input.appointmentId, businessId: business.id, status: { in: ["SCHEDULED", "CONFIRMED"] } },
       include: { service: true },

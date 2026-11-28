@@ -14,10 +14,11 @@ import { syncLoyaltyStamp } from "@/lib/loyalty-sync";
 export async function setPayment(id: string, method: string | null) {
   const user = await requireActiveUser();
   const paid = method !== null && isPaymentMethod(method);
-  await db.appointment.updateMany({
+  const r = await db.appointment.updateMany({
     where: { id, businessId: user.businessId },
     data: paid ? { paymentStatus: "PAID", paymentMethod: method, paidAt: new Date() } : { paymentStatus: "PENDING", paymentMethod: null, paidAt: null },
   });
+  if (!r.count) return { ok: false };
   await syncLoyaltyStamp(id);
   revalidatePath("/painel/agendamentos");
   return { ok: true };
