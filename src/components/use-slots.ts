@@ -21,6 +21,8 @@ export function useSlots(params: {
   const [message, setMessage] = useState<string | null>(null);
   const [closed, setClosed] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
+  // data a que os horários carregados se referem (para saber que a busca terminou)
+  const [loadedFor, setLoadedFor] = useState<string | null>(null);
 
   useEffect(() => {
     if (!serviceId || !date) {
@@ -40,6 +42,7 @@ export function useSlots(params: {
         setSlots(data.slots ?? []);
         setMessage(data.message ?? null);
         setClosed(data.closed ?? []);
+        setLoadedFor(date);
       })
       .catch((e) => {
         if (e.name !== "AbortError") {
@@ -54,5 +57,5 @@ export function useSlots(params: {
     return () => controller.abort();
   }, [slug, serviceId, professionalId, date, painel, token, appointmentId]);
 
-  return { slots, loading, message, closed };
+  return { slots, loading, message, closed, loadedFor };
 }

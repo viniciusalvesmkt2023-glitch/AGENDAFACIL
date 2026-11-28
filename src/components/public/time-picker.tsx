@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import { Clock, Moon, Sun, Sunrise } from "lucide-react";
 import { useSlots } from "../use-slots";
 import { addDays, formatDateLong, WEEKDAYS_SHORT, weekdayOf } from "@/lib/time";
@@ -43,7 +43,7 @@ export function TimePicker({
   onChange: (v: TimeValue) => void;
 }) {
   const { date, time } = value;
-  const { slots, loading, message, closed } = useSlots({ slug, serviceId, professionalId, date, token });
+  const { slots, loading, message, closed, loadedFor } = useSlots({ slug, serviceId, professionalId, date, token });
   const days = useMemo(() => Array.from({ length: maxAdvanceDays + 1 }, (_, i) => addDays(today, i)), [today, maxAdvanceDays]);
   const isClosed = useMemo(
     () => (d: string) => pros.every((p) => !p.openWeekdays.includes(weekdayOf(d)) || p.closedDates.includes(d)),
@@ -51,12 +51,23 @@ export function TimePicker({
   );
 
   // Começa no primeiro dia aberto
+  const autoPicked = useRef<string | null>(null);
   useEffect(() => {
     if (!date || isClosed(date)) {
       const first = days.find((d) => !isClosed(d));
-      if (first) onChange({ date: first });
+      if (first) {
+        autoPicked.current = first;
+        onChange({ date: first });
+      }
     }
   }, [date, days, isClosed, onChange]);
+  // Se o dia escolhido sozinho for hoje e já não tiver horário (ex.: à noite), pula para o próximo dia aberto
+  useEffect(() => {
+    if (loading || loadedFor !== date || slots.length > 0 || !date || date !== autoPicked.current || date !== today) return;
+    const next = days.find((d) => d > date && !isClosed(d));
+    autoPicked.current = null;
+    if (next) onChange({ date: next });
+  }, [loading, loadedFor, slots.length, date, today, days, isClosed, onChange]);
 
   return (
     <>
