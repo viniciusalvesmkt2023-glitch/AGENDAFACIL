@@ -9,7 +9,14 @@
 .ed svg.ed-i { fill: none; stroke: currentColor; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
 .ed .ed-phone { position: relative; width: 280px; height: 580px; border-radius: 42px; background: #111; padding: 9px; box-shadow: 0 40px 80px rgba(15,15,30,.2), 0 0 0 1px rgba(0,0,0,.2); margin-left: 70px; }
 @media (max-width: 520px) {
-.ed .ed-phone { margin-left: 40px; }
+.ed { min-height: 540px; }
+.ed .ed-phone { width: 248px; height: 530px; margin-left: 34px; border-radius: 38px; }
+.ed .ed-scr { border-radius: 30px; }
+.ed .ed-pills { gap: 4px; }
+.ed .ed-pills span { padding: 0 6px; font-size: 9.5px; white-space: nowrap; }
+}
+@media (max-width: 370px) {
+.ed .ed-phone { width: 232px; margin-left: 28px; }
 }
 .ed .ed-scr { width: 100%; height: 100%; border-radius: 34px; overflow: hidden; position: relative; }
 .ed .ed-pp { --a: #fe6e02; --a2: #fea766; --pbg: #fff; --pfg: #0c0c0d; --pmut: rgba(12,12,13,.55); --pcard: #fff; --pline: rgba(0,0,0,.07);

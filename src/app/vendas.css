@@ -389,9 +389,10 @@
 .lp .lp-perks span + span { border-left: 1px solid rgba(0, 0, 0, .1); }
 .lp .lp-perks svg { width: 18px; height: 18px; color: var(--b); }
 @media (max-width: 520px) {
-  .lp .lp-perks { font-size: 13px; }
-  .lp .lp-perks span { padding: 0 10px; }
-  .lp .lp-perks span:nth-child(3) { border-left: 0; }
+  /* celular: os 3 lado a lado, ícone em cima e texto embaixo (nunca vira 2 linhas de itens) */
+  .lp .lp-perks { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); max-width: 400px; margin-inline: auto; font-size: 12.5px; line-height: 1.25; text-align: center; }
+  .lp .lp-perks span { flex-direction: column; justify-content: flex-start; gap: 5px; padding: 0 6px; }
+  .lp .lp-perks svg { width: 19px; height: 19px; }
 }
 }
 

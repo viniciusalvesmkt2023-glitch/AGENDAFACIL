@@ -10,7 +10,7 @@
 .pz .pz-g-green { background: linear-gradient(135deg, #4ade80, #16a34a); }
 .pz .pz-g-wa { background: linear-gradient(135deg, #25d366, #128c7e); }
 .pz svg.pz-i { fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
-.pz .pz-shine { position: relative; isolation: isolate; overflow: hidden; display: inline-flex; align-items: center; justify-content: center; gap: 10px; height: 60px; padding: 0 30px; border-radius: 999px;
+.pz .pz-shine { position: relative; isolation: isolate; overflow: hidden; display: inline-flex; align-items: center; justify-content: center; gap: 10px; height: 60px; padding: 0 30px; border-radius: 999px; white-space: nowrap;
     color: #fff; font-weight: 800; font-size: 17px; text-decoration: none; background: rgba(255,255,255,.35); box-shadow: 0 0 44px rgba(254,110,2,.45); cursor: pointer; transition: transform .3s; }
 .pz .pz-shine:hover { transform: scale(.98); }
 .pz .pz-shine::before { content: ""; position: absolute; z-index: -2; left: 50%; top: 50%; width: 170%; aspect-ratio: 1; background: conic-gradient(from 0deg, transparent 0 280deg, #fff 325deg, transparent 360deg); filter: blur(4px); animation: pz-spin 4.5s linear infinite; }
@@ -67,10 +67,13 @@
 .pz .pz-g-amber { background: linear-gradient(135deg, #fbbf24, #d97706); }
 .pz .pz-perks3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 18px; }
 @media (max-width: 560px) {
-.pz .pz-perks3 { gap: 6px; }
-.pz .pz-pk { padding: 11px 9px; }
-.pz .pz-pk b { font-size: 13px; }
-.pz .pz-pk small { font-size: 11px; }
+/* celular: cada bloco numa linha inteira (ícone + título + explicação), sem texto espremido */
+.pz .pz-perks3 { grid-template-columns: minmax(0, 1fr); gap: 7px; }
+.pz .pz-pk { flex-direction: row; align-items: center; gap: 12px; padding: 10px 12px; }
+.pz .pz-pk b { font-size: 14px; }
+.pz .pz-pk small { font-size: 12px; }
+.pz .pz-big .pz-l, .pz .pz-big .pz-r { padding: 28px 20px; }
+.pz .pz-shine { height: 56px; padding: 0 18px; font-size: 15.5px; }
 }
 .pz .pz-pk { display: flex; flex-direction: column; align-items: flex-start; gap: 9px; padding: 13px 12px; border-radius: 16px; background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.1); min-width: 0; }
 .pz .pz-pk b { display: block; font-size: 14.5px; color: #fff; }
@@ -79,7 +82,7 @@
 .pz .pz-pki svg { width: 18px; height: 18px; stroke-width: 2.2; }
 .pz .pz-big .pz-r { display: flex; flex-direction: column; }
 .pz .pz-rh { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
-.pz .pz-cnt { font-size: 12px; font-weight: 800; padding: 4px 10px; border-radius: 99px; background: rgba(254,110,2,.18); color: #ffb37a; }
+.pz .pz-cnt { font-size: 12px; font-weight: 800; padding: 4px 10px; border-radius: 99px; background: rgba(254,110,2,.18); color: #ffb37a; white-space: nowrap; flex-shrink: 0; }
 .pz .pz-fgrid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 16px; }
 @media (max-width: 420px) {
 .pz .pz-fgrid { grid-template-columns: 1fr; }
@@ -102,9 +105,9 @@
 .pz .pz-perks span + span { border-left: 1px solid rgba(0,0,0,.1); }
 .pz .pz-perks svg { width: 19px; height: 19px; color: var(--b); stroke-width: 2.2; }
 @media (max-width: 520px) {
-.pz .pz-perks { font-size: 13.5px; }
-.pz .pz-perks span { padding: 0 10px; }
-.pz .pz-perks span:nth-child(3) { border-left: 0; }
+/* celular: os 3 selos lado a lado, ícone em cima */
+.pz .pz-perks { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); max-width: 400px; margin-inline: auto; font-size: 12.5px; line-height: 1.25; text-align: center; }
+.pz .pz-perks span { flex-direction: column; gap: 5px; padding: 0 6px; }
 }
 @media (prefers-reduced-motion: reduce) { .pz .pz-shine::before { animation: none; } .pz .pz-flash, .pz .pz-ftile { animation: none; } .pz .pz-seg .pz-ind { transition: none; } }
 }

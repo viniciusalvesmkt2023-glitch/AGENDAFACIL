@@ -64,10 +64,10 @@ export function MessagesForm(props: Settings) {
               </span>
             </label>
 
-            <div className="grid gap-2 sm:grid-cols-[220px_1fr] sm:items-center">
+            <div className="grid gap-2 sm:grid-cols-[220px_minmax(0,1fr)] sm:items-center">
               <label className="text-sm font-medium" htmlFor="reminderDayMode">Lembrete antecipado</label>
               <div className="flex flex-wrap items-center gap-2">
-                <select id="reminderDayMode" name="reminderDayMode" value={dayMode} onChange={(e) => setDayMode(e.target.value)} className="input sm:w-auto">
+                <select id="reminderDayMode" name="reminderDayMode" value={dayMode} onChange={(e) => setDayMode(e.target.value)} className="input max-w-full sm:w-auto">
                   <option value="OFF">Desligado</option>
                   <option value="24H">24 horas antes</option>
                   <option value="EVENING">Na véspera, em horário fixo</option>
@@ -81,9 +81,9 @@ export function MessagesForm(props: Settings) {
               </div>
             </div>
 
-            <div className="grid gap-2 sm:grid-cols-[220px_1fr] sm:items-center">
+            <div className="grid gap-2 sm:grid-cols-[220px_minmax(0,1fr)] sm:items-center">
               <label className="text-sm font-medium" htmlFor="reminderShortMinutes">Lembrete próximo do horário</label>
-              <select id="reminderShortMinutes" name="reminderShortMinutes" value={shortMinutes} onChange={(e) => setShortMinutes(Number(e.target.value))} className="input sm:w-auto">
+              <select id="reminderShortMinutes" name="reminderShortMinutes" value={shortMinutes} onChange={(e) => setShortMinutes(Number(e.target.value))} className="input max-w-full sm:w-auto">
                 {SHORT_OPTIONS.map((m) => (
                   <option key={m} value={m}>{shortLabel(m)}</option>
                 ))}
