@@ -1,13 +1,14 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import QRCode from "qrcode";
+import { ArrowLeft } from "lucide-react";
 import { db } from "@/lib/db";
 import { requireUser } from "@/lib/auth";
 import { formatMoney } from "@/lib/format";
 import { isPlanId, PLANS } from "@/lib/plans";
-import { CopyButton } from "@/components/copy-button";
-import { PixStatus } from "./pix-status";
 import { getPixProvider } from "@/lib/pix";
+import { PixScreen } from "./pix-screen";
+import "./pix.css";
 
 type Props = { params: Promise<{ id: string }> };
 
@@ -31,31 +32,27 @@ export default async function PixPaymentPage({ params }: Props) {
   }
   if (!payment.pixCopyPaste) notFound();
 
-  const qr = payment.pixQrCode || (await QRCode.toDataURL(payment.pixCopyPaste, { margin: 1, width: 280 }));
-  const qrSrc = qr.startsWith("data:") || qr.startsWith("http") ? qr : `data:image/png;base64,${qr}`;
+  // QR code gerado aqui a partir do copia e cola, com correção de erros máxima (aguenta a logo no meio e a animação por cima)
+  const qrSvg = await QRCode.toString(payment.pixCopyPaste, { type: "svg", errorCorrectionLevel: "H", margin: 0, color: { dark: "#0c0c0e", light: "#ffffff" } });
   const plan = isPlanId(payment.plan) ? PLANS[payment.plan] : null;
+  const expired = payment.status === "EXPIRED" || (payment.status === "PENDING" && !!payment.expiresAt && payment.expiresAt < new Date());
 
   return (
-    <div className="mx-auto max-w-md">
-      <div className="card p-6 text-center">
-        <h1 className="text-xl font-semibold">Pague com Pix</h1>
-        <p className="mt-1 text-sm text-zinc-500">
-          Plano {plan?.name} · <strong>{formatMoney(payment.amountCents)}</strong>
-        </p>
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={qrSrc} alt="QR code Pix" className="mx-auto my-6 h-64 w-64" />
-        <p className="text-sm text-zinc-600">Abra o app do seu banco, escolha Pix e leia o QR code, ou use o código copia e cola:</p>
-        <div className="mt-3 break-all rounded-lg bg-zinc-50 p-3 text-left font-mono text-xs text-zinc-600">{payment.pixCopyPaste}</div>
-        <div className="mt-3">
-          <CopyButton value={payment.pixCopyPaste} label="Copiar código Pix" />
-        </div>
-        <div className="mt-6">
-          <PixStatus id={payment.id} initialStatus={payment.status} />
-        </div>
-      </div>
-      <Link href="/painel/assinatura" className="mt-4 block text-center text-sm text-zinc-500 hover:underline">
-        Voltar para assinatura
-      </Link>
+    <div className="px">
+      <Link href="/painel/assinatura" className="px-back"><ArrowLeft /> Voltar para assinatura</Link>
+      <PixScreen
+        id={payment.id}
+        initialStatus={expired ? "EXPIRED" : payment.status}
+        amount={formatMoney(payment.amountCents)}
+        planName={plan?.name ?? "HoraBoa"}
+        months={plan?.months ?? 1}
+        code={payment.pixCopyPaste}
+        qrSvg={qrSvg}
+        expiresAt={payment.expiresAt?.toISOString() ?? null}
+        createdAt={payment.createdAt.toISOString()}
+        recurring={payment.provider === "ASAAS"}
+        validUntil={user.business.currentPeriodEnd?.toISOString() ?? null}
+      />
     </div>
   );
 }

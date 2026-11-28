@@ -184,6 +184,20 @@ export async function startPixPayment(_: BillingState, formData: FormData): Prom
   redirect(`/painel/assinatura/pix/${payment.id}`);
 }
 
+/** Pix expirou: gera outro igual (mesmo plano, CPF/CNPJ e telefone já salvos). */
+export async function renewPix(formData: FormData) {
+  const user = await requireUser();
+  const old = await db.payment.findFirst({ where: { id: String(formData.get("id") ?? ""), businessId: user.businessId, method: "PIX" } });
+  const b = user.business;
+  if (!old || !b.taxId || !(b.billingPhone ?? b.phone)) redirect("/painel/assinatura#planos");
+  const fd = new FormData();
+  fd.set("plan", old.plan);
+  fd.set("taxId", b.taxId);
+  fd.set("phone", b.billingPhone ?? b.phone ?? "");
+  const r = await startPixPayment(undefined, fd); // redireciona para o Pix novo quando dá certo
+  if (r?.error) redirect("/painel/assinatura?erro=pix");
+}
+
 export async function cancelPixSubscription() {
   const user = await requireUser();
   try {

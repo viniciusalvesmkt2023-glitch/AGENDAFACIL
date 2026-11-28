@@ -122,6 +122,7 @@ export default async function SubscriptionPage({ searchParams }: Props) {
         <div className="as-alert info" role="status"><CheckCircle2 /><div><b>Renovação cancelada.</b>Nenhuma nova cobrança será gerada. Seu acesso continua até o fim do período já pago.</div></div>
       )}
       {erro === "cancelar" && <div className="as-alert bad"><AlertTriangle /><div>Não foi possível cancelar agora. Tente de novo em alguns minutos ou fale com o suporte.</div></div>}
+      {erro === "pix" && <div className="as-alert bad"><AlertTriangle /><div>Não foi possível gerar um novo Pix agora. Escolha o plano abaixo e tente de novo, ou fale com o suporte.</div></div>}
       {erro === "portal" && <div className="as-alert bad"><AlertTriangle /><div>Não foi possível abrir o gerenciamento do cartão agora. Tente de novo em alguns minutos ou fale com o suporte.</div></div>}
       {state.kind === "grace" && (
         <div className="as-alert warn"><AlertTriangle /><div><b>Sua assinatura venceu{b.currentPeriodEnd ? ` em ${dateFmt.format(b.currentPeriodEnd)}` : ""}.</b>Você ainda tem {state.daysLeft} dia{state.daysLeft === 1 ? "" : "s"} antes do bloqueio da agenda e do link. Pague abaixo para continuar.</div></div>

@@ -17,5 +17,10 @@ export async function GET(_: Request, { params }: { params: Promise<{ id: string
     await db.payment.update({ where: { id }, data: { status: "EXPIRED" } });
     return NextResponse.json({ status: "EXPIRED" });
   }
+  if (payment.status === "PAID") {
+    // para a tela de "Pagamento confirmado" mostrar até quando o plano vale
+    const b = await db.business.findUnique({ where: { id: session.businessId }, select: { currentPeriodEnd: true } });
+    return NextResponse.json({ status: payment.status, validUntil: b?.currentPeriodEnd ?? null });
+  }
   return NextResponse.json({ status: payment.status });
 }
