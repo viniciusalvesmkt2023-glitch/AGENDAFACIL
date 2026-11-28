@@ -1,9 +1,10 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { useActionState, useRef, useState } from "react";
+import { useFormStatus } from "react-dom";
+import { BellRing, CalendarClock, CheckCircle2, Clock, Scissors, Send, Zap } from "lucide-react";
 import { saveWhatsappSettings, sendTestMessage } from "./actions";
 import { FormMessage } from "@/components/ui";
-import { SubmitButton } from "@/components/submit-button";
 import { DEFAULT_CONFIRMATION, DEFAULT_REMINDER, MAX_MESSAGE_LENGTH, MESSAGE_VARIABLES, renderMessage, SAMPLE_VARS } from "@/lib/messages";
 import { SHORT_OPTIONS, shortLabel } from "@/lib/reminders";
 import { minutesToTime } from "@/lib/time";
@@ -17,7 +18,30 @@ type Settings = {
   confirmation: string | null;
   reminder: string | null;
   businessName: string;
+  logoUrl?: string | null;
 };
+
+const VAR_LABELS: Record<string, string> = { nome: "Nome", estabelecimento: "Estabelecimento", quando: "Data e hora", servico: "Serviço", profissional: "Profissional", link: "Link" };
+
+function SaveButton() {
+  const { pending } = useFormStatus();
+  return <button type="submit" className="wz-go" disabled={pending}>{pending ? "Salvando..." : "Salvar mensagens"}</button>;
+}
+
+function Toggle({ name, checked, onChange, label }: { name?: string; checked: boolean; onChange: (v: boolean) => void; label: string }) {
+  return (
+    <span className="wz-tg">
+      <input type="checkbox" name={name} checked={checked} onChange={(e) => onChange(e.target.checked)} aria-label={label} />
+      <span />
+    </span>
+  );
+}
+
+/** Texto do WhatsApp com *negrito* de verdade. */
+function WaText({ text }: { text: string }) {
+  const parts = text.split(/(\*[^*\n]+\*)/g);
+  return <>{parts.map((p, i) => (p.startsWith("*") && p.endsWith("*") && p.length > 2 ? <b key={i}>{p.slice(1, -1)}</b> : p))}</>;
+}
 
 export function MessagesForm(props: Settings) {
   const [state, action] = useActionState(saveWhatsappSettings, undefined);
@@ -28,173 +52,178 @@ export function MessagesForm(props: Settings) {
   const [shortMinutes, setShortMinutes] = useState(props.shortMinutes);
   const [conf, setConf] = useState(props.confirmation || DEFAULT_CONFIRMATION);
   const [rem, setRem] = useState(props.reminder || DEFAULT_REMINDER);
-  const sample = { ...SAMPLE_VARS, estabelecimento: props.businessName };
+  const [tab, setTab] = useState<"c" | "r">(props.confirmationEnabled || !(props.dayMode !== "OFF" || props.shortMinutes > 0) ? "c" : "r");
+  const ta = useRef<HTMLTextAreaElement>(null);
+  const sample = { ...SAMPLE_VARS, nome: "Lia", estabelecimento: props.businessName, servico: "Corte", profissional: "João", link: "horaboa.com/agendamento/abc" };
   const anyReminder = dayMode !== "OFF" || shortMinutes > 0;
+  const value = tab === "c" ? conf : rem;
+  const setValue = tab === "c" ? setConf : setRem;
+  const defaultText = tab === "c" ? DEFAULT_CONFIRMATION : DEFAULT_REMINDER;
+
+  function insert(key: string) {
+    const el = ta.current;
+    const token = `{${key}}`;
+    const s = el?.selectionStart ?? value.length;
+    const e = el?.selectionEnd ?? value.length;
+    const next = (value.slice(0, s) + token + value.slice(e)).slice(0, MAX_MESSAGE_LENGTH);
+    setValue(next);
+    requestAnimationFrame(() => {
+      el?.focus();
+      el?.setSelectionRange(s + token.length, s + token.length);
+    });
+  }
+
+  // Linha do tempo: cliente agenda na segunda às 10:00 para quarta às 15:00
+  const points = [
+    { on: confirmationOn, day: "Seg 10:00", label: confirmationOn ? "Confirmação" : "Agendou", icon: <CheckCircle2 /> },
+    ...(dayMode !== "OFF" ? [{ on: true, day: dayMode === "24H" ? "Ter 15:00" : `Ter ${dayTime}`, label: "Lembrete", icon: <CalendarClock /> }] : []),
+    ...(shortMinutes > 0 ? [{ on: true, day: `Qua ${minutesToTime(15 * 60 - shortMinutes)}`, label: "Lembrete", icon: <BellRing /> }] : []),
+    { on: false, day: "Qua 15:00", label: "Atendimento", icon: <Scissors /> },
+  ];
 
   return (
-    <form action={action} className="space-y-6">
-      <label className="flex items-start gap-3 text-sm">
-        <input
-          type="checkbox"
-          name="whatsappRemindersEnabled"
-          checked={enabled}
-          onChange={(e) => setEnabled(e.target.checked)}
-          className="mt-0.5 h-4 w-4 accent-brand-600"
-        />
-        <span>
-          <strong>Mensagens automáticas ligadas</strong>
-          <span className="block text-zinc-500">Desmarque para pausar todas as mensagens automáticas.</span>
-        </span>
-      </label>
+    <form action={action}>
+      <div className="wz-sec">
+        <div><h2>Mensagens automáticas</h2><small>Escolha o que enviar e quando</small></div>
+        <label className="wz-master">
+          <span>{enabled ? "Ligadas" : "Pausadas"}</span>
+          <Toggle name="whatsappRemindersEnabled" checked={enabled} onChange={setEnabled} label="Ligar ou pausar todas as mensagens automáticas" />
+        </label>
+      </div>
 
-      <fieldset disabled={!enabled} className="space-y-6 disabled:opacity-50">
-        <div className="rounded-xl border border-zinc-200 p-4">
-          <h3 className="mb-3 font-medium">Quando enviar</h3>
-          <div className="space-y-4">
-            <label className="flex items-start gap-3 text-sm">
-              <input
-                type="checkbox"
-                name="confirmationEnabled"
-                checked={confirmationOn}
-                onChange={(e) => setConfirmationOn(e.target.checked)}
-                className="mt-0.5 h-4 w-4 accent-brand-600"
-              />
-              <span>
-                <strong>Confirmação</strong> — assim que o cliente agenda
+      <div className={`wz-flow ${enabled ? "" : "paused"}`}>
+        <div className={`wz-step ${confirmationOn ? "on" : "off"}`}>
+          <div className="wz-top">
+            <span className="wz-si" style={{ background: "linear-gradient(135deg,#4ade80,#16a34a)" }}><CheckCircle2 /></span>
+            <b>Confirmação</b>
+            <Toggle name="confirmationEnabled" checked={confirmationOn} onChange={setConfirmationOn} label="Enviar confirmação" />
+          </div>
+          <p>Assim que o cliente agenda.</p>
+          <span className="wz-when"><Zap /> Na hora</span>
+        </div>
+        <div className={`wz-step ${dayMode !== "OFF" ? "on" : "off"}`}>
+          <div className="wz-top">
+            <span className="wz-si" style={{ background: "linear-gradient(135deg,#60a5fa,#1d4ed8)" }}><CalendarClock /></span>
+            <b>Lembrete antecipado</b>
+          </div>
+          <div className="wz-sel">
+            <select id="reminderDayMode" name="reminderDayMode" value={dayMode} onChange={(e) => setDayMode(e.target.value)} aria-label="Lembrete antecipado">
+              <option value="24H">24 horas antes</option>
+              <option value="EVENING">Na véspera, em horário fixo</option>
+              <option value="OFF">Desligado</option>
+            </select>
+            {dayMode === "EVENING" && (
+              <input type="time" name="reminderDayTime" value={dayTime} onChange={(e) => setDayTime(e.target.value)} min="06:00" max="22:00" step={900} aria-label="Horário do lembrete da véspera" />
+            )}
+          </div>
+          <span className="wz-when"><Clock /> {dayMode === "OFF" ? "Não envia" : dayMode === "24H" ? "1 dia antes" : `Na véspera às ${dayTime}`}</span>
+        </div>
+        <div className={`wz-step ${shortMinutes > 0 ? "on" : "off"}`}>
+          <div className="wz-top">
+            <span className="wz-si" style={{ background: "linear-gradient(135deg,#fbbf24,#d97706)" }}><BellRing /></span>
+            <b>Lembrete do dia</b>
+          </div>
+          <div className="wz-sel">
+            <select id="reminderShortMinutes" name="reminderShortMinutes" value={shortMinutes} onChange={(e) => setShortMinutes(Number(e.target.value))} aria-label="Lembrete próximo do horário">
+              {[...SHORT_OPTIONS.filter((m) => m > 0), 0].map((m) => <option key={m} value={m}>{shortLabel(m)}</option>)}
+            </select>
+          </div>
+          <span className="wz-when"><Clock /> {shortMinutes > 0 ? "Perto do horário" : "Não envia"}</span>
+        </div>
+      </div>
+
+      <div className="wz-tl" aria-label="Exemplo de quando as mensagens saem" data-testid="wa-timeline">
+        {points.map((p, i) => (
+          <div key={i} style={{ display: "contents" }}>
+            {i > 0 && <span className="wz-ln" />}
+            <div className={`wz-pt ${p.on && enabled ? "on" : ""}`}><i>{p.icon}</i><b>{p.day}</b>{p.label}</div>
+          </div>
+        ))}
+      </div>
+      <p className="wz-tlx">
+        Exemplo: cliente agenda na segunda às 10:00 para quarta às 15:00.{" "}
+        {!enabled ? "Com as mensagens pausadas, nada é enviado." : "Lembretes não saem para agendamentos feitos em cima da hora."}
+      </p>
+
+      <div className="wz-ed">
+        <div>
+          <div className="wz-tabs" role="tablist">
+            <button type="button" role="tab" aria-selected={tab === "c"} className={tab === "c" ? "on" : ""} onClick={() => setTab("c")}>Confirmação</button>
+            <button type="button" role="tab" aria-selected={tab === "r"} className={tab === "r" ? "on" : ""} onClick={() => setTab("r")}>Lembretes</button>
+          </div>
+          <textarea
+            ref={ta}
+            className="wz-ta"
+            value={value}
+            onChange={(e) => setValue(e.target.value)}
+            maxLength={MAX_MESSAGE_LENGTH}
+            aria-label={tab === "c" ? "Texto da confirmação" : "Texto dos lembretes"}
+            data-testid="wa-text"
+          />
+          <div className="wz-vars">
+            <small>Toque para inserir no texto:</small>
+            {MESSAGE_VARIABLES.map((v) => (
+              <button key={v.key} type="button" title={v.description} onClick={() => insert(v.key)}>{VAR_LABELS[v.key] ?? v.key}</button>
+            ))}
+          </div>
+          <div className="wz-edf">
+            {value !== defaultText && <button type="button" className="wz-reset" onClick={() => setValue(defaultText)}>Restaurar texto padrão</button>}
+            <span className="wz-cnt">{value.length}/{MAX_MESSAGE_LENGTH}</span>
+          </div>
+          {tab === "c" && !confirmationOn && <p className="wz-tlx">A confirmação está desligada: este texto fica guardado, mas não é enviado.</p>}
+          {tab === "r" && !anyReminder && <p className="wz-tlx">Os lembretes estão desligados: este texto fica guardado, mas não é enviado.</p>}
+        </div>
+        <div className="wz-phone">
+          <div className="wz-chat">
+            <div className="wz-ch">
+              <span className="wz-av">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                {props.logoUrl ? <img src={props.logoUrl} alt="" /> : props.businessName.charAt(0).toUpperCase()}
               </span>
-            </label>
-
-            <div className="grid gap-2 sm:grid-cols-[220px_minmax(0,1fr)] sm:items-center">
-              <label className="text-sm font-medium" htmlFor="reminderDayMode">Lembrete antecipado</label>
-              <div className="flex flex-wrap items-center gap-2">
-                <select id="reminderDayMode" name="reminderDayMode" value={dayMode} onChange={(e) => setDayMode(e.target.value)} className="input max-w-full sm:w-auto">
-                  <option value="OFF">Desligado</option>
-                  <option value="24H">24 horas antes</option>
-                  <option value="EVENING">Na véspera, em horário fixo</option>
-                </select>
-                {dayMode === "EVENING" && (
-                  <>
-                    <span className="text-sm text-zinc-500">às</span>
-                    <input type="time" name="reminderDayTime" value={dayTime} onChange={(e) => setDayTime(e.target.value)} min="06:00" max="22:00" step={900} className="input w-auto" />
-                  </>
-                )}
-              </div>
+              <div className="min-w-0"><b className="truncate">{props.businessName}</b><small>prévia de como o cliente recebe</small></div>
             </div>
-
-            <div className="grid gap-2 sm:grid-cols-[220px_minmax(0,1fr)] sm:items-center">
-              <label className="text-sm font-medium" htmlFor="reminderShortMinutes">Lembrete próximo do horário</label>
-              <select id="reminderShortMinutes" name="reminderShortMinutes" value={shortMinutes} onChange={(e) => setShortMinutes(Number(e.target.value))} className="input max-w-full sm:w-auto">
-                {SHORT_OPTIONS.map((m) => (
-                  <option key={m} value={m}>{shortLabel(m)}</option>
-                ))}
-              </select>
+            <div className="wz-cb">
+              <div className="wz-bub" data-testid="wa-preview"><WaText text={renderMessage(value, sample)} /><time>10:02</time></div>
             </div>
           </div>
-
-          <Example confirmationOn={confirmationOn} dayMode={dayMode} dayTime={dayTime} shortMinutes={shortMinutes} />
         </div>
+      </div>
 
-        <div className="rounded-lg bg-zinc-50 p-3 text-xs text-zinc-600">
-          Variáveis que você pode usar nos textos:{" "}
-          {MESSAGE_VARIABLES.map((v, i) => (
-            <span key={v.key}>
-              <code className="rounded bg-white px-1 font-semibold text-brand-700">{`{${v.key}}`}</code> {v.description}
-              {i < MESSAGE_VARIABLES.length - 1 ? " · " : ""}
-            </span>
-          ))}
-        </div>
+      <input type="hidden" name="msgConfirmation" value={conf} />
+      <input type="hidden" name="msgReminder" value={rem} />
 
-        {confirmationOn && (
-          <MessageEditor label="Texto da confirmação" name="msgConfirmation" value={conf} onChange={setConf} defaultText={DEFAULT_CONFIRMATION} preview={renderMessage(conf, sample)} />
-        )}
-        {anyReminder && (
-          <MessageEditor label="Texto dos lembretes" name="msgReminder" value={rem} onChange={setRem} defaultText={DEFAULT_REMINDER} preview={renderMessage(rem, sample)} />
-        )}
-      </fieldset>
-
-      {/* Mantém os textos ao salvar mesmo com o editor escondido */}
-      {(!confirmationOn || !enabled) && <input type="hidden" name="msgConfirmation" value={conf} />}
-      {(!anyReminder || !enabled) && <input type="hidden" name="msgReminder" value={rem} />}
-      {!enabled && (
-        <>
-          <input type="hidden" name="reminderDayMode" value={dayMode} />
-          <input type="hidden" name="reminderShortMinutes" value={shortMinutes} />
-          {confirmationOn && <input type="hidden" name="confirmationEnabled" value="on" />}
-          {dayMode === "EVENING" && <input type="hidden" name="reminderDayTime" value={dayTime} />}
-        </>
-      )}
-
-      <FormMessage error={state?.error} success={state?.success} />
-      <SubmitButton className="btn-primary w-full md:w-auto">Salvar</SubmitButton>
+      <div className="wz-save">
+        <div className="wz-saved">{state ? <FormMessage error={state.error} success={state.success} /> : <span className="wz-hint" style={{ fontSize: 13.5, color: "var(--pn-muted)" }}>Quando enviar e o texto das mensagens</span>}</div>
+        <SaveButton />
+      </div>
     </form>
   );
 }
 
-/** Exemplo prático com a configuração escolhida. */
-function Example({ confirmationOn, dayMode, dayTime, shortMinutes }: { confirmationOn: boolean; dayMode: string; dayTime: string; shortMinutes: number }) {
-  // Cliente agendou na segunda às 10:00 para quarta às 15:00
-  const lines: string[] = [];
-  if (confirmationOn) lines.push("segunda às 10:00 — confirmação");
-  if (dayMode === "24H") lines.push("terça às 15:00 — lembrete antecipado");
-  if (dayMode === "EVENING") lines.push(`terça às ${dayTime} — lembrete antecipado`);
-  if (shortMinutes > 0) lines.push(`quarta às ${minutesToTime(15 * 60 - shortMinutes)} — lembrete`);
-
-  const sameDay: string[] = [];
-  if (confirmationOn) sameDay.push("confirmação às 09:00");
-  if (shortMinutes > 0 && 16 * 60 - shortMinutes - 60 >= 9 * 60) sameDay.push(`lembrete às ${minutesToTime(16 * 60 - shortMinutes)}`);
-
-  return (
-    <div className="mt-4 rounded-lg bg-brand-50 p-3 text-sm text-brand-900">
-      <p className="font-medium">Exemplo: cliente agenda na segunda às 10:00 para quarta às 15:00</p>
-      {lines.length ? (
-        <ul className="mt-1 list-disc pl-5">{lines.map((l) => <li key={l}>{l}</li>)}</ul>
-      ) : (
-        <p className="mt-1">Nenhuma mensagem será enviada.</p>
-      )}
-      <p className="mt-2 text-brand-800">
-        Para o mesmo dia (agenda às 09:00 para as 16:00): {sameDay.length ? sameDay.join(" e ") : "nenhuma mensagem"}.
-        O lembrete antecipado não é enviado para agendamentos feitos em cima da hora.
-      </p>
-    </div>
-  );
-}
-
-function MessageEditor({
-  label, name, value, onChange, defaultText, preview,
-}: {
-  label: string; name: string; value: string; onChange: (v: string) => void; defaultText: string; preview: string;
-}) {
-  return (
-    <div className="grid gap-4 lg:grid-cols-2">
-      <div>
-        <div className="flex items-center justify-between">
-          <label className="label" htmlFor={name}>{label}</label>
-          {value !== defaultText && (
-            <button type="button" onClick={() => onChange(defaultText)} className="mb-1 text-xs text-brand-700 hover:underline">
-              Restaurar padrão
-            </button>
-          )}
-        </div>
-        <textarea id={name} name={name} value={value} onChange={(e) => onChange(e.target.value)} rows={8} maxLength={MAX_MESSAGE_LENGTH} className="input font-mono text-xs" />
-      </div>
-      <div>
-        <p className="label">Pré-visualização</p>
-        <div className="wa-bubble rounded-xl p-3 text-sm whitespace-pre-wrap shadow-sm" data-testid="wa-preview">{preview}</div>
-      </div>
-    </div>
-  );
-}
-
+/** Mensagem de teste (fica no bloco escuro de cima). */
 export function TestMessageForm({ defaultPhone }: { defaultPhone: string }) {
   const [state, action] = useActionState(sendTestMessage, undefined);
+  const [open, setOpen] = useState(false);
   return (
-    <form action={action} className="grid gap-2 sm:flex sm:items-end">
-      <div className="min-w-0 sm:w-64">
-        <label className="label" htmlFor="to">Enviar mensagem de teste para</label>
-        <input id="to" name="to" defaultValue={defaultPhone} placeholder="(11) 99999-9999" inputMode="tel" className="input" />
-      </div>
-      <SubmitButton className="btn-secondary" pendingText="Enviando...">Enviar teste</SubmitButton>
-      <div className="w-full"><FormMessage error={state?.error} success={state?.success} /></div>
-    </form>
+    <>
+      <button type="button" className="wz-b1" onClick={() => setOpen((o) => !o)} aria-expanded={open}>
+        <Send /> Enviar mensagem de teste
+      </button>
+      {open && (
+        <form action={action} style={{ width: "100%" }}>
+          <div className="wz-test">
+            <input id="to" name="to" defaultValue={defaultPhone} placeholder="(11) 99999-9999" inputMode="tel" className="wz-in" aria-label="Número para receber o teste" />
+            <TestSend />
+          </div>
+          {state?.error && <p className="wz-msg bad">{state.error}</p>}
+          {state?.success && <p className="wz-msg ok">{state.success}</p>}
+        </form>
+      )}
+    </>
   );
+}
+
+function TestSend() {
+  const { pending } = useFormStatus();
+  return <button type="submit" className="wz-b2" disabled={pending}>{pending ? "Enviando..." : "Enviar"}</button>;
 }

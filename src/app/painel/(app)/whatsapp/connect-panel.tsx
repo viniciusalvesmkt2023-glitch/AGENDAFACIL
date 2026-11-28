@@ -2,19 +2,27 @@
 
 import { useActionState, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { KeyRound, QrCode } from "lucide-react";
+import { useFormStatus } from "react-dom";
+import { KeyRound, QrCode, RefreshCw } from "lucide-react";
 import { requestPairingCode, startWhatsappConnection } from "./actions";
-import { FormMessage } from "@/components/ui";
-import { SubmitButton } from "@/components/submit-button";
 import { CopyButton } from "@/components/copy-button";
 
 type Status = { status: string; qr?: string | null; error?: string };
 type Mode = "qr" | "code";
 
+function Go({ children, pending, wide = false }: { children: React.ReactNode; pending: string; wide?: boolean }) {
+  const { pending: busy } = useFormStatus();
+  return (
+    <button type="submit" className="wz-b1" disabled={busy} style={wide ? { width: "100%" } : undefined}>
+      {busy ? pending : children}
+    </button>
+  );
+}
+
 /**
  * Conecta o WhatsApp do estabelecimento de dois jeitos:
- * - QR code: para quem está no computador e escaneia com o celular;
- * - Código: para quem está no próprio celular do WhatsApp (não dá para escanear a própria tela).
+ * - Código: para quem está no próprio celular do WhatsApp (não dá para escanear a própria tela);
+ * - QR code: para quem está no computador e escaneia com o celular.
  */
 export function ConnectPanel({ connecting, defaultPhone = "" }: { connecting: boolean; defaultPhone?: string }) {
   const [state, action] = useActionState(startWhatsappConnection, undefined);
@@ -59,106 +67,69 @@ export function ConnectPanel({ connecting, defaultPhone = "" }: { connecting: bo
   if (!mode) return null;
 
   return (
-    <div className="space-y-4">
-      <div className="grid grid-cols-2 gap-1 rounded-xl bg-zinc-100 p-1" role="tablist">
-        {(
-          [
-            { id: "code", label: "Código", hint: "neste celular", icon: KeyRound },
-            { id: "qr", label: "QR code", hint: "pelo computador", icon: QrCode },
-          ] as const
-        ).map(({ id, label, hint, icon: Icon }) => (
-          <button
-            key={id}
-            type="button"
-            role="tab"
-            aria-selected={mode === id}
-            onClick={() => setMode(id)}
-            className={`flex items-center justify-center gap-2 rounded-lg px-2 py-2 text-sm font-semibold transition ${
-              mode === id ? "bg-white text-navy-900 shadow-sm" : "text-zinc-500"
-            }`}
-          >
-            <Icon className="h-4 w-4 shrink-0" />
-            <span>
-              {label} <span className="hidden font-normal text-zinc-400 sm:inline">({hint})</span>
-            </span>
-          </button>
-        ))}
+    <div>
+      <p className="wz-p">
+        As mensagens saem do <b>seu número</b> e as respostas chegam direto no seu WhatsApp. Escolha como conectar:
+      </p>
+      <div className="wz-modes" role="tablist">
+        <button type="button" role="tab" aria-selected={mode === "code"} className={`wz-opt ${mode === "code" ? "on" : ""}`} onClick={() => setMode("code")}>
+          <span className="wz-oi"><KeyRound /></span>
+          <span><b>Código de 8 dígitos</b><small>Quando o WhatsApp está neste celular</small></span>
+        </button>
+        <button type="button" role="tab" aria-selected={mode === "qr"} className={`wz-opt ${mode === "qr" ? "on" : ""}`} onClick={() => setMode("qr")}>
+          <span className="wz-oi"><QrCode /></span>
+          <span><b>QR code</b><small>Abriu o painel no computador: aponte a câmera do celular</small></span>
+        </button>
       </div>
 
       {mode === "code" ? (
         pairing?.code ? (
-          <div className="space-y-4">
-            <div className="rounded-2xl border-2 border-dashed border-brand-300 bg-brand-50 p-4 text-center">
-              <p className="text-sm text-brand-900">Seu código de conexão</p>
-              <p className="mt-1 font-mono text-3xl font-extrabold tracking-[0.2em] text-navy-900" data-testid="pairing-code">
-                {pairing.code.length === 8 ? `${pairing.code.slice(0, 4)}-${pairing.code.slice(4)}` : pairing.code}
-              </p>
-              <div className="mt-3 flex justify-center">
-                <CopyButton value={pairing.code} label="Copiar código" />
-              </div>
+          <>
+            <div className="wz-code">
+              <small>Seu código de conexão</small>
+              <b data-testid="pairing-code">{pairing.code.length === 8 ? `${pairing.code.slice(0, 4)}-${pairing.code.slice(4)}` : pairing.code}</b>
+              <CopyButton value={pairing.code} label="Copiar código" className="wz-b2" />
             </div>
-            <ol className="list-decimal space-y-2 pl-5 text-sm text-zinc-700">
-              <li>Abra o <strong>WhatsApp</strong> e toque em <strong>⋮</strong> (Android) ou <strong>Configurações</strong> (iPhone).</li>
-              <li>Toque em <strong>Aparelhos conectados</strong> → <strong>Conectar um aparelho</strong>.</li>
-              <li>Toque em <strong>Conectar com número de telefone</strong> (embaixo da câmera).</li>
+            <ol className="wz-steps">
+              <li>Abra o <b>WhatsApp</b> e toque em <b>⋮</b> (Android) ou <b>Configurações</b> (iPhone).</li>
+              <li>Toque em <b>Aparelhos conectados</b> → <b>Conectar um aparelho</b>.</li>
+              <li>Toque em <b>Conectar com número de telefone</b> (embaixo da câmera).</li>
               <li>Digite o código acima. Esta tela atualiza sozinha quando conectar.</li>
             </ol>
-            <form action={pairingAction}>
+            <form action={pairingAction} className="wz-acts">
               <input type="hidden" name="phone" value={pairing.phone} />
-              <SubmitButton className="btn-secondary btn-sm" pendingText="Gerando...">Gerar outro código</SubmitButton>
+              <button className="wz-b2"><RefreshCw /> Gerar outro código</button>
             </form>
-          </div>
+          </>
         ) : (
-          <form action={pairingAction} className="space-y-3">
-            <p className="text-sm text-zinc-600">
-              Ideal quando o WhatsApp do estabelecimento está <strong>neste celular</strong>. Informe o número e digite o código
-              que vamos gerar no seu WhatsApp.
-            </p>
-            <div>
-              <label className="label" htmlFor="pairPhone">Número do WhatsApp</label>
-              <input
-                className="input"
-                id="pairPhone"
-                name="phone"
-                type="tel"
-                inputMode="tel"
-                placeholder="(11) 99999-9999"
-                defaultValue={pairing?.phone ?? defaultPhone}
-                required
-              />
-            </div>
-            <FormMessage error={pairing?.error} />
-            <SubmitButton className="btn-primary w-full" pendingText="Gerando código...">Gerar código</SubmitButton>
+          <form action={pairingAction}>
+            <label className="wz-lbl" htmlFor="pairPhone">Número do WhatsApp do estabelecimento</label>
+            <input className="wz-in" id="pairPhone" name="phone" type="tel" inputMode="tel" placeholder="(11) 99999-9999" defaultValue={pairing?.phone ?? defaultPhone} required style={{ width: "100%" }} />
+            {pairing?.error && <p className="wz-msg bad">{pairing.error}</p>}
+            <div className="wz-acts"><Go pending="Gerando código..." wide>Gerar código →</Go></div>
           </form>
         )
       ) : qrActive ? (
-        <div className="grid gap-6 sm:grid-cols-[280px_1fr] sm:items-center">
-          <div className="mx-auto grid h-[280px] w-[280px] place-items-center rounded-xl border border-zinc-200 bg-white keep-white">
+        <>
+          <div className="wz-qr keep-white">
             {status?.qr ? (
               // eslint-disable-next-line @next/next/no-img-element
-              <img src={status.qr} alt="QR code para conectar o WhatsApp" className="h-[260px] w-[260px]" />
+              <img src={status.qr} alt="QR code para conectar o WhatsApp" />
             ) : (
-              <p className="px-6 text-center text-sm text-zinc-500">
-                {status?.status === "ERROR" ? status.error : "Gerando QR code..."}
-              </p>
+              <span>{status?.status === "ERROR" ? status.error : "Gerando QR code..."}</span>
             )}
           </div>
-          <ol className="list-decimal space-y-2 pl-5 text-sm text-zinc-700">
-            <li>Abra o <strong>WhatsApp</strong> no celular do estabelecimento.</li>
-            <li>Toque em <strong>⋮ Mais opções</strong> (Android) ou <strong>Configurações</strong> (iPhone).</li>
-            <li>Toque em <strong>Aparelhos conectados</strong> e depois em <strong>Conectar um aparelho</strong>.</li>
-            <li>Aponte a câmera para o QR code.</li>
-            <li className="list-none pt-2 text-zinc-500">O QR code se renova sozinho. Esta tela atualiza quando conectar.</li>
+          <ol className="wz-steps">
+            <li>Abra o <b>WhatsApp</b> no celular do estabelecimento.</li>
+            <li>Toque em <b>⋮ Mais opções</b> (Android) ou <b>Configurações</b> (iPhone).</li>
+            <li>Toque em <b>Aparelhos conectados</b> → <b>Conectar um aparelho</b> e aponte a câmera.</li>
           </ol>
-        </div>
+          <p className="wz-note">O QR code se renova sozinho. Esta tela atualiza quando conectar.</p>
+        </>
       ) : (
-        <form action={action} className="space-y-3">
-          <p className="text-sm text-zinc-600">
-            Conecte o WhatsApp do seu estabelecimento para enviar confirmações e lembretes automáticos aos clientes. As
-            mensagens saem do <strong>seu número</strong>, e as respostas chegam direto no seu WhatsApp.
-          </p>
-          <FormMessage error={state?.error} />
-          <SubmitButton pendingText="Preparando...">Conectar WhatsApp</SubmitButton>
+        <form action={action}>
+          {state?.error && <p className="wz-msg bad">{state.error}</p>}
+          <div className="wz-acts"><Go pending="Preparando...">Conectar WhatsApp →</Go></div>
         </form>
       )}
     </div>
