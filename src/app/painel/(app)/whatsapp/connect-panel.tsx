@@ -1,9 +1,10 @@
 "use client";
 
-import { useActionState, useEffect, useState } from "react";
+import { useActionState, useCallback, useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 import { useFormStatus } from "react-dom";
-import { KeyRound, QrCode, RefreshCw } from "lucide-react";
+import { KeyRound, QrCode, RefreshCw, X } from "lucide-react";
 import { requestPairingCode, startWhatsappConnection } from "./actions";
 import { CopyButton } from "@/components/copy-button";
 
@@ -36,7 +37,13 @@ export function ConnectPanel({ connecting, defaultPhone = "" }: { connecting: bo
     setMode(window.matchMedia("(pointer: coarse)").matches ? "code" : "qr");
   }, []);
 
-  const qrActive = mode === "qr" && (connecting || state?.success === null);
+  // QR code abre numa janela depois de clicar em "Conectar WhatsApp"
+  const [qrOpen, setQrOpen] = useState(false);
+  useEffect(() => {
+    if (state?.success === null) setQrOpen(true);
+  }, [state]);
+  const qrActive = mode === "qr" && qrOpen;
+  const closeQr = useCallback(() => setQrOpen(false), []);
   const codeActive = mode === "code" && !!pairing?.code;
 
   // Acompanha a conexão até o WhatsApp conectar
@@ -109,29 +116,62 @@ export function ConnectPanel({ connecting, defaultPhone = "" }: { connecting: bo
             <div className="wz-acts"><Go pending="Gerando código..." wide>Gerar código →</Go></div>
           </form>
         )
-      ) : qrActive ? (
-        <>
-          <div className="wz-qr keep-white">
-            {status?.qr ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={status.qr} alt="QR code para conectar o WhatsApp" />
-            ) : (
-              <span>{status?.status === "ERROR" ? status.error : "Gerando QR code..."}</span>
-            )}
-          </div>
-          <ol className="wz-steps">
-            <li>Abra o <b>WhatsApp</b> no celular do estabelecimento.</li>
-            <li>Toque em <b>⋮ Mais opções</b> (Android) ou <b>Configurações</b> (iPhone).</li>
-            <li>Toque em <b>Aparelhos conectados</b> → <b>Conectar um aparelho</b> e aponte a câmera.</li>
-          </ol>
-          <p className="wz-note">O QR code se renova sozinho. Esta tela atualiza quando conectar.</p>
-        </>
       ) : (
         <form action={action}>
           {state?.error && <p className="wz-msg bad">{state.error}</p>}
-          <div className="wz-acts"><Go pending="Preparando...">Conectar WhatsApp →</Go></div>
+          <div className="wz-acts"><Go pending="Preparando...">{connecting ? "Mostrar QR code →" : "Conectar WhatsApp →"}</Go></div>
         </form>
       )}
+      {qrActive && <QrModal qr={status?.qr ?? null} error={status?.status === "ERROR" ? status.error ?? "Erro ao gerar o QR code." : null} onClose={closeQr} />}
     </div>
+  );
+}
+
+/** Janela com o QR code (computador). Fecha sozinha quando o WhatsApp conecta (a página recarrega). */
+function QrModal({ qr, error, onClose }: { qr: string | null; error: string | null; onClose: () => void }) {
+  const [root, setRoot] = useState<Element | null>(null);
+  useEffect(() => {
+    setRoot(document.querySelector(".pn") ?? document.body);
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
+    window.addEventListener("keydown", onKey);
+    return () => {
+      document.body.style.overflow = prev;
+      window.removeEventListener("keydown", onKey);
+    };
+  }, [onClose]);
+  if (!root) return null;
+  return createPortal(
+    <div className="wz-shade" onMouseDown={(e) => e.target === e.currentTarget && onClose()}>
+      <div className="wz-modal" role="dialog" aria-modal="true" aria-labelledby="wz-qr-title" data-testid="wa-qr-modal">
+        <div className="wz-mh">
+          <span className="wz-wai sm"><QrCode /></span>
+          <div className="min-w-0"><h2 id="wz-qr-title">Conectar WhatsApp</h2><p>Leia o QR code com o celular do estabelecimento</p></div>
+          <button type="button" className="wz-x" onClick={onClose} aria-label="Fechar"><X /></button>
+        </div>
+        <div className="wz-mb">
+          <div className="wz-qrbox keep-white">
+            {qr ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={qr} alt="QR code para conectar o WhatsApp" />
+            ) : (
+              <span>{error ?? "Gerando QR code..."}</span>
+            )}
+          </div>
+          <div>
+            <ol className="wz-msteps">
+              <li><span>Abra o <b>WhatsApp</b> no celular do estabelecimento.</span></li>
+              <li><span>Toque em <b>⋮ Mais opções</b> (Android) ou <b>Configurações</b> (iPhone).</span></li>
+              <li><span>Toque em <b>Aparelhos conectados</b> → <b>Conectar um aparelho</b>.</span></li>
+              <li><span>Aponte a câmera para o QR code ao lado.</span></li>
+            </ol>
+            <div className="wz-mwait"><span className="wz-mspin" />Aguardando a leitura… a janela fecha sozinha.</div>
+            <p className="wz-mnote">O QR code se renova sozinho a cada poucos segundos.</p>
+          </div>
+        </div>
+      </div>
+    </div>,
+    root,
   );
 }
