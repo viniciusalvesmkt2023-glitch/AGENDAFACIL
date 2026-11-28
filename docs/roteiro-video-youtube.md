@@ -1,6 +1,7 @@
 # Roteiro completo: Review do HoraBoa no YouTube
 
-**Duração:** cerca de 9 minutos (uns 1.300 palavras faladas, em ritmo tranquilo)
+**Duração:** cerca de 10 minutos (uns 1.550 palavras faladas, em ritmo tranquilo)
+**Estrutura:** chamar a atenção → explorar o problema → mostrar quanto ele custa → apresentar o HoraBoa como solução → mostrar cada benefício funcionando → preço e chamada final.
 **Formato:** você falando para a câmera (CÂMERA) e gravação da tela (TELA).
 As falas estão entre aspas. O que está em *[colchetes]* é o que aparece na tela.
 
@@ -15,25 +16,60 @@ As falas estão entre aspas. O que está em *[colchetes]* é o que aparece na te
 
 ---
 
-## 0:00 · Gancho (CÂMERA)
+## 0:00 · Gancho: chamar a atenção (CÂMERA)
 
-"Se você tem barbearia ou salão, me responde rapidinho: quantas vezes nesta semana você parou um atendimento para responder 'tem horário amanhã?' no WhatsApp? E quantos clientes marcaram e simplesmente não apareceram?
+*[Abrir com o celular na mão, vibrando com notificações do WhatsApp. Você olha para a tela, suspira e olha para a câmera.]*
 
-Neste vídeo eu vou te mostrar, na prática, um sistema que deixa a sua agenda funcionando sozinha: o cliente marca pelo celular, recebe a confirmação e o lembrete no seu WhatsApp, e você acompanha tudo, até o lucro do mês, num lugar só. Fica até o final que eu falo do preço e se vale a pena pra você."
+"Você está no meio de um corte, o celular não para de vibrar… 'Tem horário hoje?', 'E amanhã às 3?', 'Dá pra encaixar?'. Você para, responde, volta, para de novo.
 
-*[Corte rápido de 2 segundos: a agenda do dia cheia e uma mensagem de confirmação chegando no WhatsApp.]*
+E aí, no fim do dia, aquele cliente que marcou… simplesmente não apareceu.
 
----
-
-## 0:30 · Para quem é (CÂMERA)
-
-"O nome é **HoraBoa**. Ele foi feito para quem trabalha com horário marcado: barbearia, salão de beleza, manicure, sobrancelha, estética. Serve tanto para quem trabalha sozinho quanto para quem tem uma equipe com vários profissionais.
-
-E não precisa instalar nada: funciona direto no navegador, no celular ou no computador."
+Se isso acontece com você, fica comigo nos próximos minutos, porque eu vou te mostrar como resolver isso de vez."
 
 ---
 
-## 1:00 · Criando a conta (TELA: computador)
+## 0:25 · O problema (CÂMERA)
+
+"Vamos ser sinceros: quem tem barbearia ou salão vive três problemas.
+
+**Primeiro:** você vira secretário do próprio WhatsApp. Passa o dia respondendo mensagem para marcar, remarcar e confirmar horário, muitas vezes no meio do atendimento, ou de noite, quando devia estar descansando.
+
+**Segundo:** as faltas. O cliente marca, esquece e não avisa. E aquele horário que você guardou fica vazio.
+
+**Terceiro:** a bagunça. Agenda no caderno ou de cabeça, horário marcado em cima de outro, e no fim do mês você nem sabe direito quanto entrou, quanto gastou e quanto tem que pagar para cada profissional."
+
+---
+
+## 0:55 · Quanto isso custa (CÂMERA)
+
+*[Na edição, mostre a conta aparecendo na tela, número por número.]*
+
+"Faz essa conta comigo. Se um corte é R$ 40 e você tem só **duas faltas por semana**, são R$ 80 por semana. No mês, são mais de **R$ 320 jogados fora**. Isso sem contar o tempo que você perde no WhatsApp e os clientes que desistem porque você demorou para responder e marcam em outro lugar.
+
+Não é falta de cliente. É falta de organização."
+
+---
+
+## 1:20 · A solução: o que é o HoraBoa (CÂMERA → TELA)
+
+"Foi exatamente para resolver isso que existe o **HoraBoa**.
+
+O HoraBoa é um sistema de **agendamento online** para quem trabalha com horário marcado: barbearia, salão de beleza, manicure, sobrancelha, estética. Ele funciona como uma **secretária que trabalha 24 horas por você**."
+
+*[Na tela: a página do cliente no celular de um lado e a agenda no computador do outro.]*
+
+"Funciona assim, em três passos:
+1. Você ganha **um link só seu**, com a cara do seu negócio, e coloca na bio do Instagram e no WhatsApp.
+2. O cliente **marca sozinho** pelo celular, a qualquer hora, só nos horários que estão realmente livres.
+3. O sistema **confirma e lembra o cliente pelo seu WhatsApp**, automaticamente, e tudo cai organizado na sua agenda.
+
+Você não precisa instalar nada: funciona no celular e no computador. Serve para quem trabalha sozinho e para quem tem equipe. E você pode testar tudo grátis por 7 dias, sem cartão.
+
+Agora deixa eu te mostrar tudo isso funcionando, na prática."
+
+---
+
+## 2:10 · Criando a conta (TELA: computador)
 
 *[Página inicial do HoraBoa → clicar em "Começar meus 7 dias grátis".]*
 
@@ -51,7 +87,7 @@ Em uns 5 minutos o seu link já está pronto para mandar para os clientes."
 
 ---
 
-## 2:00 · Como o cliente agenda (TELA: celular)
+## 3:10 · Como o cliente agenda (TELA: celular)
 
 *[Abrir o link da Barbearia do João no celular.]*
 
@@ -75,7 +111,7 @@ Em uns 5 minutos o seu link já está pronto para mandar para os clientes."
 
 ---
 
-## 3:20 · WhatsApp automático (TELA: celular do cliente → computador)
+## 4:30 · WhatsApp automático (TELA: celular do cliente → computador)
 
 *[Mostrar a mensagem de confirmação chegando no WhatsApp do cliente.]*
 
@@ -97,7 +133,7 @@ E tem um link aqui embaixo: se ele não puder ir, ele mesmo remarca ou cancela, 
 
 ---
 
-## 4:40 · A agenda no dia a dia (TELA: computador e celular)
+## 5:50 · A agenda no dia a dia (TELA: computador e celular)
 
 *[Abrir a agenda do dia.]*
 
@@ -121,7 +157,7 @@ E tem um link aqui embaixo: se ele não puder ir, ele mesmo remarca ou cancela, 
 
 ---
 
-## 6:00 · Equipe e Finanças (TELA: computador)
+## 7:10 · Equipe e Finanças (TELA: computador)
 
 *[Gestão de equipe → abrir um profissional.]*
 
@@ -133,7 +169,7 @@ E tem um link aqui embaixo: se ele não puder ir, ele mesmo remarca ou cancela, 
 
 ---
 
-## 7:15 · Fidelidade, Produtos e a sua página (TELA: ritmo rápido)
+## 8:25 · Fidelidade, Produtos e a sua página (TELA: ritmo rápido)
 
 *[Cartão fidelidade.]*
 
@@ -153,7 +189,7 @@ E tem um link aqui embaixo: se ele não puder ir, ele mesmo remarca ou cancela, 
 
 ---
 
-## 8:15 · Preço e minha opinião (CÂMERA)
+## 9:25 · Preço e minha opinião (CÂMERA)
 
 "Agora o preço. Você testa **tudo por 7 dias grátis**, sem colocar cartão. Depois tem três planos, todos com tudo incluso:
 - **Mensal:** R$ 37,90 por mês;
@@ -166,7 +202,7 @@ Na minha opinião, se você perde pelo menos um ou dois clientes por mês com fa
 
 ---
 
-## 8:50 · Chamada final (CÂMERA)
+## 10:00 · Chamada final (CÂMERA)
 
 "O link para testar grátis está aqui na descrição. Cria a sua conta hoje e já sai com o link pronto para mandar para os clientes.
 
@@ -187,19 +223,21 @@ Se ficou alguma dúvida, deixa nos comentários que eu respondo todo mundo. E se
 >
 > Neste vídeo eu mostro na prática o HoraBoa, um sistema de agendamento online para barbearias, salões de beleza, manicures e estética. O cliente marca pelo seu link, recebe a confirmação e o lembrete no seu WhatsApp, e você controla agenda, equipe, comissões, finanças, cartão fidelidade e produtos num lugar só.
 >
-> 0:00 O problema das faltas
-> 0:30 Para quem é
-> 1:00 Criando a conta
-> 2:00 Como o cliente agenda
-> 3:20 WhatsApp automático
-> 4:40 A agenda no dia a dia
-> 6:00 Equipe e finanças
-> 7:15 Fidelidade, produtos e sua página
-> 8:15 Preço e minha opinião
-> 8:50 Como testar grátis
+> 0:00 O caos do WhatsApp e das faltas
+> 0:25 Os 3 problemas de toda barbearia e salão
+> 0:55 Quanto as faltas te custam por mês
+> 1:20 O que é o HoraBoa e como funciona
+> 2:10 Criando a conta
+> 3:10 Como o cliente agenda
+> 4:30 WhatsApp automático
+> 5:50 A agenda no dia a dia
+> 7:10 Equipe e finanças
+> 8:25 Fidelidade, produtos e sua página
+> 9:25 Preço e minha opinião
+> 10:00 Como testar grátis
 
 **Tags:** agendamento online, sistema para barbearia, agenda para salão de beleza, lembrete whatsapp, agenda barbearia, sistema para salão, controle financeiro barbearia, cartão fidelidade, app de agendamento, horaboa
 
 **Capa (thumbnail):** você apontando para um celular com a agenda cheia, com um texto curto em laranja, como **"ACABOU A FALTA"** ou **"AGENDA NO AUTOMÁTICO"**.
 
-**Shorts para tirar deste vídeo:** o cliente agendando (2:00), a mensagem chegando no WhatsApp (3:20), a agenda e o botão + (4:40), as finanças (6:00) e o cartão fidelidade (7:15).
+**Shorts para tirar deste vídeo:** o gancho com o celular vibrando + a conta das faltas (0:00 a 1:20), o cliente agendando (3:10), a mensagem chegando no WhatsApp (4:30), a agenda e o botão + (5:50) e as finanças (7:10).
